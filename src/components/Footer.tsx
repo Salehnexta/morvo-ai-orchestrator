@@ -8,6 +8,12 @@ export const Footer = () => {
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
 
+  // Extract common RTL-related classes
+  const rtlTextClass = isRTL ? 'text-right' : 'text-left';
+  const rtlFlexClass = isRTL ? 'flex-row-reverse' : '';
+  const rtlPositionClass = isRTL ? 'right-0' : 'left-0';
+  const fontClass = 'font-cairo';
+
   const content = {
     ar: {
       companyName: "مورفو",
@@ -52,7 +58,11 @@ export const Footer = () => {
   const t = content[language];
 
   return (
-    <footer className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden font-cairo" dir={isRTL ? 'rtl' : 'ltr'}>
+    <footer 
+      className={`relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden ${fontClass}`} 
+      dir={isRTL ? 'rtl' : 'ltr'}
+      aria-label="Footer Navigation"
+    >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-gradient-radial from-blue-500/20 via-transparent to-transparent"></div>
@@ -62,34 +72,34 @@ export const Footer = () => {
 
       {/* Main Footer Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 ${isRTL ? 'text-right' : 'text-left'}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 ${rtlTextClass}`}>
           
           {/* Company Info */}
           <div className="lg:col-span-1 space-y-6">
-            <Link to="/" className={`inline-flex items-center gap-4 group ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <Link to="/" className={`inline-flex items-center gap-4 group ${rtlFlexClass}`}>
               <div className="relative">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
                   <span className="text-white font-bold text-xl">M</span>
                 </div>
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
               </div>
-              <div className={isRTL ? 'text-right' : 'text-left'}>
-                <h3 className="text-2xl font-bold text-white group-hover:text-blue-300 transition-colors duration-300 font-cairo">
+              <div className={rtlTextClass}>
+                <h3 className={`text-2xl font-bold text-white group-hover:text-blue-300 transition-colors duration-300 ${fontClass}`}>
                   {t.companyName}
                 </h3>
-                <p className="text-sm text-blue-300 font-medium font-cairo">
+                <p className={`text-sm text-blue-300 font-medium ${fontClass}`}>
                   {t.companySubtitle}
                 </p>
               </div>
             </Link>
             
-            <p className={`text-gray-300 leading-relaxed text-sm font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>
+            <p className={`text-gray-300 leading-relaxed text-sm ${fontClass} ${rtlTextClass}`}>
               {t.description}
             </p>
             
             {/* Social Media */}
             <div>
-              <h4 className={`text-lg font-semibold mb-4 text-white font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>{t.followUs}</h4>
+              <h4 className={`text-lg font-semibold mb-4 text-white ${fontClass} ${rtlTextClass}`}>{t.followUs}</h4>
               <div className={`flex gap-3 ${isRTL ? 'justify-end' : 'justify-start'}`}>
                 {[
                   { Icon: Facebook, href: "#", color: "hover:bg-blue-600" },
@@ -102,6 +112,7 @@ export const Footer = () => {
                     key={index}
                     href={href} 
                     className={`group relative p-3 rounded-xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 text-gray-400 ${color} hover:text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:border-transparent`}
+                    aria-label={`Social media link ${index + 1}`}
                   >
                     <Icon className="w-5 h-5" />
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -112,22 +123,22 @@ export const Footer = () => {
           </div>
 
           {/* Quick Links */}
-          <div className={`space-y-6 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <h4 className={`text-xl font-bold text-white relative font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>
+          <div className={`space-y-6 ${rtlTextClass}`}>
+            <h4 className={`text-xl font-bold text-white relative ${fontClass} ${rtlTextClass}`}>
               {t.quickLinks}
-              <div className={`absolute bottom-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full ${isRTL ? 'right-0' : 'left-0'}`}></div>
+              <div className={`absolute bottom-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full ${rtlPositionClass}`}></div>
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-3" role="list">
               {t.productItems.map((item, index) => (
                 <li key={index}>
                   <Link 
                     to={item.href} 
-                    className={`group inline-flex items-center gap-2 text-gray-300 hover:text-white transition-all duration-300 py-2 font-cairo ${isRTL ? 'flex-row-reverse' : ''}`}
+                    className={`group inline-flex items-center gap-2 text-gray-300 hover:text-white transition-all duration-300 py-2 ${fontClass} ${rtlFlexClass}`}
                   >
                     <ArrowRight className={`w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                     <span className="relative">
                       {item.name}
-                      <span className={`absolute bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full ${isRTL ? 'right-0' : 'left-0'}`}></span>
+                      <span className={`absolute bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full ${rtlPositionClass}`}></span>
                     </span>
                   </Link>
                 </li>
@@ -136,10 +147,10 @@ export const Footer = () => {
           </div>
 
           {/* Contact Info */}
-          <div className={`space-y-6 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <h4 className={`text-xl font-bold text-white relative font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>
+          <div className={`space-y-6 ${rtlTextClass}`}>
+            <h4 className={`text-xl font-bold text-white relative ${fontClass} ${rtlTextClass}`}>
               {t.contactInfo}
-              <div className={`absolute bottom-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full ${isRTL ? 'right-0' : 'left-0'}`}></div>
+              <div className={`absolute bottom-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full ${rtlPositionClass}`}></div>
             </h4>
             <div className="space-y-4">
               {[
@@ -147,14 +158,14 @@ export const Footer = () => {
                 { Icon: Phone, text: t.phone, color: "text-blue-400", shouldBeLTR: true },
                 { Icon: Mail, text: t.email, color: "text-purple-400", shouldBeLTR: true }
               ].map(({ Icon, text, color, shouldBeLTR }, index) => (
-                <div key={index} className={`group flex items-start gap-4 p-3 rounded-xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/30 hover:border-gray-600/50 transition-all duration-300 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div key={index} className={`group flex items-start gap-4 p-3 rounded-xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/30 hover:border-gray-600/50 transition-all duration-300 ${rtlFlexClass}`}>
                   <div className={`flex-shrink-0 p-2 rounded-lg bg-gray-700/50 ${color}`}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <span 
-                    className={`text-gray-300 group-hover:text-white transition-colors duration-300 text-sm font-cairo ${
+                    className={`text-gray-300 group-hover:text-white transition-colors duration-300 text-sm ${fontClass} ${
                       shouldBeLTR ? 'ltr' : ''
-                    } ${isRTL && !shouldBeLTR ? 'text-right' : ''} ${isRTL && shouldBeLTR ? 'text-left' : ''}`} 
+                    } ${shouldBeLTR ? 'text-left' : rtlTextClass}`} 
                     dir={shouldBeLTR ? 'ltr' : (isRTL ? 'rtl' : 'ltr')}
                   >
                     {text}
@@ -172,15 +183,15 @@ export const Footer = () => {
           <div className={`flex flex-col md:flex-row justify-between items-center gap-6 ${
             isRTL ? 'md:flex-row-reverse text-right' : 'text-left'
           }`}>
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 ${rtlFlexClass}`}>
               <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xs">M</span>
               </div>
-              <p className={`text-sm text-gray-400 font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>
+              <p className={`text-sm text-gray-400 ${fontClass} ${rtlTextClass}`}>
                 © 2024 <span className="text-white font-medium">{t.companyName}</span> - {t.rights}
               </p>
             </div>
-            <div className={`flex gap-8 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <nav className={`flex gap-8 ${rtlFlexClass}`} role="navigation" aria-label="Footer legal links">
               {[
                 { text: language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy', href: '/privacy' },
                 { text: language === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions', href: '/terms' },
@@ -189,13 +200,13 @@ export const Footer = () => {
                 <Link 
                   key={index}
                   to={link.href} 
-                  className={`text-sm text-gray-400 hover:text-white transition-colors duration-300 relative group font-cairo ${isRTL ? 'text-right' : 'text-left'}`}
+                  className={`text-sm text-gray-400 hover:text-white transition-colors duration-300 relative group ${fontClass} ${rtlTextClass}`}
                 >
                   {link.text}
-                  <span className={`absolute bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full ${isRTL ? 'right-0' : 'left-0'}`}></span>
+                  <span className={`absolute bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full ${rtlPositionClass}`}></span>
                 </Link>
               ))}
-            </div>
+            </nav>
           </div>
         </div>
       </div>
