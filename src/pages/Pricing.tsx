@@ -1,3 +1,4 @@
+
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -17,7 +18,7 @@ export const Pricing = () => {
       plans: [
         {
           name: "الأساسي",
-          description: "للأفراد والشركات الناشئة",
+          description: "",
           price: "749 ر.س",
           period: "شهرياً",
           buttonText: "ابدأ الآن",
@@ -26,7 +27,7 @@ export const Pricing = () => {
         },
         {
           name: "الاحترافي",
-          description: "للشركات المتنامية",
+          description: "",
           price: "899 ر.س",
           originalPrice: "1,999 ر.س",
           period: "شهرياً",
@@ -36,8 +37,8 @@ export const Pricing = () => {
         },
         {
           name: "الأعمال",
-          description: "للمؤسسات الكبيرة",
-          price: "1,499 ر.س",
+          description: "للشركات الكبيرة والجهات الحكوميه",
+          price: "",
           period: "شهرياً",
           buttonText: "تواصل معنا",
           popular: false,
@@ -371,18 +372,20 @@ export const Pricing = () => {
                           {(plan as any).originalPrice}
                         </span>
                       )}
-                      <div>
-                        <span className={`text-5xl font-bold font-cairo ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                          {plan.price}
-                        </span>
-                        {plan.period && (
-                          <span className={`text-lg font-cairo ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} ${
-                            isRTL ? 'mr-2' : 'ml-2'
-                          }`}>
-                            /{plan.period}
+                      {plan.price && (
+                        <div>
+                          <span className={`text-5xl font-bold font-cairo ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            {plan.price}
                           </span>
-                        )}
-                      </div>
+                          {plan.period && (
+                            <span className={`text-lg font-cairo ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} ${
+                              isRTL ? 'mr-2' : 'ml-2'
+                            }`}>
+                              /{plan.period}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </CardHeader>
                   
