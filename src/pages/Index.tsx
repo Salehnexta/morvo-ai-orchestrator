@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Globe, Brain, Zap, Target, Users, BarChart, Shield } from "lucide-react";
@@ -11,7 +10,7 @@ import { ChatInterface } from "@/components/ChatInterface";
 const content = {
   ar: {
     hero: {
-      title: "ثورة التسويق هنا - تعرف على Morvo AI",
+      title: "ثورة الذكاء الآصطناعي في التسويق تبدأ من هنا",
       subtitle: "أول ذكاء تسويقي عائل في العالم",
       description:
         "9 عملاء ذكاء اصطناعي. إمكانيات لا نهائية. حوّل استراتيجية التسويق الخاصة بك مع الذكاء الاصطناعي المستقل الذي يفكر ويتعلم وينفذ مثل أفضل فريق تسويق لديك - ولكن أسرع 100 مرة.",
