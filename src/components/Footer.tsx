@@ -30,7 +30,6 @@ export const Footer = () => {
       supportLegalItems: [
         { name: "الدعم", href: "/support" },
         { name: "تواصل معنا", href: "/contact" },
-        { name: "حالة الخدمة", href: "/service-status" },
         { name: "الشروط والأحكام", href: "/terms" },
         { name: "سياسة الخصوصية", href: "/privacy" }
       ],
@@ -61,7 +60,6 @@ export const Footer = () => {
       supportLegalItems: [
         { name: "Support", href: "/support" },
         { name: "Contact Us", href: "/contact" },
-        { name: "Service Status", href: "/service-status" },
         { name: "Terms & Conditions", href: "/terms" },
         { name: "Privacy Policy", href: "/privacy" }
       ],
