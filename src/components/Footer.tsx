@@ -20,19 +20,6 @@ export const Footer = () => {
         { name: "الأسعار", href: "/pricing" },
         { name: "الأسئلة الشائعة", href: "/faq" }
       ],
-      resources: "المصادر", 
-      resourceItems: [
-        { name: "قصص النجاح", href: "/success-stories" },
-        { name: "التحديثات", href: "/updates" },
-        { name: "مركز المساعدة", href: "/help-center" }
-      ],
-      supportLegal: "الدعم والقانونية",
-      supportLegalItems: [
-        { name: "الدعم", href: "/support" },
-        { name: "تواصل معنا", href: "/contact" },
-        { name: "الشروط والأحكام", href: "/terms" },
-        { name: "سياسة الخصوصية", href: "/privacy" }
-      ],
       rights: "جميع الحقوق محفوظة",
       contactInfo: "معلومات الاتصال",
       address: "الرياض، المملكة العربية السعودية",
@@ -50,19 +37,6 @@ export const Footer = () => {
         { name: "Pricing", href: "/pricing" },
         { name: "FAQ", href: "/faq" }
       ],
-      resources: "Resources",
-      resourceItems: [
-        { name: "Success Stories", href: "/success-stories" },
-        { name: "Updates", href: "/updates" },
-        { name: "Help Center", href: "/help-center" }
-      ],
-      supportLegal: "Support & Legal",
-      supportLegalItems: [
-        { name: "Support", href: "/support" },
-        { name: "Contact Us", href: "/contact" },
-        { name: "Terms & Conditions", href: "/terms" },
-        { name: "Privacy Policy", href: "/privacy" }
-      ],
       rights: "All rights reserved",
       contactInfo: "Contact Info",
       address: "Riyadh, Saudi Arabia",
@@ -77,7 +51,7 @@ export const Footer = () => {
     <footer className="bg-gray-900 text-white" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 ${isRTL ? 'text-right' : 'text-left'}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 ${isRTL ? 'text-right' : 'text-left'}`}>
           {/* Company Info */}
           <div className="lg:col-span-1">
             <Link to="/" className={`flex items-center gap-3 mb-6 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
@@ -140,44 +114,6 @@ export const Footer = () => {
             </h4>
             <ul className="space-y-4">
               {t.productItems.map((item, index) => (
-                <li key={index}>
-                  <Link 
-                    to={item.href} 
-                    className="text-sm text-gray-300 hover:text-white transition-colors block"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Resources */}
-          <div className={isRTL ? 'text-right' : 'text-left'}>
-            <h4 className="text-lg font-semibold mb-6 text-white">
-              {t.resources}
-            </h4>
-            <ul className="space-y-4">
-              {t.resourceItems.map((item, index) => (
-                <li key={index}>
-                  <Link 
-                    to={item.href} 
-                    className="text-sm text-gray-300 hover:text-white transition-colors block"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Support & Legal */}
-          <div className={isRTL ? 'text-right' : 'text-left'}>
-            <h4 className="text-lg font-semibold mb-6 text-white">
-              {t.supportLegal}
-            </h4>
-            <ul className="space-y-4">
-              {t.supportLegalItems.map((item, index) => (
                 <li key={index}>
                   <Link 
                     to={item.href} 
