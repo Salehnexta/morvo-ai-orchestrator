@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MessageSquare, Sparkles, Zap, Globe, BarChart3, Users, Play, ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,42 +64,48 @@ const Index = () => {
       title: language === 'ar' ? "نظام إدارة المتاجر" : "Store Management System",
       titleSecondary: language === 'ar' ? "Store Management" : "نظام إدارة المتاجر",
       description: language === 'ar' ? "نظام شامل لإدارة متجرك الإلكتروني بكل سهولة ومرونة" : "Comprehensive system to manage your online store with ease and flexibility",
-      descriptionSecondary: language === 'ar' ? "Comprehensive store management with ease and flexibility" : "نظام شامل لإدارة متجرك الإلكتروني بكل سهولة ومرونة"
+      descriptionSecondary: language === 'ar' ? "Comprehensive store management with ease and flexibility" : "نظام شامل لإدارة متجرك الإلكتروني بكل سهولة ومرونة",
+      color: "from-blue-500 to-blue-600"
     },
     {
       icon: <Sparkles className="w-8 h-8" />,
       title: "Bilingual AI",
       titleAr: "ذكاء اصطناعي ثنائي اللغة",
       description: "Native Arabic and English support with Saudi dialect optimization",
-      descriptionAr: "دعم أصلي للعربية والإنجليزية مع تحسين للهجة السعودية"
+      descriptionAr: "دعم أصلي للعربية والإنجليزية مع تحسين للهجة السعودية",
+      color: "from-pink-500 to-pink-600"
     },
     {
       icon: <Zap className="w-8 h-8" />,
       title: "Real-time Processing",
       titleAr: "معالجة فورية",
       description: "Sub-10 second responses with live cost tracking and performance monitoring",
-      descriptionAr: "استجابة أقل من 10 ثواني مع تتبع التكلفة ومراقبة الأداء"
+      descriptionAr: "استجابة أقل من 10 ثواني مع تتبع التكلفة ومراقبة الأداء",
+      color: "from-green-500 to-green-600"
     },
     {
       icon: <Globe className="w-8 h-8" />,
       title: "Multi-Agent Ecosystem",
       titleAr: "نظام متعدد الوكلاء",
       description: "9 specialized agents covering SEO, social media, analytics, content, and competitive intelligence",
-      descriptionAr: "9 وكلاء متخصصين يغطون السيو ووسائل التواصل والتحليلات والمحتوى والذكاء التنافسي"
+      descriptionAr: "9 وكلاء متخصصين يغطون السيو ووسائل التواصل والتحليلات والمحتوى والذكاء التنافسي",
+      color: "from-purple-500 to-purple-600"
     },
     {
       icon: <BarChart3 className="w-8 h-8" />,
       title: "Enterprise Analytics",
       titleAr: "تحليلات متقدمة",
       description: "Advanced business intelligence with ROI analysis and data-driven insights",
-      descriptionAr: "ذكاء أعمال متقدم مع تحليل العائد على الاستثمار ورؤى مدفوعة بالبيانات"
+      descriptionAr: "ذكاء أعمال متقدم مع تحليل العائد على الاستثمار ورؤى مدفوعة بالبيانات",
+      color: "from-orange-500 to-orange-600"
     },
     {
       icon: <Users className="w-8 h-8" />,
       title: "Scalable Platform",
       titleAr: "منصة قابلة للتوسع",
       description: "Railway deployment with 99.9% uptime handling 1000+ concurrent clients",
-      descriptionAr: "نشر على Railway مع 99.9% وقت تشغيل يتعامل مع 1000+ عميل متزامن"
+      descriptionAr: "نشر على Railway مع 99.9% وقت تشغيل يتعامل مع 1000+ عميل متزامن",
+      color: "from-indigo-500 to-indigo-600"
     }
   ];
 
@@ -129,7 +136,7 @@ const Index = () => {
     <div className={`min-h-screen transition-colors duration-300 ${
       theme === 'dark' 
         ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' 
-        : 'bg-gradient-to-br from-white via-blue-50 to-purple-50'
+        : 'bg-white'
     }`} dir={isRTL ? 'rtl' : 'ltr'}>
       <Header onStartChat={() => setShowChat(true)} />
 
@@ -139,11 +146,11 @@ const Index = () => {
           <div className={`text-center ${isRTL ? 'text-right' : 'text-left'} md:text-center`}>
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8 ${
               theme === 'dark' 
-                ? 'bg-white/10 backdrop-blur-sm border border-white/20' 
-                : 'bg-blue-100 border border-blue-200'
+                ? 'bg-gray-800 border border-gray-700' 
+                : 'bg-gradient-to-r from-blue-50 to-indigo-100 border border-blue-200'
             }`}>
               <Sparkles className={`w-4 h-4 ${theme === 'dark' ? 'text-yellow-400' : 'text-blue-600'}`} />
-              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/90' : 'text-blue-900'}`}>
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {t.badge}
               </span>
             </div>
@@ -152,7 +159,7 @@ const Index = () => {
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
               <span className="block">{t.title1}</span>
-              <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
                 {t.title2}
               </span>
               <span className={`block text-lg md:text-xl lg:text-2xl font-normal mt-4 ${
@@ -163,7 +170,7 @@ const Index = () => {
             </h1>
             
             <p className={`text-xl md:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed ${
-              theme === 'dark' ? 'text-white/80' : 'text-gray-700'
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               {t.description1}
               <br />
@@ -175,7 +182,7 @@ const Index = () => {
             <div className={`flex flex-col sm:flex-row gap-4 justify-center ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
               <Button 
                 onClick={() => setShowChat(true)}
-                className={`bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
+                className={`bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
                   isRTL ? 'flex-row-reverse' : ''
                 }`}
               >
@@ -184,11 +191,11 @@ const Index = () => {
               </Button>
               <Button 
                 variant="outline" 
-                className={`px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm ${
+                className={`px-8 py-4 text-lg font-semibold rounded-full ${
                   isRTL ? 'flex-row-reverse' : ''
                 } ${
                   theme === 'dark' 
-                    ? 'border-white/30 text-white hover:bg-white/10' 
+                    ? 'border-gray-600 text-white hover:bg-gray-800' 
                     : 'border-gray-300 text-gray-900 hover:bg-gray-50'
                 }`}
               >
@@ -212,7 +219,7 @@ const Index = () => {
               <span className="text-2xl md:text-3xl">Powered by Advanced Smart Technologies</span>
             </h2>
             <p className={`text-xl max-w-3xl mx-auto ${
-              theme === 'dark' ? 'text-white/70' : 'text-gray-600'
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               اختبر مستقبل أتمتة التسويق حيث يتعاون وكلاء الذكاء الاصطناعي المتخصصون لتقديم استراتيجيات على مستوى الخبراء
             </p>
@@ -224,15 +231,11 @@ const Index = () => {
                 key={index}
                 className={`group p-8 rounded-2xl transition-all duration-300 hover:transform hover:scale-105 hover:shadow-xl ${
                   theme === 'dark' 
-                    ? 'bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/15' 
-                    : 'bg-white border border-gray-200 hover:border-purple-300 shadow-sm hover:shadow-lg'
+                    ? 'bg-gray-800 border border-gray-700 hover:bg-gray-750' 
+                    : 'bg-white border border-gray-200 hover:border-blue-300 shadow-lg hover:shadow-xl'
                 }`}
               >
-                <div className={`mb-4 transition-colors duration-300 ${
-                  theme === 'dark'
-                    ? 'text-blue-400 group-hover:text-purple-400'
-                    : 'text-blue-600 group-hover:text-purple-600'
-                }`}>
+                <div className={`mb-4 transition-colors duration-300 p-3 rounded-lg bg-gradient-to-r ${feature.color} text-white inline-flex`}>
                   {feature.icon}
                 </div>
                 <h3 className={`text-xl font-semibold mb-2 ${
@@ -241,17 +244,17 @@ const Index = () => {
                   {feature.titleAr}
                 </h3>
                 <h4 className={`text-lg font-medium mb-3 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   {feature.title}
                 </h4>
                 <p className={`leading-relaxed mb-2 ${
-                  theme === 'dark' ? 'text-white/70' : 'text-gray-600'
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   {feature.descriptionAr}
                 </p>
                 <p className={`text-sm leading-relaxed ${
-                  theme === 'dark' ? 'text-white/60' : 'text-gray-500'
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                 }`}>
                   {feature.description}
                 </p>
@@ -264,8 +267,8 @@ const Index = () => {
       {/* Benefits Section */}
       <section className={`py-20 ${
         theme === 'dark' 
-          ? 'bg-white/5 backdrop-blur-sm' 
-          : 'bg-gray-50'
+          ? 'bg-gray-900' 
+          : 'bg-gradient-to-r from-blue-50 to-indigo-100'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -280,9 +283,7 @@ const Index = () => {
               <div className="space-y-4">
                 {benefits.map((benefit, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <CheckCircle className={`w-5 h-5 ${
-                      theme === 'dark' ? 'text-green-400' : 'text-green-600'
-                    }`} />
+                    <CheckCircle className="w-5 h-5 text-green-500" />
                     <div>
                       <span className={`font-medium ${
                         theme === 'dark' ? 'text-white' : 'text-gray-900'
@@ -291,7 +292,7 @@ const Index = () => {
                       </span>
                       <br />
                       <span className={`text-sm ${
-                        theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                       }`}>
                         {benefit.text}
                       </span>
@@ -303,8 +304,8 @@ const Index = () => {
             
             <div className={`p-8 rounded-2xl ${
               theme === 'dark' 
-                ? 'bg-gradient-to-br from-blue-900/50 to-purple-900/50 backdrop-blur-sm border border-white/20' 
-                : 'bg-gradient-to-br from-blue-50 to-purple-50 border border-gray-200'
+                ? 'bg-gray-800 border border-gray-700' 
+                : 'bg-white border border-gray-200 shadow-lg'
             }`}>
               <h3 className={`text-2xl font-bold mb-6 text-center ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
@@ -320,11 +321,11 @@ const Index = () => {
                       {stat.number}
                     </div>
                     <div className={`text-sm ${
-                      theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                     }`}>
-                      {stat.labelAr}
-                      <br />
                       {stat.label}
+                      <br />
+                      {stat.labelSecondary}
                     </div>
                   </div>
                 ))}
@@ -345,7 +346,7 @@ const Index = () => {
             <span className="text-2xl md:text-3xl">Ready to revolutionize your marketing with AI?</span>
           </h2>
           <p className={`text-xl mb-8 ${
-            theme === 'dark' ? 'text-white/70' : 'text-gray-700'
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
           }`}>
             ابدأ مع الوكيل الرئيسي واختبر قوة ذكاء التسويق المنسق بالذكاء الاصطناعي
             <br />
@@ -353,7 +354,7 @@ const Index = () => {
           </p>
           <Button 
             onClick={() => setShowChat(true)}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-12 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white px-12 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <Sparkles className="w-5 h-5 mr-2" />
             ابدأ الآن | Get Started Now

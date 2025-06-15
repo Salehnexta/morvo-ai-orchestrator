@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -140,13 +141,13 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
       theme === 'dark' 
         ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' 
-        : 'bg-gradient-to-br from-white via-blue-50 to-purple-50'
+        : 'bg-white'
     }`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className={`backdrop-blur-sm border-b p-4 ${
         theme === 'dark' 
-          ? 'bg-white/10 border-white/20' 
-          : 'bg-white/80 border-gray-200'
+          ? 'bg-gray-900/95 border-gray-800' 
+          : 'bg-gradient-to-r from-blue-50 to-indigo-100 border-gray-200'
       }`}>
         <div className={`max-w-4xl mx-auto flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Button
@@ -155,8 +156,8 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
             onClick={onBack}
             className={`${isRTL ? 'flex-row-reverse' : ''} ${
               theme === 'dark' 
-                ? 'text-white hover:bg-white/10' 
-                : 'text-gray-900 hover:bg-gray-100'
+                ? 'text-white hover:bg-gray-800' 
+                : 'text-gray-900 hover:bg-white/50'
             }`}
           >
             <ArrowLeft className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
@@ -164,14 +165,14 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
           </Button>
           
           <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div className={isRTL ? 'text-right' : 'text-left'}>
               <h1 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {t.masterAgent}
               </h1>
-              <p className={`text-sm ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 {t.clientAgent}
               </p>
             </div>
@@ -184,16 +185,16 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
               onClick={toggleTheme}
               className={`${
                 theme === 'dark' 
-                  ? 'text-white hover:bg-white/10' 
-                  : 'text-gray-900 hover:bg-gray-100'
+                  ? 'text-white hover:bg-gray-800' 
+                  : 'text-gray-900 hover:bg-white/50'
               }`}
             >
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
             
             <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className={`text-sm ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 {t.active}
               </span>
             </div>
@@ -215,7 +216,7 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                 }`}
               >
                 {message.sender === 'agent' && !isRTL && (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
                 )}
@@ -223,12 +224,12 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                 <div
                   className={`max-w-[80%] p-4 rounded-2xl ${
                     message.sender === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
                       : theme === 'dark'
-                      ? 'bg-white/10 backdrop-blur-sm border border-white/20 text-white'
-                      : 'bg-white border border-gray-200 text-gray-900 shadow-sm'
+                      ? 'bg-gray-800 border border-gray-700 text-white shadow-md'
+                      : 'bg-white border border-gray-200 text-gray-900 shadow-md'
                   }`}
-                  style={{ direction: 'auto' }}
+                  style={{ direction: isRTL ? 'rtl' : 'ltr' }}
                 >
                   <div className="whitespace-pre-wrap leading-relaxed">
                     {message.content}
@@ -238,7 +239,7 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                     message.sender === 'user'
                       ? 'border-white/20 text-white/70'
                       : theme === 'dark'
-                      ? 'border-white/10 text-white/60'
+                      ? 'border-gray-600 text-gray-400'
                       : 'border-gray-200 text-gray-500'
                   } ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <span>{message.timestamp.toLocaleTimeString()}</span>
@@ -253,21 +254,21 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
 
                 {message.sender === 'user' && isRTL && (
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
-                    theme === 'dark' ? 'bg-white/20' : 'bg-gray-200'
+                    theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
                   }`}>
                     <User className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
                   </div>
                 )}
 
                 {message.sender === 'agent' && isRTL && (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
                 )}
 
                 {message.sender === 'user' && !isRTL && (
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
-                    theme === 'dark' ? 'bg-white/20' : 'bg-gray-200'
+                    theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
                   }`}>
                     <User className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
                   </div>
@@ -278,24 +279,24 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
             {isLoading && (
               <div className={`flex gap-3 ${isRTL ? 'justify-end' : 'justify-start'}`}>
                 {!isRTL && (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
                 )}
                 <div className={`p-4 rounded-2xl ${
                   theme === 'dark' 
-                    ? 'bg-white/10 backdrop-blur-sm border border-white/20' 
-                    : 'bg-white border border-gray-200 shadow-sm'
+                    ? 'bg-gray-800 border border-gray-700 shadow-md' 
+                    : 'bg-white border border-gray-200 shadow-md'
                 }`}>
                   <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} ${
-                    theme === 'dark' ? 'text-white/70' : 'text-gray-600'
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                   }`}>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>{t.thinking}</span>
                   </div>
                 </div>
                 {isRTL && (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
                 )}
@@ -308,8 +309,8 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
       {/* Input */}
       <div className={`backdrop-blur-sm border-t p-4 ${
         theme === 'dark' 
-          ? 'bg-white/10 border-white/20' 
-          : 'bg-white/80 border-gray-200'
+          ? 'bg-gray-900/95 border-gray-800' 
+          : 'bg-white border-gray-200'
       }`}>
         <div className={`max-w-4xl mx-auto flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Input
@@ -319,16 +320,16 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
             placeholder={t.placeholder}
             className={`flex-1 ${
               theme === 'dark' 
-                ? 'bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-blue-400' 
+                ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 focus:border-blue-500' 
                 : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500'
             } ${isRTL ? 'text-right' : 'text-left'}`}
             disabled={isLoading}
-            dir="auto"
+            dir={isRTL ? 'rtl' : 'ltr'}
           />
           <Button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
