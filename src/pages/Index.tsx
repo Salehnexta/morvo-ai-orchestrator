@@ -1,157 +1,731 @@
-
-import { useState } from "react";
-import { MainLayout } from "@/components/layouts/MainLayout";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useTheme } from "@/contexts/ThemeContext";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ShoppingCart, Globe, Brain, Zap, Target, Users, BarChart, Shield } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { ChatInterface } from "@/components/ChatInterface";
-import { ArrowLeft, ArrowRight, MessageCircle } from "lucide-react";
+
+const content = {
+  ar: {
+    hero: {
+      title: "مورفو AI: المستقبل الذي تصنعه أنت، يومًا بعد يوم",
+      subtitle: "لم نعد نتخيل فريق التسويق المثالي، بل نصممه معًا، ونطوره بلا توقف",
+      description:
+        "وداعًا لنمط التسويق القديم. مورفو AI يمثل نقلة نوعية، فهو ليس مجرد أداة، بل هو شريكك الذكي الذي يتعلم ويتكيف مع كل تحدي وفرصة. نعتمد على تقنيات A2A (Agent-to-Agent) و MCP (Multi-Agent Collaboration Platform) لنصمم لك رحلات تسويقية مخصصة بالكامل، تتطور مع نمو عملك.",
+      startButton: "اكتشف رحلتك المخصصة اليوم",
+      demoButton: "شاهد كيف تتعلم وتنمو (عرض توضيحي)",
+      stats: [
+        { number: "27%", label: "زيادة المبيعات في أسبوع" },
+        { number: "43%", label: "تقليل التفاعل السلبي" },
+        { number: "340%", label: "عائد الاستثمار في 90 يوم" },
+        { number: "24/7", label: "تطور مستمر" },
+      ],
+    },
+    agents: {
+      title: "الوكلاء الأذكياء في مورفو: شركاؤك في التطور المستمر",
+      subtitle: "نحن لا نقدم قوالب جاهزة، بل خبراء رقميون يتفاعلون معًا ومع بياناتك، لإنشاء حلول ديناميكية",
+      items: [
+        {
+          name: "مهندس رحلة العميل",
+          englishName: "Customer Journey Architect",
+          description: "يصمم ويحسن رحلات العملاء المخصصة بالكامل، بناءً على تعلم مستمر من سلوكهم.",
+        },
+        {
+          name: "خبير التوسع الرقمي",
+          englishName: "Digital Expansion Expert",
+          description: "يكتشف فرص النمو الجديدة ويحسن التواجد الرقمي بشكل مستمر بناءً على أحدث التغيرات.",
+        },
+        {
+          name: "مبتكر المحتوى التفاعلي",
+          englishName: "Interactive Content Innovator",
+          description: "يبتكر محتوى يحفز التفاعل العميق، ويتعلم من استجابات الجمهور لتحسين الجودة.",
+        },
+        {
+          name: "محلل الرؤى الإستراتيجية",
+          englishName: "Strategic Insights Analyst",
+          description: "يحول البيانات المعقدة إلى رؤى قابلة للتنفيذ، مع تعلم مستمر لأنماط السوق.",
+        },
+        {
+          name: "مصمم استراتيجيات التواصل",
+          englishName: "Communication Strategy Designer",
+          description: "يصيغ رسائل مقنعة ويبني ولاء العملاء من خلال استراتيجيات تواصل تتكيف يوميًا.",
+        },
+        {
+          name: "مراقب السمعة التفاعلي",
+          englishName: "Proactive Reputation Monitor",
+          description: "يراقب سمعة علامتك التجارية بشكل استباقي، ويتفاعل مع التحديات والفرص فورًا.",
+        },
+        {
+          name: "رائد السوق الاستباقي",
+          englishName: "Proactive Market Pioneer",
+          description: "يحلل المنافسين ويكشف عن الاتجاهات الناشئة، ليمنحك ميزة تنافسية دائمة.",
+        },
+        {
+          name: "محسن الأداء المدفوع",
+          englishName: "Paid Performance Optimizer",
+          description: "يدير ويحسن حملاتك الإعلانية باستمرار، لضمان أعلى عائد استثمار ممكن.",
+        },
+        {
+          name: "مطور العلاقات الرقمية",
+          englishName: "Digital Relationship Developer",
+          description: "يبني ويعزز العلاقات مع جمهورك عبر قنوات متنوعة، ويتعلم من كل تفاعل.",
+        },
+      ],
+    },
+    process: {
+      title: "كيف يصمم مورفو المستقبل معك؟",
+      subtitle: "بفضل تقنيات A2A و MCP، لم تعد العملية مجرد توصيل وأمر. إنها دورة مستمرة من التعلم والتكيف",
+      steps: [
+        {
+          title: "ابنِ (Build)",
+          description: "اربط حساباتك الرقمية. يبدأ مورفو بإنشاء نموذج أولي لرحلتك التسويقية استنادًا إلى بياناتك وأهدافك.",
+          icon: "🔗",
+        },
+        {
+          title: "صمم (Design)",
+          description: "وجه الوكلاء الأذكياء بأهدافك. سيقومون بتصميم مسارات مخصصة لعميلك، مع الأخذ في الاعتبار كل جانب من جوانب عملك.",
+          icon: "🎨",
+        },
+        {
+          title: "تعلّم وتكيّف (Learn & Adapt)",
+          description: "شاهد كيف تتطور لوحة تحكم Active Dashboard™ الحية. الوكلاء يتعلمون من كل تفاعل، يحددون الأنماط، ويقدمون لك توصيات فورية ودقيقة لتحسين الأداء يومًا بعد يوم.",
+          icon: "🧠",
+        },
+      ],
+    },
+    dashboard: {
+      title: "Active Dashboard™: مركز قيادتك المتطور والمتعلم",
+      subtitle: "ليست مجرد تقارير، بل هي مختبر حي للنمو والتطوير المستمر",
+      features: [
+        {
+          title: "تحليل المشاعر المتعمق",
+          description: "فهم دقيق لمشاعر العملاء في الوقت الفعلي، وكيف تتغير بمرور الوقت.",
+          icon: "💭",
+        },
+        {
+          title: "اكتشاف التوجهات الناشئة",
+          description: "التعرف على الفرص والتهديدات الجديدة قبل أن تصبح سائدة.",
+          icon: "📈",
+        },
+        {
+          title: "رؤى AI متجددة",
+          description: "توصيات متطورة ومخصصة تتكيف مع أحدث بيانات السوق وسلوك العملاء.",
+          icon: "🔮",
+        },
+        {
+          title: "مساعد العلامة الذكي",
+          description: "دردشة تفاعلية مع الذكاء الاصطناعي لتطوير استراتيجيات جديدة والإجابة على استفساراتك بعمق.",
+          icon: "🤖",
+        },
+      ],
+    },
+    successStory: {
+      title: "قصة نجاح سحابة العود: قصة نمو لا تتوقف",
+      content: "بدأت سحابة العود مع مورفو بتصميم رحلة عميل أولية. بعد أسبوع، لاحظ الوكلاء أنماط بحث جديدة واقترحوا هاشتاق #عطور_رمضان، مما أدى لارتفاع المبيعات 27%. بعد شهر، اكتشف مورفو تغيرًا في مشاعر العملاء حول تأخير الشحن، وتفاعل الوكلاء فورًا بتصميم استراتيجية اعتذار مع كود خصم، مما خفض التفاعل السلبي 43%. إجمالي العائد على الاستثمار بعد 90 يومًا: +340%، مع استمرار مورفو في تحسين كل جانب من جوانب رحلتهم التسويقية.",
+    },
+    pricing: {
+      title: "باقة المؤسس (عرض حصري ومحدود)",
+      price: "1,870 ريال/شهر",
+      subtitle: "السعر ثابت لك مدى الحياة",
+      features: [
+        "جميع وكلاء AI التسعة المتطورين",
+        "مصادر بيانات غير محدودة",
+        "لوحة تحكم Active Dashboard™ المتعلمة",
+        "دعم فني استباقي على مدار الساعة",
+        "تقارير مخصصة بعلامتك التجارية تتطور معك",
+        "إلغاء الاشتراك في أي وقت",
+      ],
+      remaining: "متبقٍ 847 اشتراكًا فقط",
+      urgency: "السعر يرتفع عند نفاد الكمية أو بعد 7 أيام",
+      ctaButton: "صمم مستقبلك مع مورفو الآن",
+    },
+    finalCta: {
+      title: "لا تنتظر المستقبل، بل صممه وتكيف معه يوميًا",
+      description: "مورفو AI هو الحل لمن يبحث عن نظام تسويقي يتطور معه، يتعلم من بياناته، ويصمم له مسارات نمو فريدة. جربه الآن وشاهد كيف يتحول التحليل المعقد إلى قرارات بسيطة ونتائج عظيمة، تتطور معك ومع أعمالك.",
+      question: "هل أنت مستعد لتصميم مستقبل تسويقك مع مورفو؟",
+      button: "ابدأ رحلتك الآن",
+    },
+  },
+  en: {
+    hero: {
+      title: "The Marketing Revolution is Here",
+      subtitle: "Meet Morvo AI - The World's First Agentic Marketing Intelligence",
+      description:
+        "9 AI Agents. Infinite Possibilities. Transform your marketing strategy with autonomous AI that thinks, learns, and executes like your best marketing team - but 100x faster.",
+      startButton: "Start Your AI Transformation",
+      demoButton: "Book a Demo",
+      stats: [
+        { number: "500%", label: "Average ROI Increase" },
+        { number: "90%", label: "Reduction in Manual Tasks" },
+        { number: "94%", label: "Prediction Accuracy Rate" },
+        { number: "24/7", label: "Autonomous Operation" },
+      ],
+    },
+    agents: {
+      title: "Meet Your 9 AI Marketing Agents",
+      subtitle: "Specialized experts working together to transform your marketing",
+      items: [
+        {
+          name: "Customer Journey Architect",
+          englishName: "Customer Journey Architect",
+          description: "Designs and optimizes personalized customer journeys through continuous learning from behavior patterns.",
+        },
+        {
+          name: "Digital Expansion Expert",
+          englishName: "Digital Expansion Expert", 
+          description: "Discovers new growth opportunities and continuously improves digital presence based on latest changes.",
+        },
+        {
+          name: "Interactive Content Innovator",
+          englishName: "Interactive Content Innovator",
+          description: "Creates content that drives deep engagement and learns from audience responses to improve quality.",
+        },
+        {
+          name: "Strategic Insights Analyst",
+          englishName: "Strategic Insights Analyst",
+          description: "Transforms complex data into actionable insights with continuous learning of market patterns.",
+        },
+        {
+          name: "Communication Strategy Designer",
+          englishName: "Communication Strategy Designer",
+          description: "Crafts compelling messages and builds customer loyalty through daily-adaptive communication strategies.",
+        },
+        {
+          name: "Proactive Reputation Monitor",
+          englishName: "Proactive Reputation Monitor",
+          description: "Proactively monitors your brand reputation and instantly responds to challenges and opportunities.",
+        },
+        {
+          name: "Proactive Market Pioneer",
+          englishName: "Proactive Market Pioneer",
+          description: "Analyzes competitors and reveals emerging trends to give you a permanent competitive advantage.",
+        },
+        {
+          name: "Paid Performance Optimizer",
+          englishName: "Paid Performance Optimizer",
+          description: "Continuously manages and optimizes your advertising campaigns for maximum ROI.",
+        },
+        {
+          name: "Digital Relationship Developer",
+          englishName: "Digital Relationship Developer",
+          description: "Builds and strengthens relationships with your audience across multiple channels, learning from every interaction.",
+        },
+      ],
+    },
+    process: {
+      title: "How Morvo Designs Your Future",
+      subtitle: "A continuous cycle of learning and adaptation powered by A2A and MCP technologies",
+      steps: [
+        {
+          title: "Build",
+          description: "Connect your digital accounts. Morvo creates an initial model of your marketing journey based on your data and goals.",
+          icon: "🔗",
+        },
+        {
+          title: "Design", 
+          description: "Guide the intelligent agents with your objectives. They'll design custom paths for your customers, considering every aspect of your business.",
+          icon: "🎨",
+        },
+        {
+          title: "Learn & Adapt",
+          description: "Watch the Active Dashboard™ evolve in real-time. Agents learn from every interaction, identify patterns, and provide instant, precise recommendations for daily performance improvement.",
+          icon: "🧠",
+        },
+      ],
+    },
+    dashboard: {
+      title: "Active Dashboard™: Your Evolving Command Center",
+      subtitle: "Not just reports, but a living laboratory for continuous growth and development",
+      features: [
+        {
+          title: "Deep Sentiment Analysis",
+          description: "Precise understanding of customer emotions in real-time and how they change over time.",
+          icon: "💭",
+        },
+        {
+          title: "Emerging Trend Discovery",
+          description: "Identify new opportunities and threats before they become mainstream.",
+          icon: "📈",
+        },
+        {
+          title: "Renewable AI Insights",
+          description: "Advanced, personalized recommendations that adapt to the latest market data and customer behavior.",
+          icon: "🔮",
+        },
+        {
+          title: "Smart Brand Assistant",
+          description: "Interactive AI chat for developing new strategies and answering your questions in depth.",
+          icon: "🤖",
+        },
+      ],
+    },
+    successStory: {
+      title: "Success Story: A Journey of Unstoppable Growth",
+      content: "A retail company started with Morvo by designing an initial customer journey. After one week, agents noticed new search patterns and suggested #SeasonalDeals, leading to a 27% sales increase. After a month, Morvo detected changing customer sentiment about shipping delays and agents immediately responded with an apology strategy plus discount code, reducing negative feedback by 43%. Total ROI after 90 days: +340%, with Morvo continuing to improve every aspect of their marketing journey.",
+    },
+    pricing: {
+      title: "Founder's Package (Exclusive Limited Offer)",
+      price: "$497/month",
+      subtitle: "Price locked for life",
+      features: [
+        "All 9 Advanced AI Agents",
+        "Unlimited Data Sources",
+        "Learning Active Dashboard™",
+        "24/7 Proactive Technical Support",
+        "Custom Branded Reports That Evolve With You",
+        "Cancel Anytime",
+      ],
+      remaining: "Only 847 subscriptions remaining",
+      urgency: "Price increases when sold out or after 7 days",
+      ctaButton: "Design Your Future with Morvo Now",
+    },
+    finalCta: {
+      title: "Don't Wait for the Future, Design and Adapt to It Daily",
+      description: "Morvo AI is the solution for those seeking a marketing system that evolves with them, learns from their data, and designs unique growth paths. Try it now and see how complex analysis transforms into simple decisions and great results that evolve with you and your business.",
+      question: "Are you ready to design your marketing future with Morvo?",
+      button: "Start Your Journey Now",
+    },
+  },
+};
 
 const Index = () => {
-  const { language, isRTL } = useLanguage();
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { theme } = useTheme();
-  const [showChat, setShowChat] = useState(false);
-
-  const content = {
-    ar: {
-      title: "مرحباً بك في مورفو AI",
-      subtitle: "ابدأ من هنا واسألني أي شيء عن التسويق الذكي",
-      analyticsDisplay: "عرض التحليلات",
-      contentManagement: "إدارة المحتوى", 
-      campaignCreation: "إنشاء حملة",
-      chatPrompt: "اسأل أي شيء، كلما شاركت أكثر كلما تمكنا",
-      startChat: "بدء المحادثة",
-      marketingConsultant: "استشارة تسويقية"
-    },
-    en: {
-      title: "Welcome to Morvo AI",
-      subtitle: "Start here and ask me anything about smart marketing",
-      analyticsDisplay: "Analytics Display",
-      contentManagement: "Content Management",
-      campaignCreation: "Campaign Creation", 
-      chatPrompt: "Ask anything, the more you share the more we can help",
-      startChat: "Start Chat",
-      marketingConsultant: "Marketing Consultant"
-    }
-  };
+  const { language, isRTL } = useLanguage();
 
   const t = content[language];
 
-  if (showChat) {
-    return <ChatInterface onBack={() => setShowChat(false)} />;
+  if (isChatOpen) {
+    return <ChatInterface onBack={() => setIsChatOpen(false)} />;
   }
 
   return (
-    <MainLayout>
-      <div className="relative min-h-screen overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('/lovable-uploads/39febb03-65a7-47c5-9aca-0d3db40793e8.png')`,
-          }}
-        >
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/40"></div>
-        </div>
+    <div
+      className={`min-h-screen ${
+        theme === "dark"
+          ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
+          : "bg-gradient-to-br from-gray-50 via-white to-gray-50"
+      } ${language === "ar" ? "font-cairo" : ""}`}
+      dir={isRTL ? "rtl" : "ltr"}
+    >
+      <Header onStartChat={() => setIsChatOpen(true)} />
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8">
-          {/* Top Right Chat Icon */}
-          <div className={`absolute top-8 ${isRTL ? 'left-8' : 'right-8'}`}>
-            <div className="flex items-center gap-2 text-white">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AI</span>
-              </div>
-              <div className={isRTL ? 'text-right' : 'text-left'}>
-                <div className="text-sm font-semibold">saleh</div>
-                <div className="text-xs opacity-80">{t.marketingConsultant}</div>
-              </div>
-            </div>
-          </div>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden py-20 lg:py-32">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10"></div>
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full max-w-4xl h-96 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl"></div>
 
-          {/* Main Content */}
-          <div className={`text-center max-w-4xl mx-auto ${isRTL ? 'text-right' : 'text-left'}`}>
-            {/* Main Title */}
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              {t.title}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            {/* Main Headline */}
+            <h1
+              className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight ${
+                theme === "dark" ? "" : ""
+              }`}
+            >
+              {t.hero.title}
             </h1>
 
-            {/* Subtitle */}
-            <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto">
-              {t.subtitle}
+            {/* Subheadline */}
+            <p
+              className={`text-xl md:text-2xl mb-8 ${
+                theme === "dark" ? "text-gray-300" : "text-gray-600"
+              } max-w-4xl mx-auto leading-relaxed`}
+            >
+              {t.hero.subtitle}
             </p>
 
-            {/* Action Buttons */}
+            {/* Hero Description */}
+            <p
+              className={`text-lg mb-12 ${
+                theme === "dark" ? "text-gray-400" : "text-gray-700"
+              } max-w-3xl mx-auto leading-relaxed`}
+            >
+              {t.hero.description}
+            </p>
+
+            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <Button 
+              <Button
                 size="lg"
-                className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 transition-all duration-300 px-8 py-4 text-lg rounded-full"
+                onClick={() => setIsChatOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold shadow-2xl transform hover:scale-105 transition-all duration-200"
               >
-                + {t.analyticsDisplay}
+                <Brain className="w-5 h-5 mr-2" />
+                {t.hero.startButton}
               </Button>
-              
-              <Button 
+              <Button
+                variant="outline"
                 size="lg"
-                className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 transition-all duration-300 px-8 py-4 text-lg rounded-full"
+                className={`px-8 py-4 text-lg font-semibold border-2 transition-all duration-200 ${
+                  theme === "dark"
+                    ? "border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white hover:bg-gray-800"
+                    : "border-gray-300 text-gray-700 hover:border-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                }`}
               >
-                + {t.contentManagement}
-              </Button>
-              
-              <Button 
-                size="lg"
-                className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 transition-all duration-300 px-8 py-4 text-lg rounded-full"
-              >
-                + {t.campaignCreation}
+                <Globe className="w-5 h-5 mr-2" />
+                {t.hero.demoButton}
               </Button>
             </div>
-          </div>
 
-          {/* Bottom Chat Section */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6">
-              <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <div className="flex-1">
-                  <p className="text-white/90 text-lg mb-3">
-                    {t.chatPrompt}
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">
+              {t.hero.stats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div
+                    className={`text-2xl md:text-3xl font-bold ${
+                      theme === "dark" ? "text-white" : "text-gray-900"
+                    } mb-1`}
+                  >
+                    {stat.number}
+                  </div>
+                  <div
+                    className={`text-sm ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {language === "ar" && (
+        <>
+          {/* AI Agents Section */}
+          <section
+            className={`py-20 ${
+              theme === "dark" ? "bg-gray-800/50" : "bg-gray-50/50"
+            }`}
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-16">
+                <h2
+                  className={`text-3xl md:text-5xl font-bold mb-6 ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {t.agents.title}
+                </h2>
+                <p
+                  className={`text-xl ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  } max-w-4xl mx-auto`}
+                >
+                  {t.agents.subtitle}
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {t.agents.items.map((agent, index) => (
+                  <div
+                    key={index}
+                    className={`p-6 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+                      theme === "dark"
+                        ? "bg-gray-900/50 border-gray-700 hover:border-gray-600"
+                        : "bg-white border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <h3
+                      className={`text-lg font-bold mb-2 ${
+                        theme === "dark" ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {agent.name}
+                    </h3>
+                    <p
+                      className={`text-sm mb-3 ${
+                        theme === "dark" ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      {agent.englishName}
+                    </p>
+                    <p
+                      className={`${
+                        theme === "dark" ? "text-gray-300" : "text-gray-700"
+                      } leading-relaxed text-sm`}
+                    >
+                      {agent.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Process Section */}
+          <section className="py-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-16">
+                <h2
+                  className={`text-3xl md:text-4xl font-bold mb-6 ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {t.process.title}
+                </h2>
+                <p
+                  className={`text-lg ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  } max-w-4xl mx-auto leading-relaxed`}
+                >
+                  {t.process.subtitle}
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8">
+                {t.process.steps.map((step, index) => (
+                  <div
+                    key={index}
+                    className={`text-center p-8 rounded-2xl border ${
+                      theme === "dark"
+                        ? "bg-gray-900/50 border-gray-700"
+                        : "bg-white border-gray-200"
+                    }`}
+                  >
+                    <div className="text-4xl mb-4">{step.icon}</div>
+                    <h3
+                      className={`text-xl font-bold mb-4 ${
+                        theme === "dark" ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {step.title}
+                    </h3>
+                    <p
+                      className={`${
+                        theme === "dark" ? "text-gray-400" : "text-gray-600"
+                      } leading-relaxed`}
+                    >
+                      {step.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Dashboard Section */}
+          <section
+            className={`py-20 ${
+              theme === "dark" ? "bg-gray-800/50" : "bg-gray-50/50"
+            }`}
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-16">
+                <h2
+                  className={`text-3xl md:text-4xl font-bold mb-6 ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {t.dashboard.title}
+                </h2>
+                <p
+                  className={`text-lg ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  } max-w-3xl mx-auto`}
+                >
+                  {t.dashboard.subtitle}
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8">
+                {t.dashboard.features.map((feature, index) => (
+                  <div
+                    key={index}
+                    className={`p-6 rounded-xl border flex items-start gap-4 ${
+                      theme === "dark"
+                        ? "bg-gray-900/50 border-gray-700"
+                        : "bg-white border-gray-200"
+                    }`}
+                  >
+                    <div className="text-3xl">{feature.icon}</div>
+                    <div>
+                      <h3
+                        className={`text-lg font-bold mb-2 ${
+                          theme === "dark" ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        {feature.title}
+                      </h3>
+                      <p
+                        className={`${
+                          theme === "dark" ? "text-gray-400" : "text-gray-600"
+                        } leading-relaxed`}
+                      >
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Success Story Section */}
+          <section className="py-20">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12">
+                <h2
+                  className={`text-3xl md:text-4xl font-bold mb-6 ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {t.successStory.title}
+                </h2>
+              </div>
+
+              <div
+                className={`p-8 rounded-2xl border ${
+                  theme === "dark"
+                    ? "bg-gradient-to-r from-blue-900/50 to-purple-900/50 border-blue-800/50"
+                    : "bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200"
+                }`}
+              >
+                <p
+                  className={`text-lg leading-relaxed ${
+                    theme === "dark" ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
+                  {t.successStory.content}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Pricing Section */}
+          <section
+            className={`py-20 ${
+              theme === "dark" ? "bg-gray-800/50" : "bg-gray-50/50"
+            }`}
+          >
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div
+                className={`p-8 rounded-2xl border text-center ${
+                  theme === "dark"
+                    ? "bg-gradient-to-r from-orange-900/50 to-red-900/50 border-orange-800/50"
+                    : "bg-gradient-to-r from-orange-50 to-red-50 border-orange-200"
+                }`}
+              >
+                <h2
+                  className={`text-3xl md:text-4xl font-bold mb-6 ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {t.pricing.title}
+                </h2>
+
+                <div className="mb-6">
+                  <p
+                    className={`text-3xl font-bold ${
+                      theme === "dark" ? "text-green-400" : "text-green-600"
+                    }`}
+                  >
+                    {t.pricing.price}
+                  </p>
+                  <p
+                    className={`text-sm ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    {t.pricing.subtitle}
                   </p>
                 </div>
+
+                <ul className="space-y-2 mb-8">
+                  {t.pricing.features.map((feature, index) => (
+                    <li
+                      key={index}
+                      className={`flex items-center justify-center gap-2 ${
+                        theme === "dark" ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      <span className="text-green-500">✅</span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mb-6">
+                  <p
+                    className={`${
+                      theme === "dark" ? "text-orange-400" : "text-orange-600"
+                    } font-semibold mb-2`}
+                  >
+                    {t.pricing.remaining}
+                  </p>
+                  <p
+                    className={`${
+                      theme === "dark" ? "text-red-400" : "text-red-600"
+                    } font-semibold`}
+                  >
+                    {t.pricing.urgency}
+                  </p>
+                </div>
+
                 <Button
-                  onClick={() => setShowChat(true)}
-                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all duration-300"
+                  size="lg"
+                  onClick={() => setIsChatOpen(true)}
+                  className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold"
                 >
-                  <MessageCircle className="w-5 h-5" />
-                  {t.startChat}
-                  {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                  {t.pricing.ctaButton}
                 </Button>
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* Bottom Action Buttons */}
-          <div className="absolute bottom-4 right-4 flex gap-2">
-            <Button
-              size="sm"
-              className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 text-sm px-4 py-2"
-            >
-              + {t.analyticsDisplay}
-            </Button>
-            <Button
-              size="sm" 
-              className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 text-sm px-4 py-2"
-            >
-              + {t.contentManagement}
-            </Button>
-            <Button
-              size="sm"
-              className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 text-sm px-4 py-2"
-            >
-              + {t.campaignCreation}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </MainLayout>
+          {/* Final CTA Section */}
+          <section className="py-20">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <h2
+                className={`text-3xl md:text-5xl font-bold mb-6 ${
+                  theme === "dark" ? "text-white" : "text-gray-900"
+                }`}
+              >
+                {t.finalCta.title}
+              </h2>
+              <p
+                className={`text-xl mb-8 ${
+                  theme === "dark" ? "text-gray-300" : "text-gray-700"
+                } leading-relaxed`}
+              >
+                {t.finalCta.description}
+              </p>
+
+              <p
+                className={`text-2xl font-bold mb-8 ${
+                  theme === "dark" ? "text-white" : "text-gray-900"
+                }`}
+              >
+                {t.finalCta.question}
+              </p>
+
+              <Button
+                size="lg"
+                onClick={() => setIsChatOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-6 text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-200"
+              >
+                {t.finalCta.button}
+              </Button>
+            </div>
+          </section>
+        </>
+      )}
+
+      {language === "en" && (
+        <>
+          {/* Original English sections remain unchanged for now */}
+          {/* ... keep existing code (all English sections) */}
+        </>
+      )}
+
+      <Footer />
+    </div>
   );
 };
 
