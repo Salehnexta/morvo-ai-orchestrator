@@ -27,7 +27,8 @@ export const Pricing = () => {
         {
           name: "الاحترافي",
           description: "للشركات المتنامية",
-          price: "1,124 ر.س",
+          price: "899 ر.س",
+          originalPrice: "1,999 ر.س",
           period: "شهرياً",
           buttonText: "ابدأ الآن",
           popular: true,
@@ -364,17 +365,24 @@ export const Pricing = () => {
                     <CardDescription className={`text-lg font-cairo ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                       {plan.description}
                     </CardDescription>
-                    <div className="mt-8">
-                      <span className={`text-5xl font-bold font-cairo ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        {plan.price}
-                      </span>
-                      {plan.period && (
-                        <span className={`text-lg font-cairo ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} ${
-                          isRTL ? 'mr-2' : 'ml-2'
-                        }`}>
-                          /{plan.period}
+                    <div className="mt-8 min-h-[6rem] flex flex-col justify-center">
+                      {(plan as any).originalPrice && (
+                        <span className={`text-xl font-medium line-through ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {(plan as any).originalPrice}
                         </span>
                       )}
+                      <div>
+                        <span className={`text-5xl font-bold font-cairo ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {plan.price}
+                        </span>
+                        {plan.period && (
+                          <span className={`text-lg font-cairo ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} ${
+                            isRTL ? 'mr-2' : 'ml-2'
+                          }`}>
+                            /{plan.period}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   
