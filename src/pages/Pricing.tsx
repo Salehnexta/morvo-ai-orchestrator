@@ -360,32 +360,30 @@ export const Pricing = () => {
             </h2>
             
             {language === 'ar' ? (
-              'feature_table' in t && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className={`${isRTL ? 'text-right' : 'text-left'}`}>{t.table_headers[0]}</TableHead>
-                      <TableHead className="text-center">{t.table_headers[1]}</TableHead>
-                      <TableHead className="text-center">{t.table_headers[2]}</TableHead>
-                      <TableHead className="text-center">{t.table_headers[3]}</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className={`${isRTL ? 'text-right' : 'text-left'}`}>{(t as ArabicContent).table_headers[0]}</TableHead>
+                    <TableHead className="text-center">{(t as ArabicContent).table_headers[1]}</TableHead>
+                    <TableHead className="text-center">{(t as ArabicContent).table_headers[2]}</TableHead>
+                    <TableHead className="text-center">{(t as ArabicContent).table_headers[3]}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(t as ArabicContent).feature_table.map((row, index) => (
+                    <TableRow key={index}>
+                      <TableCell className={`font-medium ${row.feature.startsWith('–') || row.feature.startsWith('✓') ? (isRTL ? 'pr-8' : 'pl-8') : ''}`}>
+                        {row.feature}
+                      </TableCell>
+                      <TableCell className="text-center">{renderCellContent(row.base)}</TableCell>
+                      <TableCell className="text-center">{renderCellContent(row.pro)}</TableCell>
+                      <TableCell className="text-center">{renderCellContent(row.business)}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {t.feature_table.map((row, index) => (
-                      <TableRow key={index}>
-                        <TableCell className={`font-medium ${row.feature.startsWith('–') || row.feature.startsWith('✓') ? (isRTL ? 'pr-8' : 'pl-8') : ''}`}>
-                          {row.feature}
-                        </TableCell>
-                        <TableCell className="text-center">{renderCellContent(row.base)}</TableCell>
-                        <TableCell className="text-center">{renderCellContent(row.pro)}</TableCell>
-                        <TableCell className="text-center">{renderCellContent(row.business)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )
+                  ))}
+                </TableBody>
+              </Table>
             ) : (
-              'features' in t && Object.entries(t.features).map(([categoryKey, category]) => (
+              Object.entries((t as EnglishContent).features).map(([categoryKey, category]) => (
                 <div key={categoryKey} className="mb-12">
                   <h3 className={`text-xl font-semibold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                     {category.title}
