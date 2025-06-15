@@ -17,7 +17,6 @@ const content = {
 أنت الآن تملك وكيل تسويق ذكي يعمل نيابةً عنك على مدار الساعة，
 يقوم تلقائيًا بـ صياغة الاستراتيجية، إنشاء المحتوى العربي والإنجليزي، تحسين نتائج البحث، إدارة الحملات الإعلانية، متابعة المنافسين، تحليل الأداء، والتفاعل مع جمهورك — كل ذلك دون تدخل يدوي`,
       startButton: "اكتشف رحلتك المخصصة اليوم",
-      demoButton: "شاهد كيف تتعلم وتنمو (عرض توضيحي)",
       stats: [
         { number: "27%", label: "زيادة المبيعات في أسبوع" },
         { number: "43%", label: "التقليل من التفاعل السلبي" },
@@ -354,18 +353,6 @@ const Index = () => {
               >
                 <Brain className="w-5 h-5 mr-2" />
                 {t.hero.startButton}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className={`px-8 py-4 text-lg font-semibold border-2 transition-all duration-200 ${
-                  theme === "dark"
-                    ? "border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white hover:bg-gray-800"
-                    : "border-gray-300 text-gray-700 hover:border-gray-500 hover:text-gray-900 hover:bg-gray-50"
-                }`}
-              >
-                <Globe className="w-5 h-5 mr-2" />
-                {t.hero.demoButton}
               </Button>
             </div>
 
