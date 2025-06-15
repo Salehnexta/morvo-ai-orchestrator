@@ -1,4 +1,3 @@
-
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -101,17 +100,15 @@ export const HowItWorks = () => {
 
   return (
     <MainLayout>
-      <div className={`py-16 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className={`py-16 font-cairo ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`text-center mb-16 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${
+          <div className={`text-center mb-16`}>
+            <h1 className={`text-4xl md:text-5xl font-bold mb-6 font-cairo ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
               {t.title}
             </h1>
-            <p className={`text-xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} max-w-3xl ${
-              isRTL ? 'mr-auto' : 'ml-auto'
-            }`}>
+            <p className={`text-xl font-cairo ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
               {t.subtitle}
             </p>
           </div>
@@ -122,7 +119,7 @@ export const HowItWorks = () => {
                 index % 2 === 1 && !isRTL ? 'flex-row-reverse' : ''
               } ${index % 2 === 1 && isRTL ? 'flex-row' : ''}`}>
                 <div className="flex-1">
-                  <Card className={`transition-all duration-300 hover:shadow-lg ${
+                  <Card className={`transition-all duration-300 hover:shadow-lg font-cairo ${
                     theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50'
                   }`}>
                     <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
@@ -130,16 +127,16 @@ export const HowItWorks = () => {
                         <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                           <step.icon className="w-8 h-8 text-white" />
                         </div>
-                        <div className={`text-6xl font-bold text-gray-300 ${theme === 'dark' ? 'text-gray-600' : ''}`}>
+                        <div className={`text-6xl font-bold text-gray-300 font-cairo ${theme === 'dark' ? 'text-gray-600' : ''}`}>
                           {step.number}
                         </div>
                       </div>
-                      <CardTitle className={`text-2xl ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      <CardTitle className={`text-2xl font-cairo ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         {step.title}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <CardDescription className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} ${
+                      <CardDescription className={`text-lg font-cairo ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} ${
                         isRTL ? 'text-right' : 'text-left'
                       }`}>
                         {step.description}

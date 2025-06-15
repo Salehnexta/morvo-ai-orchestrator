@@ -115,7 +115,7 @@ export const Footer = () => {
           <div className={`space-y-6 ${isRTL ? 'text-right' : 'text-left'}`}>
             <h4 className="text-xl font-bold text-white relative">
               {t.quickLinks}
-              <div className="absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
+              <div className={`absolute bottom-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full ${isRTL ? 'right-0' : 'left-0'}`}></div>
             </h4>
             <ul className="space-y-3">
               {t.productItems.map((item, index) => (
@@ -124,10 +124,10 @@ export const Footer = () => {
                     to={item.href} 
                     className={`group inline-flex items-center gap-2 text-gray-300 hover:text-white transition-all duration-300 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}
                   >
-                    <ArrowRight className={`w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+                    <ArrowRight className={`w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isRTL ? 'rotate-180 group-hover:translate-x-1' : 'group-hover:translate-x-1'}`} />
                     <span className="relative">
                       {item.name}
-                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+                      <span className={`absolute bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full ${isRTL ? 'right-0' : 'left-0'}`}></span>
                     </span>
                   </Link>
                 </li>
@@ -139,7 +139,7 @@ export const Footer = () => {
           <div className={`space-y-6 ${isRTL ? 'text-right' : 'text-left'}`}>
             <h4 className="text-xl font-bold text-white relative">
               {t.contactInfo}
-              <div className="absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
+              <div className={`absolute bottom-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full ${isRTL ? 'right-0' : 'left-0'}`}></div>
             </h4>
             <div className="space-y-4">
               {[
@@ -167,7 +167,7 @@ export const Footer = () => {
           <div className={`flex flex-col md:flex-row justify-between items-center gap-6 ${
             isRTL ? 'md:flex-row-reverse text-right' : 'text-left'
           }`}>
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xs">M</span>
               </div>
@@ -187,7 +187,7 @@ export const Footer = () => {
                   className="text-sm text-gray-400 hover:text-white transition-colors duration-300 relative group"
                 >
                   {link.text}
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+                  <span className={`absolute bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full ${isRTL ? 'right-0' : 'left-0'}`}></span>
                 </Link>
               ))}
             </div>

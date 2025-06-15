@@ -1,4 +1,3 @@
-
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -118,24 +117,22 @@ export const Features = () => {
 
   return (
     <MainLayout>
-      <div className={`py-16 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className={`py-16 font-cairo ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`text-center mb-16 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${
+          <div className={`text-center mb-16`}>
+            <h1 className={`text-4xl md:text-5xl font-bold mb-6 font-cairo ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
               {t.title}
             </h1>
-            <p className={`text-xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} max-w-3xl ${
-              isRTL ? 'mr-auto' : 'ml-auto'
-            }`}>
+            <p className={`text-xl font-cairo ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
               {t.subtitle}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {t.features.map((feature, index) => (
-              <Card key={index} className={`transition-all duration-300 hover:shadow-lg ${
+              <Card key={index} className={`transition-all duration-300 hover:shadow-lg font-cairo ${
                 theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'
               }`}>
                 <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
@@ -144,12 +141,12 @@ export const Features = () => {
                   }`}>
                     <feature.icon className="w-6 h-6 text-white" />
                   </div>
-                  <CardTitle className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
+                  <CardTitle className={`font-cairo ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} ${
+                  <CardDescription className={`font-cairo ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} ${
                     isRTL ? 'text-right' : 'text-left'
                   }`}>
                     {feature.description}

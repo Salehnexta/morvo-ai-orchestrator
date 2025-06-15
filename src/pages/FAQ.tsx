@@ -1,4 +1,3 @@
-
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -109,17 +108,15 @@ export const FAQ = () => {
 
   return (
     <MainLayout>
-      <div className={`py-16 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className={`py-16 font-cairo ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`text-center mb-16 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${
+          <div className={`text-center mb-16`}>
+            <h1 className={`text-4xl md:text-5xl font-bold mb-6 font-cairo ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
               {t.title}
             </h1>
-            <p className={`text-xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} max-w-3xl ${
-              isRTL ? 'mr-auto' : 'ml-auto'
-            }`}>
+            <p className={`text-xl font-cairo ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
               {t.subtitle}
             </p>
           </div>
@@ -129,16 +126,16 @@ export const FAQ = () => {
               <AccordionItem 
                 key={index} 
                 value={`item-${index}`}
-                className={`border rounded-lg px-6 ${
+                className={`border rounded-lg px-6 font-cairo ${
                   theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
                 }`}
               >
-                <AccordionTrigger className={`text-lg font-medium ${
+                <AccordionTrigger className={`text-lg font-medium font-cairo ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 } ${isRTL ? 'text-right' : 'text-left'} hover:no-underline`}>
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className={`text-base ${
+                <AccordionContent className={`text-base font-cairo ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 } ${isRTL ? 'text-right' : 'text-left'} pt-2 pb-6`}>
                   {faq.answer}
@@ -147,8 +144,8 @@ export const FAQ = () => {
             ))}
           </Accordion>
 
-          <div className={`text-center mt-16 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <p className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+          <div className={`text-center mt-16`}>
+            <p className={`text-lg font-cairo ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               {t.finalNote}
             </p>
           </div>
