@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, Globe } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import ChatInterface from "@/components/ChatInterface";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { ChatInterface } from "@/components/ChatInterface";
 
 const content = {
   ar: {
