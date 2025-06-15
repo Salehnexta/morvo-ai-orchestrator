@@ -25,6 +25,7 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       support: "الدعم",
       about: "من نحن",
       login: "تسجيل الدخول",
+      register: "إنشاء حساب",
       startNow: "ابدأ الآن",
       smartPlatform: "منصة التجارة الذكية",
       storeName: "متجر مورفو"
@@ -38,6 +39,7 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       support: "Support",
       about: "About",
       login: "Login",
+      register: "Sign Up",
       startNow: "Start Now",
       smartPlatform: "Smart Commerce Platform",
       storeName: "Morvo Store"
@@ -139,18 +141,34 @@ export const Header = ({ onStartChat }: HeaderProps) => {
           <div className="flex items-center gap-4">
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`transition-colors ${
-                  theme === 'dark' 
-                    ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <User className="w-4 h-4 mr-2" />
-                {t.login}
-              </Button>
+              <Link to="/auth/login">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`transition-colors ${
+                    theme === 'dark' 
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  {t.login}
+                </Button>
+              </Link>
+              
+              <Link to="/auth/register">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`transition-colors ${
+                    theme === 'dark' 
+                      ? 'border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800' 
+                      : 'border-gray-300 text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {t.register}
+                </Button>
+              </Link>
               
               <Button
                 onClick={onStartChat}
@@ -208,13 +226,24 @@ export const Header = ({ onStartChat }: HeaderProps) => {
               </Link>
               
               <div className="pt-4 space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  {t.login}
-                </Button>
+                <Link to="/auth/login">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    {t.login}
+                  </Button>
+                </Link>
+                
+                <Link to="/auth/register">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    {t.register}
+                  </Button>
+                </Link>
                 
                 <Button
                   onClick={onStartChat}
