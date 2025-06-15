@@ -324,9 +324,11 @@ const Index = () => {
           <div className="text-center">
             {/* Main Headline */}
             <h1
-              className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight ${
-                theme === "dark" ? "" : ""
-              }`}
+              className={`${
+                language === "ar"
+                  ? "text-3xl md:text-4xl lg:text-5xl"
+                  : "text-4xl md:text-6xl lg:text-7xl"
+              } font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight`}
             >
               {t.hero.title}
             </h1>
