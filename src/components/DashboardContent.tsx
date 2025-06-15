@@ -8,8 +8,6 @@ interface DashboardContentProps {
 }
 
 export const DashboardContent = ({ data, theme, language, isRTL, content }: DashboardContentProps) => {
-  const t = content[language];
-
   return (
     <div className={`h-screen w-full flex flex-col items-center justify-center text-center px-8 ${
       theme === 'dark' ? 'text-white' : 'text-gray-900'
