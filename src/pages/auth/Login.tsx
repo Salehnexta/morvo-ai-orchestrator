@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const Login = () => {
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const content = {
     ar: {
@@ -29,7 +34,10 @@ export const Login = () => {
       backToHome: "العودة للرئيسية",
       orContinueWith: "أو تابع باستخدام",
       google: "جوجل",
-      microsoft: "مايكروسوفت"
+      microsoft: "مايكروسوفت",
+      loginSuccess: "تم تسجيل الدخول بنجاح",
+      loginError: "خطأ في تسجيل الدخول",
+      invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة"
     },
     en: {
       title: "Sign In",
@@ -43,17 +51,48 @@ export const Login = () => {
       backToHome: "Back to Home",
       orContinueWith: "Or continue with",
       google: "Google",
-      microsoft: "Microsoft"
+      microsoft: "Microsoft",
+      loginSuccess: "Login successful",
+      loginError: "Login error",
+      invalidCredentials: "Invalid email or password"
     }
   };
 
   const t = content[language];
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt:", { email, password });
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: t.loginError,
+          description: error.message === "Invalid login credentials" ? t.invalidCredentials : error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: t.loginSuccess,
+          description: `${t.subtitle}`,
+        });
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      toast({
+        title: t.loginError,
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -106,6 +145,7 @@ export const Login = () => {
                     isRTL ? 'text-right' : 'text-left'
                   }`}
                   required
+                  disabled={isLoading}
                 />
               </div>
               
@@ -128,6 +168,7 @@ export const Login = () => {
                       isRTL ? 'text-right pr-10' : 'text-left pl-10'
                     }`}
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
@@ -135,6 +176,7 @@ export const Login = () => {
                     className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 transform -translate-y-1/2 ${
                       theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                     }`}
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -144,8 +186,9 @@ export const Login = () => {
               <Button 
                 type="submit" 
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                disabled={isLoading}
               >
-                {t.login}
+                {isLoading ? "..." : t.login}
               </Button>
             </form>
 

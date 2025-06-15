@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const Register = () => {
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -38,7 +43,11 @@ export const Register = () => {
       terms: "بإنشاء حساب، أنت توافق على",
       termsLink: "الشروط والأحكام",
       and: "و",
-      privacyLink: "سياسة الخصوصية"
+      privacyLink: "سياسة الخصوصية",
+      registerSuccess: "تم إنشاء الحساب بنجاح",
+      registerError: "خطأ في إنشاء الحساب",
+      passwordMismatch: "كلمات المرور غير متطابقة",
+      checkEmail: "تحقق من بريدك الإلكتروني لتأكيد الحساب"
     },
     en: {
       title: "Create Account",
@@ -57,16 +66,65 @@ export const Register = () => {
       terms: "By creating an account, you agree to our",
       termsLink: "Terms of Service",
       and: "and",
-      privacyLink: "Privacy Policy"
+      privacyLink: "Privacy Policy",
+      registerSuccess: "Account created successfully",
+      registerError: "Registration error",
+      passwordMismatch: "Passwords don't match",
+      checkEmail: "Check your email to confirm your account"
     }
   };
 
   const t = content[language];
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Register attempt:", formData);
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: t.registerError,
+        description: t.passwordMismatch,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: formData.name,
+          },
+        },
+      });
+
+      if (error) {
+        toast({
+          title: t.registerError,
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: t.registerSuccess,
+          description: t.checkEmail,
+        });
+        navigate("/auth/login");
+      }
+    } catch (error) {
+      toast({
+        title: t.registerError,
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -116,6 +174,7 @@ export const Register = () => {
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -130,6 +189,7 @@ export const Register = () => {
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
                   required
+                  disabled={isLoading}
                 />
               </div>
               
@@ -145,11 +205,13 @@ export const Register = () => {
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right pr-10' : 'text-left pl-10'}`}
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -167,11 +229,16 @@ export const Register = () => {
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                   className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
                   required
+                  disabled={isLoading}
                 />
               </div>
               
-              <Button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-                {t.register}
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                disabled={isLoading}
+              >
+                {isLoading ? "..." : t.register}
               </Button>
             </form>
 
@@ -187,8 +254,12 @@ export const Register = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full">{t.google}</Button>
-              <Button variant="outline" className="w-full">{t.microsoft}</Button>
+              <Button variant="outline" className="w-full" disabled={isLoading}>
+                {t.google}
+              </Button>
+              <Button variant="outline" className="w-full" disabled={isLoading}>
+                {t.microsoft}
+              </Button>
             </div>
 
             <div className={`text-center text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
