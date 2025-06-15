@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Users, ShoppingCart, TrendingUp, Plus, Settings, PieChart, LineChart } from "lucide-react";
@@ -46,6 +47,14 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
       color: "hsl(var(--chart-2))",
     },
   };
+
+  // Arabic action buttons
+  const arabicActions = [
+    { text: "عرض التقارير", icon: BarChart3, color: "from-blue-500 to-blue-600" },
+    { text: "إدارة المستخدمين", icon: Users, color: "from-green-500 to-green-600" },
+    { text: "إضافة منتج", icon: Plus, color: "from-purple-500 to-purple-600" },
+    { text: "الإعدادات", icon: Settings, color: "from-orange-500 to-orange-600" }
+  ];
 
   const renderChart = () => {
     if (!data || !data.chartType) return null;
@@ -138,21 +147,37 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
   };
 
   return (
-    <div className="h-screen overflow-y-auto p-6">
-      {/* Header */}
-      <div className={`mb-8 ${isRTL ? 'text-right' : 'text-left'}`}>
-        <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          {content.title}
-        </h1>
-        <p className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mt-2`}>
-          {content.welcome}
-        </p>
+    <div className="h-screen overflow-y-auto p-6 font-cairo" dir="rtl">
+      {/* Arabic Header with Overlay */}
+      <div className="mb-8 text-right relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent rounded-lg"></div>
+        <div className="relative p-6">
+          <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-2">
+            مرحباً بك في منصة زد
+          </h1>
+          <p className="text-xl text-white/90 drop-shadow-md">
+            لوحة التحكم الذكية لإدارة أعمالك
+          </p>
+        </div>
+      </div>
+
+      {/* Arabic Action Buttons */}
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        {arabicActions.map((action, index) => (
+          <Button
+            key={index}
+            className={`h-16 bg-gradient-to-r ${action.color} hover:scale-105 transform transition-all duration-200 text-white font-bold text-lg rounded-2xl shadow-lg border-0`}
+          >
+            <action.icon className="w-6 h-6 ml-3" />
+            {action.text}
+          </Button>
+        ))}
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {(data?.stats || defaultStats).map((stat: any, index: number) => (
-          <Card key={index} className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white/90'} backdrop-blur-sm`}>
+          <Card key={index} className={`${theme === 'dark' ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90'} backdrop-blur-sm rounded-2xl shadow-lg`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 {stat.title}
@@ -179,29 +204,34 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Activity */}
           <div className="lg:col-span-2">
-            <Card className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white/90'} backdrop-blur-sm`}>
+            <Card className={`${theme === 'dark' ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90'} backdrop-blur-sm rounded-2xl shadow-lg`}>
               <CardHeader>
-                <CardTitle className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {content.recentActivity}
+                <CardTitle className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-right`}>
+                  النشاط الأخير
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[1, 2, 3, 4].map((item) => (
-                    <div key={item} className={`flex items-center gap-4 p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                  {[
+                    { title: "طلب جديد تم استلامه", desc: "طلب رقم #1234", time: "منذ ساعة" },
+                    { title: "تم إتمام عملية بيع", desc: "بقيمة 150 ريال", time: "منذ ساعتين" },
+                    { title: "عميل جديد انضم", desc: "أحمد محمد", time: "منذ 3 ساعات" },
+                    { title: "تحديث المخزون", desc: "تم إضافة 50 منتج", time: "منذ 4 ساعات" }
+                  ].map((item, index) => (
+                    <div key={index} className={`flex items-center gap-4 p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
                       <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-semibold text-sm">{item}</span>
+                        <span className="text-white font-semibold text-sm">{index + 1}</span>
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 text-right">
                         <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                          Activity {item}
+                          {item.title}
                         </p>
                         <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Description of activity {item}
+                          {item.desc}
                         </p>
                       </div>
                       <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {item}h ago
+                        {item.time}
                       </span>
                     </div>
                   ))}
@@ -210,31 +240,39 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
             </Card>
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Stats */}
           <div>
-            <Card className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white/90'} backdrop-blur-sm`}>
+            <Card className={`${theme === 'dark' ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90'} backdrop-blur-sm rounded-2xl shadow-lg`}>
               <CardHeader>
-                <CardTitle className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {content.quickActions}
+                <CardTitle className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-right`}>
+                  إحصائيات سريعة
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  {content.viewReports}
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Users className="w-4 h-4 mr-2" />
-                  {content.manageUsers}
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  {content.addProduct}
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Settings className="w-4 h-4 mr-2" />
-                  {content.settings}
-                </Button>
+              <CardContent className="space-y-4">
+                <div className="text-center p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl">
+                  <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    127
+                  </div>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    عدد الطلبات اليوم
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-xl">
+                  <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    ٨٥٪
+                  </div>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    معدل رضا العملاء
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl">
+                  <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    ١٢٫٣ك
+                  </div>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    إجمالي المبيعات (ريال)
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>

@@ -2,9 +2,6 @@
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { BarChart3, Users, ShoppingCart, TrendingUp, Plus, Settings } from "lucide-react";
 import { ChatInterface } from "@/components/ChatInterface";
 import { useState } from "react";
 import { DashboardContent } from "@/components/DashboardContent";
@@ -56,10 +53,8 @@ export default function Dashboard() {
   return (
     <MainLayout>
       <div 
-        className={`min-h-screen flex ${isRTL ? 'flex-row-reverse' : 'flex-row'} ${
-          theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
-        }`} 
-        dir={isRTL ? 'rtl' : 'ltr'}
+        className="min-h-screen flex w-full" 
+        dir="rtl"
         style={{
           backgroundImage: 'url(/lovable-uploads/39febb03-65a7-47c5-9aca-0d3db40793e8.png)',
           backgroundSize: 'cover',
@@ -67,20 +62,20 @@ export default function Dashboard() {
           backgroundRepeat: 'no-repeat'
         }}
       >
-        {/* Chat Area - 40% */}
-        <div className={`w-2/5 ${theme === 'dark' ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-sm border-r border-gray-200`}>
-          <ChatInterface onBack={() => {}} onDashboardUpdate={handleDashboardUpdate} />
-        </div>
-
-        {/* Dashboard Area - 60% */}
-        <div className={`w-3/5 ${theme === 'dark' ? 'bg-gray-900/90' : 'bg-white/90'} backdrop-blur-sm`}>
+        {/* Dashboard/Image Area - 60% (Left side in RTL) */}
+        <div className={`w-3/5 ${theme === 'dark' ? 'bg-gray-900/60' : 'bg-white/60'} backdrop-blur-sm`}>
           <DashboardContent 
             data={dashboardData} 
             theme={theme} 
             language={language}
-            isRTL={isRTL}
+            isRTL={true}
             content={t}
           />
+        </div>
+
+        {/* Chat Area - 40% (Right side in RTL) */}
+        <div className={`w-2/5 ${theme === 'dark' ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-sm border-l border-gray-200`}>
+          <ChatInterface onBack={() => {}} onDashboardUpdate={handleDashboardUpdate} />
         </div>
       </div>
     </MainLayout>
