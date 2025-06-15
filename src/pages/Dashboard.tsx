@@ -33,22 +33,11 @@ const Dashboard = () => {
       <div 
         className={`min-h-screen ${
           theme === 'dark' 
-            ? 'bg-gray-900' 
-            : 'bg-gradient-to-br from-gray-50 to-white'
+            ? 'bg-black' 
+            : 'bg-black'
         }`}
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: 'url("/lovable-uploads/f7658506-ad00-4cf7-a7c1-fb72fdbe720d.png")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
-
         {/* Dashboard Layout */}
         <div className="relative z-10 h-screen flex">
           {/* Chat Interface - 40% width */}
