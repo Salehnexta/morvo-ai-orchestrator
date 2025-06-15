@@ -163,159 +163,129 @@ const content = {
         { number: "24/7", label: "Autonomous Operation" },
       ],
     },
-    features: {
-      title: "Why Morvo AI Changes Everything",
-      subtitle: "The Dawn of Agentic Marketing Intelligence",
+    agents: {
+      title: "Meet Your 9 AI Marketing Agents",
+      subtitle: "Specialized experts working together to transform your marketing",
       items: [
         {
+          name: "Customer Journey Architect",
+          englishName: "Customer Journey Architect",
+          description: "Designs and optimizes personalized customer journeys through continuous learning from behavior patterns.",
+        },
+        {
+          name: "Digital Expansion Expert",
+          englishName: "Digital Expansion Expert", 
+          description: "Discovers new growth opportunities and continuously improves digital presence based on latest changes.",
+        },
+        {
+          name: "Interactive Content Innovator",
+          englishName: "Interactive Content Innovator",
+          description: "Creates content that drives deep engagement and learns from audience responses to improve quality.",
+        },
+        {
+          name: "Strategic Insights Analyst",
+          englishName: "Strategic Insights Analyst",
+          description: "Transforms complex data into actionable insights with continuous learning of market patterns.",
+        },
+        {
+          name: "Communication Strategy Designer",
+          englishName: "Communication Strategy Designer",
+          description: "Crafts compelling messages and builds customer loyalty through daily-adaptive communication strategies.",
+        },
+        {
+          name: "Proactive Reputation Monitor",
+          englishName: "Proactive Reputation Monitor",
+          description: "Proactively monitors your brand reputation and instantly responds to challenges and opportunities.",
+        },
+        {
+          name: "Proactive Market Pioneer",
+          englishName: "Proactive Market Pioneer",
+          description: "Analyzes competitors and reveals emerging trends to give you a permanent competitive advantage.",
+        },
+        {
+          name: "Paid Performance Optimizer",
+          englishName: "Paid Performance Optimizer",
+          description: "Continuously manages and optimizes your advertising campaigns for maximum ROI.",
+        },
+        {
+          name: "Digital Relationship Developer",
+          englishName: "Digital Relationship Developer",
+          description: "Builds and strengthens relationships with your audience across multiple channels, learning from every interaction.",
+        },
+      ],
+    },
+    process: {
+      title: "How Morvo Designs Your Future",
+      subtitle: "A continuous cycle of learning and adaptation powered by A2A and MCP technologies",
+      steps: [
+        {
+          title: "Build",
+          description: "Connect your digital accounts. Morvo creates an initial model of your marketing journey based on your data and goals.",
+          icon: "🔗",
+        },
+        {
+          title: "Design", 
+          description: "Guide the intelligent agents with your objectives. They'll design custom paths for your customers, considering every aspect of your business.",
+          icon: "🎨",
+        },
+        {
+          title: "Learn & Adapt",
+          description: "Watch the Active Dashboard™ evolve in real-time. Agents learn from every interaction, identify patterns, and provide instant, precise recommendations for daily performance improvement.",
           icon: "🧠",
-          title: "Autonomous Decision Making",
-          description: "Your AI Marketing Team That Never Sleeps",
-          points: [
-            "Analyzing competitor moves in real-time",
-            "Optimizing your SEO rankings automatically",
-            "Creating viral social media content",
-          ],
-        },
-        {
-          icon: "🤝",
-          title: "Intelligent Agent Collaboration",
-          description: "9 Specialists, One Unified Strategy",
-          points: [
-            "Master Coordinator - Orchestrates everything seamlessly",
-            "SEO Specialist - Dominates search rankings 24/7",
-            "Social Media Expert - Creates viral content that converts",
-          ],
-        },
-        {
-          icon: "⚡",
-          title: "Real-Time Market Adaptation",
-          description: "AI That Evolves With Your Business",
-          points: [
-            "Market shifts detected in milliseconds",
-            "Strategies adjusted automatically",
-            "Campaigns optimized in real-time",
-          ],
         },
       ],
     },
-    problemSolution: {
-      problem: {
-        title: "Marketing is Broken. Here's Why:",
-        points: [
-          "You're drowning in tools that don't talk to each other",
-          "Your team spends 80% of time on manual tasks",
-          "Insights come too late to matter",
-        ],
-        result: "The result? Wasted budgets, missed opportunities, and marketing that feels like gambling.",
-      },
-      solution: {
-        title: "Morvo AI Solves Everything:",
-        points: [
-          "One unified intelligence that connects everything",
-          "99% automation with 1% human oversight",
-          "Predictive insights that guide decisions before they matter",
-        ],
-        result: "The result? Marketing that works like magic, but it's actually just superior intelligence.",
-      },
-    },
-    transformation: {
-      title: "Transformation Stories",
-      before: {
-        title: "Before Morvo AI",
-        quote: "We had 12 different marketing tools, 3 agencies, and still couldn't figure out why our campaigns weren't working.",
-        author: "Sarah Chen, CMO at TechFlow",
-      },
-      after: {
-        title: "After Morvo AI",
-        quote: "Morvo AI replaced our entire marketing stack and tripled our ROI in 60 days. What used to take our team weeks now happens automatically overnight.",
-        author: "Sarah Chen (3 months later)",
-      },
-      results: {
-        title: "Results",
-        stats: "300% ROI increase, 90% time savings, 500% more leads",
-      },
-    },
-    uniqueValue: {
-      title: "What Makes Morvo AI Impossible to Ignore",
-      items: [
+    dashboard: {
+      title: "Active Dashboard™: Your Evolving Command Center",
+      subtitle: "Not just reports, but a living laboratory for continuous growth and development",
+      features: [
         {
-          icon: "🎯",
-          title: "Predictive Marketing",
-          description: "See the future before it happens. Our AI predicts market trends, customer behavior, and competitor moves with 94% accuracy.",
+          title: "Deep Sentiment Analysis",
+          description: "Precise understanding of customer emotions in real-time and how they change over time.",
+          icon: "💭",
         },
         {
-          icon: "🔄",
-          title: "Autonomous Execution",
-          description: "Set your goals once. Watch Morvo achieve them automatically. No daily management required.",
+          title: "Emerging Trend Discovery",
+          description: "Identify new opportunities and threats before they become mainstream.",
+          icon: "📈",
         },
         {
-          icon: "🌍",
-          title: "Bilingual Intelligence",
-          description: "Fluent in English and Arabic, with cultural nuance understanding that connects with global audiences.",
+          title: "Renewable AI Insights",
+          description: "Advanced, personalized recommendations that adapt to the latest market data and customer behavior.",
+          icon: "🔮",
+        },
+        {
+          title: "Smart Brand Assistant",
+          description: "Interactive AI chat for developing new strategies and answering your questions in depth.",
+          icon: "🤖",
         },
       ],
     },
-    socialProof: {
-      title: "What Our Customers Say",
-      testimonials: [
-        {
-          quote: "Morvo AI didn't just improve our marketing - it revolutionized our entire business. We went from struggling startup to industry leader in 6 months.",
-          author: "Ahmed Al-Rashid, CEO, Dubai Innovations",
-        },
-        {
-          quote: "I thought I understood marketing until I met Morvo AI. It's like having a crystal ball that shows you exactly what your customers want.",
-          author: "Jennifer Martinez, Founder, EcoTech Solutions",
-        },
-        {
-          quote: "Our marketing team was skeptical about AI. Now they can't imagine working without Morvo. It's not replacing marketers - it's making them superhuman.",
-          author: "David Kim, VP Marketing, Global Dynamics",
-        },
-      ],
-      stats: [
-        { number: "500%", label: "Average ROI Increase" },
-        { number: "90%", label: "Reduction in Manual Tasks" },
-        { number: "94%", label: "Prediction Accuracy Rate" },
-        { number: "24/7", label: "Autonomous Operation" },
-      ],
+    successStory: {
+      title: "Success Story: A Journey of Unstoppable Growth",
+      content: "A retail company started with Morvo by designing an initial customer journey. After one week, agents noticed new search patterns and suggested #SeasonalDeals, leading to a 27% sales increase. After a month, Morvo detected changing customer sentiment about shipping delays and agents immediately responded with an apology strategy plus discount code, reducing negative feedback by 43%. Total ROI after 90 days: +340%, with Morvo continuing to improve every aspect of their marketing journey.",
     },
-    urgency: {
-      title: "Revolutionary Launch Pricing",
-      subtitle: "Available for First 1,000 Customers Only",
-      offer: {
-        title: "Founder's Edition Access",
-        features: [
-          "All 9 AI Agents Included",
-          "Unlimited Campaigns & Analysis",
-          "24/7 Priority Support",
-        ],
-        normalPrice: "Normally $2,997/month",
-        launchPrice: "Launch Price: $497/month",
-        lockIn: "Lock in this price forever",
-        remaining: "847 spots remaining",
-        priceIncrease: "Price increases to $997/month in 7 days",
-        ctaButton: "Secure Your Spot Now",
-        disclaimer: "This offer expires when we reach 1,000 customers or in 7 days, whichever comes first.",
-      },
+    pricing: {
+      title: "Founder's Package (Exclusive Limited Offer)",
+      price: "$497/month",
+      subtitle: "Price locked for life",
+      features: [
+        "All 9 Advanced AI Agents",
+        "Unlimited Data Sources",
+        "Learning Active Dashboard™",
+        "24/7 Proactive Technical Support",
+        "Custom Branded Reports That Evolve With You",
+        "Cancel Anytime",
+      ],
+      remaining: "Only 847 subscriptions remaining",
+      urgency: "Price increases when sold out or after 7 days",
+      ctaButton: "Design Your Future with Morvo Now",
     },
     finalCta: {
-      title: "The Revolution Starts Now",
-      description:
-        "The Only Question is: Are You In or Out?",
-      points: [
-        "Every day you wait is a day your competitors get ahead",
-        "Every campaign you run manually is wasted potential",
-        "Every insight you miss is lost revenue",
-      ],
-      callToAction: "Join the revolution. Command the future.",
-      button: "Start Your Transformation Now",
-      features: [
-        "Free 14-day trial",
-        "Setup in 5 minutes",
-        "ROI guaranteed",
-        "Cancel anytime",
-      ],
-      closing: "The future of marketing is agentic. The future of marketing is Morvo AI. The future of marketing is now.",
+      title: "Don't Wait for the Future, Design and Adapt to It Daily",
+      description: "Morvo AI is the solution for those seeking a marketing system that evolves with them, learns from their data, and designs unique growth paths. Try it now and see how complex analysis transforms into simple decisions and great results that evolve with you and your business.",
+      question: "Are you ready to design your marketing future with Morvo?",
+      button: "Start Your Journey Now",
     },
   },
 };
