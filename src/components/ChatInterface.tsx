@@ -31,7 +31,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     {
       id: '1',
       content: language === 'ar' 
-        ? 'مرحباً! أنا مساعدك الذكي في منصة زد. يمكنني مساعدتك في تحليل البيانات وإنشاء التقارير والرسوم البيانية. جرب أن تسألني عن المبيعات أو التحليلات!'
+        ? 'انا مورفر وابشرك وصلت خير ...... راح اكون موظفك المسؤل عن التسويق'
         : 'Hello! I\'m your smart assistant at Zid platform. I can help you analyze data and create reports and charts. Try asking me about sales or analytics!',
       sender: 'agent',
       timestamp: new Date()
