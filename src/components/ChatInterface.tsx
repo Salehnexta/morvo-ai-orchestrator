@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
+import { Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,17 +21,18 @@ interface Message {
 
 interface ChatInterfaceProps {
   onBack: () => void;
+  onDashboardUpdate?: (data: any) => void;
 }
 
-export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
+export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, isRTL } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       content: language === 'ar' 
-        ? 'مرحباً! أنا مساعدك الذكي في منصة زد. كيف يمكنني مساعدتك في إدارة متجرك الإلكتروني اليوم؟\n\nHello! I\'m your smart assistant at Zid platform. How can I help you manage your online store today?'
-        : 'Hello! I\'m your smart assistant at Zid platform. How can I help you manage your online store today?\n\nمرحباً! أنا مساعدك الذكي في منصة زد. كيف يمكنني مساعدتك في إدارة متجرك الإلكتروني اليوم؟',
+        ? 'مرحباً! أنا مساعدك الذكي في منصة زد. يمكنني مساعدتك في تحليل البيانات وإنشاء التقارير والرسوم البيانية. جرب أن تسألني عن المبيعات أو التحليلات!'
+        : 'Hello! I\'m your smart assistant at Zid platform. I can help you analyze data and create reports and charts. Try asking me about sales or analytics!',
       sender: 'agent',
       timestamp: new Date()
     }
@@ -43,7 +44,6 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
 
   const content = {
     ar: {
-      back: "رجوع",
       masterAgent: "المساعد الذكي",
       clientAgent: "وكيل خدمة العملاء",
       active: "نشط",
@@ -51,7 +51,6 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
       placeholder: "اكتب رسالتك بالعربية أو الإنجليزية..."
     },
     en: {
-      back: "Back",
       masterAgent: "Smart Assistant",
       clientAgent: "Customer Service Agent",
       active: "Active",
@@ -68,6 +67,51 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
     }
   }, [messages]);
 
+  const analyzeMessageForDashboard = (message: string) => {
+    const lowerMessage = message.toLowerCase();
+    
+    // Simple keyword analysis to determine chart type
+    if (lowerMessage.includes('sales') || lowerMessage.includes('مبيعات')) {
+      return {
+        chartType: 'bar',
+        title: 'Sales Analytics',
+        data: [
+          { month: "Jan", sales: 4000 },
+          { month: "Feb", sales: 3000 },
+          { month: "Mar", sales: 2000 },
+          { month: "Apr", sales: 2780 },
+          { month: "May", sales: 1890 },
+          { month: "Jun", sales: 2390 },
+        ]
+      };
+    } else if (lowerMessage.includes('trend') || lowerMessage.includes('اتجاه')) {
+      return {
+        chartType: 'line',
+        title: 'Trend Analysis',
+        data: [
+          { month: "Jan", sales: 2000 },
+          { month: "Feb", sales: 2200 },
+          { month: "Mar", sales: 2800 },
+          { month: "Apr", sales: 3200 },
+          { month: "May", sales: 3800 },
+          { month: "Jun", sales: 4200 },
+        ]
+      };
+    } else if (lowerMessage.includes('distribution') || lowerMessage.includes('توزيع')) {
+      return {
+        chartType: 'pie',
+        title: 'Distribution Analysis',
+        data: [
+          { name: 'Desktop', value: 400, fill: '#3B82F6' },
+          { name: 'Mobile', value: 300, fill: '#10B981' },
+          { name: 'Tablet', value: 200, fill: '#F59E0B' },
+          { name: 'Other', value: 100, fill: '#EF4444' },
+        ]
+      };
+    }
+    return null;
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -79,6 +123,13 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Analyze message for dashboard updates
+    const dashboardData = analyzeMessageForDashboard(input);
+    if (dashboardData && onDashboardUpdate) {
+      onDashboardUpdate(dashboardData);
+    }
+
     setInput('');
     setIsLoading(true);
 
@@ -138,32 +189,14 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
-      theme === 'dark' 
-        ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' 
-        : 'bg-white'
-    }`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`h-screen flex flex-col transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className={`backdrop-blur-sm border-b p-4 ${
         theme === 'dark' 
           ? 'bg-gray-900/95 border-gray-800' 
           : 'bg-gradient-to-r from-blue-50 to-indigo-100 border-gray-200'
       }`}>
-        <div className={`max-w-4xl mx-auto flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className={`${isRTL ? 'flex-row-reverse' : ''} ${
-              theme === 'dark' 
-                ? 'text-white hover:bg-gray-800' 
-                : 'text-gray-900 hover:bg-white/50'
-            }`}
-          >
-            <ArrowLeft className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-            {t.back}
-          </Button>
-          
+        <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
@@ -203,7 +236,7 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 max-w-4xl mx-auto w-full p-4">
+      <div className="flex-1 p-4">
         <ScrollArea className="h-[calc(100vh-200px)]" ref={scrollAreaRef}>
           <div className="space-y-4 pb-4">
             {messages.map((message) => (
@@ -312,7 +345,7 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
           ? 'bg-gray-900/95 border-gray-800' 
           : 'bg-white border-gray-200'
       }`}>
-        <div className={`max-w-4xl mx-auto flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
