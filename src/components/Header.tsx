@@ -50,7 +50,7 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       theme === 'dark' 
         ? 'bg-gray-900/95 border-gray-800' 
         : 'bg-white/95 border-gray-200'
-    }`} dir={isRTL ? 'rtl' : 'ltr'}>
+    } ${language === 'ar' ? 'font-cairo' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Top Bar */}
       <div className={`border-b ${theme === 'dark' ? 'border-gray-800 bg-gradient-to-r from-purple-900 to-blue-900' : 'border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
