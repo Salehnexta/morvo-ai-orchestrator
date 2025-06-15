@@ -1904,6 +1904,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      initialize_conversation_system: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          client_id: string
+          conversation_id: string
+          client_name: string
+        }[]
+      }
+      link_clients_to_auth: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          client_id: string
+          auth_user_id: string
+          client_name: string
+        }[]
+      }
       user_owns_company: {
         Args:
           | { company_id: string }
