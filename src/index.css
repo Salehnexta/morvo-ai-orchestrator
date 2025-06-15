@@ -48,48 +48,33 @@
   }
 
   .dark {
-    /* Using your exact color palette with proper HSL conversion */
-    /* #001514 - Very dark green-black for background */
-    --background: 177 100% 4%;
-    /* #fcf7f8 - Very light pink for text */
-    --foreground: 343 17% 98%;
-
-    /* #5b616a - Medium gray for cards */
-    --card: 215 8% 38%;
-    --card-foreground: 343 17% 98%;
-
-    --popover: 215 8% 38%;
-    --popover-foreground: 343 17% 98%;
-
-    /* #aba9c3 - Light purple-gray for primary */
-    --primary: 245 19% 71%;
-    --primary-foreground: 177 100% 4%;
-
-    /* #ced3dc - Light blue-gray for secondary */
-    --secondary: 214 15% 83%;
-    --secondary-foreground: 177 100% 4%;
-
-    --muted: 215 8% 38%;
-    --muted-foreground: 214 15% 83%;
-
-    --accent: 245 19% 71%;
-    --accent-foreground: 177 100% 4%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 343 17% 98%;
-
-    --border: 215 8% 38%;
-    --input: 215 8% 38%;
-    --ring: 245 19% 71%;
-    
-    --sidebar-background: 177 100% 4%;
-    --sidebar-foreground: 214 15% 83%;
-    --sidebar-primary: 245 19% 71%;
-    --sidebar-primary-foreground: 177 100% 4%;
-    --sidebar-accent: 215 8% 38%;
-    --sidebar-accent-foreground: 214 15% 83%;
-    --sidebar-border: 215 8% 38%;
-    --sidebar-ring: 245 19% 71%;
+    --background: 220 25% 7%;
+    --foreground: 210 40% 98%;
+    --card: 220 25% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 25% 7%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 32.6% 17.5%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+    --accent: 217 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 32.6% 17.5%;
+    --input: 217 32.6% 17.5%;
+    --ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 220 25% 7%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 32.6% 17.5%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
