@@ -1,4 +1,3 @@
-
 import { ChatInterface } from "@/components/ChatInterface";
 import { DashboardContent } from "@/components/DashboardContent";
 import { ProtectedDashboard } from "@/components/ProtectedDashboard";
@@ -31,35 +30,26 @@ const Dashboard = () => {
   return (
     <ProtectedDashboard>
       <div 
-        className={`min-h-screen ${
-          theme === 'dark' 
-            ? 'bg-black' 
-            : 'bg-black'
-        }`}
+        className="min-h-screen bg-cover bg-center"
+        style={{ backgroundImage: `url('/lovable-uploads/ac9c9c9b-a4db-48f3-ae39-d0ae9a8c5ed4.png')` }}
         dir={isRTL ? 'rtl' : 'ltr'}
       >
         {/* Dashboard Layout */}
-        <div className="relative z-10 h-screen flex">
+        <div className="h-screen flex bg-black/50">
           {/* Chat Interface - 40% width */}
-          <div className="w-2/5 border-r border-gray-200 dark:border-gray-700">
+          <div className="w-2/5 border-r border-white/10 backdrop-blur-lg bg-black/10">
             <ChatInterface onBack={() => {}} />
           </div>
 
           {/* Dashboard Content - 60% width */}
-          <div 
-            className="flex-1 relative bg-cover bg-center"
-            style={{ backgroundImage: `url('/lovable-uploads/ac9c9c9b-a4db-48f3-ae39-d0ae9a8c5ed4.png')` }}
-          >
-            <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
-            <div className="relative z-10 h-full">
-              <DashboardContent 
-                data={mockData}
-                theme={theme}
-                language={language}
-                isRTL={isRTL}
-                content={content}
-              />
-            </div>
+          <div className="flex-1">
+            <DashboardContent 
+              data={mockData}
+              theme={theme}
+              language={language}
+              isRTL={isRTL}
+              content={content}
+            />
           </div>
         </div>
       </div>

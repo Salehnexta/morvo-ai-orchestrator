@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -189,12 +188,12 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   };
 
   return (
-    <div className={`h-screen flex flex-col transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`h-screen flex flex-col bg-transparent transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <div className={`backdrop-blur-sm border-b p-4 ${
+      <div className={`backdrop-blur-md border-b p-4 ${
         theme === 'dark' 
-          ? 'bg-gray-900/95 border-gray-800' 
-          : 'bg-gradient-to-r from-blue-50 to-indigo-100 border-gray-200'
+          ? 'bg-black/20 border-white/10' 
+          : 'bg-white/20 border-white/30'
       }`}>
         <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -255,12 +254,12 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
                 )}
                 
                 <div
-                  className={`max-w-[80%] p-4 rounded-2xl ${
+                  className={`max-w-[80%] p-4 rounded-2xl shadow-md ${
                     message.sender === 'user'
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                       : theme === 'dark'
-                      ? 'bg-gray-800 border border-gray-700 text-white shadow-md'
-                      : 'bg-white border border-gray-200 text-gray-900 shadow-md'
+                      ? 'bg-black/40 border border-white/20 text-white'
+                      : 'bg-white/50 border border-gray-200 text-gray-900'
                   }`}
                   style={{ direction: isRTL ? 'rtl' : 'ltr' }}
                 >
@@ -316,10 +315,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
                     <Bot className="w-4 h-4 text-white" />
                   </div>
                 )}
-                <div className={`p-4 rounded-2xl ${
+                <div className={`p-4 rounded-2xl shadow-md ${
                   theme === 'dark' 
-                    ? 'bg-gray-800 border border-gray-700 shadow-md' 
-                    : 'bg-white border border-gray-200 shadow-md'
+                    ? 'bg-black/40 border border-white/20' 
+                    : 'bg-white/50 border border-gray-200'
                 }`}>
                   <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} ${
                     theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
@@ -340,10 +339,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       </div>
 
       {/* Input */}
-      <div className={`backdrop-blur-sm border-t p-4 ${
+      <div className={`backdrop-blur-md border-t p-4 ${
         theme === 'dark' 
-          ? 'bg-gray-900/95 border-gray-800' 
-          : 'bg-white border-gray-200'
+          ? 'bg-black/20 border-white/10' 
+          : 'bg-white/20 border-white/30'
       }`}>
         <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Input
@@ -351,10 +350,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={t.placeholder}
-            className={`flex-1 ${
+            className={`flex-1 transition-colors ${
               theme === 'dark' 
-                ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 focus:border-blue-500' 
-                : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500'
+                ? 'bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-blue-500' 
+                : 'bg-black/5 border-black/20 text-black placeholder:text-gray-700 focus:border-blue-500'
             } ${isRTL ? 'text-right' : 'text-left'}`}
             disabled={isLoading}
             dir={isRTL ? 'rtl' : 'ltr'}
