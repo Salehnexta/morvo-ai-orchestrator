@@ -322,7 +322,7 @@ const Index = () => {
                 language === "ar"
                   ? "text-4xl md:text-5xl lg:text-5xl"
                   : "text-4xl md:text-6xl lg:text-7xl"
-              } font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight`}
+              } font-bold mb-10 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight`}
             >
               {t.hero.title}
             </h1>
