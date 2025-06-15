@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 interface HeaderProps {
   onStartChat: () => void;
@@ -90,7 +91,7 @@ export const Header = ({ onStartChat }: HeaderProps) => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">M</span>
               </div>
@@ -102,36 +103,36 @@ export const Header = ({ onStartChat }: HeaderProps) => {
                   {t.smartPlatform}
                 </p>
               </div>
-            </div>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#" className={`text-sm font-medium transition-colors ${
+            <Link to="/" className={`text-sm font-medium transition-colors ${
               theme === 'dark' ? 'text-white hover:text-blue-400' : 'text-gray-900 hover:text-blue-600'
             }`}>
               {t.home}
-            </a>
-            <a href="#" className={`text-sm font-medium transition-colors ${
+            </Link>
+            <Link to="/features" className={`text-sm font-medium transition-colors ${
               theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
             }`}>
               {t.agents}
-            </a>
-            <a href="#" className={`text-sm font-medium transition-colors ${
+            </Link>
+            <Link to="/pricing" className={`text-sm font-medium transition-colors ${
               theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
             }`}>
               {t.pricing}
-            </a>
-            <a href="#" className={`text-sm font-medium transition-colors ${
+            </Link>
+            <Link to="/support" className={`text-sm font-medium transition-colors ${
               theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
             }`}>
               {t.support}
-            </a>
-            <a href="#" className={`text-sm font-medium transition-colors ${
+            </Link>
+            <Link to="/about" className={`text-sm font-medium transition-colors ${
               theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
             }`}>
               {t.about}
-            </a>
+            </Link>
           </nav>
 
           {/* Right Side Actions */}
@@ -180,31 +181,31 @@ export const Header = ({ onStartChat }: HeaderProps) => {
             theme === 'dark' ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
           }`}>
             <div className="px-4 py-6 space-y-4">
-              <a href="#" className={`block text-base font-medium ${
+              <Link to="/" className={`block text-base font-medium ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
                 {t.home}
-              </a>
-              <a href="#" className={`block text-base font-medium ${
+              </Link>
+              <Link to="/features" className={`block text-base font-medium ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}>
                 {t.agents}
-              </a>
-              <a href="#" className={`block text-base font-medium ${
+              </Link>
+              <Link to="/pricing" className={`block text-base font-medium ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}>
                 {t.pricing}
-              </a>
-              <a href="#" className={`block text-base font-medium ${
+              </Link>
+              <Link to="/support" className={`block text-base font-medium ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}>
                 {t.support}
-              </a>
-              <a href="#" className={`block text-base font-medium ${
+              </Link>
+              <Link to="/about" className={`block text-base font-medium ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}>
                 {t.about}
-              </a>
+              </Link>
               
               <div className="pt-4 space-y-3">
                 <Button

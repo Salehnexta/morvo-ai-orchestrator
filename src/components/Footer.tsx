@@ -82,7 +82,7 @@ export const Footer = () => {
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 ${isRTL ? 'text-right' : 'text-left'}`}>
           {/* Company Info */}
           <div className="lg:col-span-1">
-            <div className={`flex items-center gap-3 mb-6 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
+            <Link to="/" className={`flex items-center gap-3 mb-6 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">M</span>
               </div>
@@ -94,7 +94,7 @@ export const Footer = () => {
                   {t.companySubtitle}
                 </p>
               </div>
-            </div>
+            </Link>
             <p className={`text-sm leading-relaxed mb-6 text-gray-300 ${isRTL ? 'text-right' : 'text-left'}`}>
               {t.description}
             </p>
