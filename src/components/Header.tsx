@@ -16,7 +16,7 @@ export const Header = ({ onStartChat }: HeaderProps) => {
 
   const content = {
     ar: {
-      welcome: "مرحباً بك في متجر زد",
+      welcome: "مرحباً بك في متجر مورفو",
       languageLabel: "العربية",
       home: "الرئيسية",
       agents: "المنتجات",
@@ -26,10 +26,10 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       login: "تسجيل الدخول",
       startNow: "ابدأ الآن",
       smartPlatform: "منصة التجارة الذكية",
-      storeName: "متجر زد"
+      storeName: "متجر مورفو"
     },
     en: {
-      welcome: "Welcome to Zid Store",
+      welcome: "Welcome to Morvo Store",
       languageLabel: "English",
       home: "Home",
       agents: "Products", 
@@ -39,7 +39,7 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       login: "Login",
       startNow: "Start Now",
       smartPlatform: "Smart Commerce Platform",
-      storeName: "Zid Store"
+      storeName: "Morvo Store"
     }
   };
 
@@ -92,7 +92,7 @@ export const Header = ({ onStartChat }: HeaderProps) => {
           <div className="flex items-center">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">ز</span>
+                <span className="text-white font-bold text-lg">M</span>
               </div>
               <div>
                 <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Globe } from "lucide-react";
@@ -10,10 +11,10 @@ import { ChatInterface } from "@/components/ChatInterface";
 const content = {
   ar: {
     hero: {
-      title: "منصة زد - التجارة الذكية تبدأ هنا",
+      title: "منصة مورفو - التجارة الذكية تبدأ هنا",
       subtitle: "حلول متكاملة لتطوير متجرك الإلكتروني",
       description:
-        "زد توفر لك كل ما تحتاجه لإدارة متجرك الإلكتروني بسهولة وفعالية، من تصميم إلى تسويق ودعم العملاء.",
+        "مورفو توفر لك كل ما تحتاجه لإدارة متجرك الإلكتروني بسهولة وفعالية، من تصميم إلى تسويق ودعم العملاء.",
       startButton: "ابدأ الآن",
       demoButton: "عرض تجريبي",
       stats: [
@@ -82,13 +83,13 @@ const content = {
     transformation: {
       title: "قصة التحول",
       before: {
-        title: "قبل زد",
+        title: "قبل مورفو",
         quote: "كنت أواجه صعوبات كبيرة في إدارة متجري الإلكتروني.",
         author: "عميل سابق",
       },
       after: {
-        title: "بعد زد",
-        quote: "زد غيرت طريقة عملي وزادت مبيعاتي بشكل ملحوظ.",
+        title: "بعد مورفو",
+        quote: "مورفو غيرت طريقة عملي وزادت مبيعاتي بشكل ملحوظ.",
         author: "عميل سعيد",
       },
       results: {
@@ -128,7 +129,7 @@ const content = {
           author: "محمد",
         },
         {
-          quote: "زد ساعدتني على زيادة مبيعاتي بشكل كبير.",
+          quote: "مورفو ساعدتني على زيادة مبيعاتي بشكل كبير.",
           author: "ليلى",
         },
       ],
@@ -161,7 +162,7 @@ const content = {
     finalCta: {
       title: "هل أنت مستعد للانطلاق؟",
       description:
-        "انضم إلى آلاف التجار الذين يثقون في زد لتطوير أعمالهم.",
+        "انضم إلى آلاف التجار الذين يثقون في مورفو لتطوير أعمالهم.",
       points: [
         "سهولة الاستخدام",
         "دعم فني متميز",
@@ -176,15 +177,15 @@ const content = {
         "دعم فني 24/7",
         "تحديثات مستمرة",
       ],
-      closing: "زد - شريكك في النجاح التجاري.",
+      closing: "مورفو - شريكك في النجاح التجاري.",
     },
   },
   en: {
     hero: {
-      title: "Zid Platform - Smart Commerce Starts Here",
+      title: "Morvo Platform - Smart Commerce Starts Here",
       subtitle: "Integrated solutions to grow your online store",
       description:
-        "Zid provides everything you need to manage your online store easily and effectively, from design to marketing and customer support.",
+        "Morvo provides everything you need to manage your online store easily and effectively, from design to marketing and customer support.",
       startButton: "Start Now",
       demoButton: "Demo",
       stats: [
@@ -253,13 +254,13 @@ const content = {
     transformation: {
       title: "Transformation Story",
       before: {
-        title: "Before Zid",
+        title: "Before Morvo",
         quote: "I faced great difficulties managing my online store.",
         author: "Former Client",
       },
       after: {
-        title: "After Zid",
-        quote: "Zid changed my business and significantly increased my sales.",
+        title: "After Morvo",
+        quote: "Morvo changed my business and significantly increased my sales.",
         author: "Happy Client",
       },
       results: {
@@ -299,7 +300,7 @@ const content = {
           author: "Mohammed",
         },
         {
-          quote: "Zid helped me significantly increase my sales.",
+          quote: "Morvo helped me significantly increase my sales.",
           author: "Laila",
         },
       ],
@@ -332,7 +333,7 @@ const content = {
     finalCta: {
       title: "Ready to Launch?",
       description:
-        "Join thousands of merchants who trust Zid to grow their business.",
+        "Join thousands of merchants who trust Morvo to grow their business.",
       points: [
         "Ease of use",
         "Outstanding support",
@@ -347,7 +348,7 @@ const content = {
         "24/7 technical support",
         "Continuous updates",
       ],
-      closing: "Zid - Your partner in commercial success.",
+      closing: "Morvo - Your partner in commercial success.",
     },
   },
 };
