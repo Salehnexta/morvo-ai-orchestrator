@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Globe, Brain } from "lucide-react";
@@ -137,8 +138,8 @@ const content = {
         "تقارير مخصصة بعلامتك التجارية تتطور معك",
         "إلغاء الاشتراك في أي وقت",
       ],
-      remaining: "متبقٍ 847 اشتراكًا فقط",
-      urgency: "السعر يرتفع عند نفاد الكمية أو بعد 7 أيام",
+      remaining: "متبقٍ 37 اشتراكًا فقط",
+      urgency: "السعر يرتفع عند نفاد الكمية",
       ctaButton: "صمم مستقبلك مع مورفو الآن",
     },
     finalCta: {
@@ -265,6 +266,8 @@ const content = {
     pricing: {
       title: "Founder's Package (Exclusive Limited Offer)",
       price: "$497/month",
+      oldPrice: null,
+      discount: null,
       subtitle: "Price locked for life",
       features: [
         "All 9 Advanced AI Agents",
