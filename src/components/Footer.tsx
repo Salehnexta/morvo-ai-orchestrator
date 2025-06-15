@@ -2,6 +2,8 @@
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const Footer = () => {
   const { theme } = useTheme();
@@ -18,10 +20,15 @@ export const Footer = () => {
       resourceItems: ["قصص النجاح", "التحديثات", "مركز المساعدة", "الأسئلة الشائعة"],
       supportLegal: "الدعم والقانونية",
       supportLegalItems: ["الدعم", "تواصل معنا", "حالة الخدمة", "الشروط والأحكام", "سياسة الخصوصية"],
-      newsletter: "النشرة الإخبارية",
-      emailPlaceholder: "البريد الإلكتروني",
+      newsletter: "اشترك في النشرة الإخبارية",
+      newsletterDesc: "احصل على آخر التحديثات والنصائح التسويقية المدعومة بالذكاء الاصطناعي",
+      emailPlaceholder: "أدخل بريدك الإلكتروني",
       subscribe: "اشتراك",
-      rights: "جميع الحقوق محفوظة"
+      rights: "جميع الحقوق محفوظة",
+      contactInfo: "معلومات الاتصال",
+      address: "الرياض، المملكة العربية السعودية",
+      phone: "+966 50 123 4567",
+      email: "info@morvo.ai"
     },
     en: {
       companyName: "Morvo",
@@ -33,10 +40,15 @@ export const Footer = () => {
       resourceItems: ["Success Stories", "Updates", "Help Center", "FAQ"],
       supportLegal: "Support & Legal",
       supportLegalItems: ["Support", "Contact Us", "Service Status", "Terms & Conditions", "Privacy Policy"],
-      newsletter: "Newsletter",
-      emailPlaceholder: "Email Address",
+      newsletter: "Subscribe to Newsletter",
+      newsletterDesc: "Get the latest updates and AI-powered marketing tips",
+      emailPlaceholder: "Enter your email address",
       subscribe: "Subscribe",
-      rights: "All rights reserved"
+      rights: "All rights reserved",
+      contactInfo: "Contact Info",
+      address: "Riyadh, Saudi Arabia",
+      phone: "+966 50 123 4567",
+      email: "info@morvo.ai"
     }
   };
 
@@ -44,13 +56,37 @@ export const Footer = () => {
 
   return (
     <footer className="bg-gray-900 text-white" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Newsletter Section */}
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            {t.newsletter}
+          </h2>
+          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            {t.newsletterDesc}
+          </p>
+          <div className={`flex flex-col sm:flex-row gap-4 max-w-md mx-auto ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+            <Input
+              type="email"
+              placeholder={t.emailPlaceholder}
+              className="flex-1 px-4 py-3 text-gray-900 bg-white border-0 rounded-lg focus:ring-2 focus:ring-white"
+            />
+            <Button 
+              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 font-semibold rounded-lg transition-colors"
+            >
+              {t.subscribe}
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 ${isRTL ? 'text-right' : 'text-left'}`}>
           {/* Company Info */}
           <div className="lg:col-span-1">
             <div className={`flex items-center gap-3 mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">M</span>
               </div>
               <div className={isRTL ? 'text-right' : 'text-left'}>
@@ -66,8 +102,24 @@ export const Footer = () => {
               {t.description}
             </p>
             
+            {/* Contact Info */}
+            <div className="space-y-3 mb-6">
+              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <MapPin className="w-4 h-4 text-blue-400" />
+                <span className="text-sm text-gray-300">{t.address}</span>
+              </div>
+              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Phone className="w-4 h-4 text-blue-400" />
+                <span className="text-sm text-gray-300">{t.phone}</span>
+              </div>
+              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Mail className="w-4 h-4 text-blue-400" />
+                <span className="text-sm text-gray-300">{t.email}</span>
+              </div>
+            </div>
+            
             {/* Social Media */}
-            <div className={`flex gap-4 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+            <div className={`flex gap-3 ${isRTL ? 'justify-end' : 'justify-start'}`}>
               <a href="#" className="p-2 rounded-lg bg-gray-800 hover:bg-blue-600 text-gray-400 hover:text-white transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
@@ -147,13 +199,13 @@ export const Footer = () => {
             </p>
             <div className={`flex gap-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
-                سياسة الخصوصية
+                {language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
               </a>
               <a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
-                الشروط والأحكام
+                {language === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions'}
               </a>
               <a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
-                ملفات تعريف الارتباط
+                {language === 'ar' ? 'ملفات تعريف الارتباط' : 'Cookies'}
               </a>
             </div>
           </div>
