@@ -125,7 +125,9 @@ const content = {
     // تم حذف successStory من العربية
     pricing: {
       title: "باقة المؤسس (عرض حصري ومحدود)",
-      price: "1,870 ريال/شهر",
+      price: "999 ريال/شهر",
+      oldPrice: "1,870 ريال/شهر",
+      discount: "وفر 47%",
       subtitle: "السعر ثابت لك مدى الحياة",
       features: [
         "جميع وكلاء AI التسعة المتطورين",
@@ -575,13 +577,33 @@ const Index = () => {
             </h2>
 
             <div className="mb-6">
-              <p
-                className={`text-3xl font-bold ${
-                  theme === "dark" ? "text-green-400" : "text-green-600"
-                }`}
-              >
-                {t.pricing.price}
-              </p>
+              <div className="flex justify-center items-baseline gap-3">
+                <p
+                  className={`text-4xl font-bold ${
+                    theme === "dark" ? "text-green-400" : "text-green-600"
+                  }`}
+                >
+                  {t.pricing.price}
+                </p>
+                {t.pricing.oldPrice && (
+                  <p
+                    className={`text-2xl line-through ${
+                      theme === "dark" ? "text-gray-500" : "text-gray-400"
+                    }`}
+                  >
+                    {t.pricing.oldPrice}
+                  </p>
+                )}
+              </div>
+              
+              {t.pricing.discount && (
+                <div className="my-4">
+                  <span className="bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-full">
+                    {t.pricing.discount}
+                  </span>
+                </div>
+              )}
+
               <p
                 className={`text-sm ${
                   theme === "dark" ? "text-gray-400" : "text-gray-500"
