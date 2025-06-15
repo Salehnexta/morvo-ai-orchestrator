@@ -11,7 +11,7 @@ export const Footer = () => {
   const content = {
     ar: {
       companyName: "مورفو",
-      companySubtitle: "النظام الاصطناعي يقود نجاحك التسويقي",
+      companySubtitle: "النظام الذكي للتسويق",
       description: "منصة التسويق الرقمي والذكاء الاصطناعي التي تساعدك على تحليل السوق وبناء استراتيجيات تسويقية فعالة باستخدام الذكاء الاصطناعي.",
       product: "المنتج",
       productItems: [
@@ -28,7 +28,7 @@ export const Footer = () => {
     },
     en: {
       companyName: "Morvo",
-      companySubtitle: "AI System Drives Your Marketing Success",
+      companySubtitle: "Smart Marketing System",
       description: "Digital marketing and AI platform that helps you analyze the market and build effective marketing strategies using artificial intelligence.",
       product: "Product",
       productItems: [

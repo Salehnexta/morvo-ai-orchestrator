@@ -17,7 +17,7 @@ export const Header = ({ onStartChat }: HeaderProps) => {
 
   const content = {
     ar: {
-      welcome: "مرحباً بك في متجر مورفو",
+      welcome: "مرحباً بك في مورفو",
       languageLabel: "العربية",
       home: "الرئيسية",
       agents: "المنتجات",
@@ -27,11 +27,11 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       login: "تسجيل الدخول",
       register: "إنشاء حساب",
       startNow: "ابدأ الآن",
-      smartPlatform: "منصة التجارة الذكية",
-      storeName: "متجر مورفو"
+      smartPlatform: "النظام الذكي للتسويق",
+      storeName: "مورفو"
     },
     en: {
-      welcome: "Welcome to Morvo Store",
+      welcome: "Welcome to Morvo",
       languageLabel: "English",
       home: "Home",
       agents: "Products", 
@@ -41,8 +41,8 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       login: "Login",
       register: "Sign Up",
       startNow: "Start Now",
-      smartPlatform: "Smart Commerce Platform",
-      storeName: "Morvo Store"
+      smartPlatform: "Smart Marketing System",
+      storeName: "Morvo"
     }
   };
 
