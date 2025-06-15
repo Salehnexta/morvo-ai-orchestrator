@@ -1,5 +1,5 @@
 
-import { ShoppingCart, User, Globe, Menu, X } from "lucide-react";
+import { ShoppingCart, User, Globe, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useState } from "react";
@@ -11,6 +11,11 @@ interface HeaderProps {
 export const Header = ({ onStartChat }: HeaderProps) => {
   const { theme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
+
+  const toggleLanguage = () => {
+    setCurrentLanguage(prev => prev === 'ar' ? 'en' : 'ar');
+  };
 
   return (
     <header className={`sticky top-0 z-50 border-b backdrop-blur-sm ${
@@ -19,24 +24,34 @@ export const Header = ({ onStartChat }: HeaderProps) => {
         : 'bg-white/95 border-gray-200'
     }`}>
       {/* Top Bar */}
-      <div className={`border-b ${theme === 'dark' ? 'border-gray-800' : 'border-gray-100'}`}>
+      <div className={`border-b ${theme === 'dark' ? 'border-gray-800 bg-gray-800' : 'border-gray-100 bg-gray-50'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-10 text-sm">
             <div className="flex items-center gap-4">
-              <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-                مرحباً بك في مورفو | Welcome to Morvo
+              <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                {currentLanguage === 'ar' ? 'مرحباً بك في مورفو' : 'Welcome to Morvo'}
               </span>
             </div>
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleTheme}
-                className={`p-1 rounded ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                className={`p-1 rounded hover:bg-opacity-20 hover:bg-gray-500 transition-colors ${
+                  theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 <Globe className="w-4 h-4" />
               </button>
-              <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                العربية | EN
-              </span>
+              <button
+                onClick={toggleLanguage}
+                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                  theme === 'dark' 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {currentLanguage === 'ar' ? 'العربية' : 'English'}
+                <ChevronDown className="w-3 h-3" />
+              </button>
             </div>
           </div>
         </div>
@@ -48,15 +63,15 @@ export const Header = ({ onStartChat }: HeaderProps) => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">M</span>
               </div>
               <div>
                 <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  مورفو
+                  {currentLanguage === 'ar' ? 'مورفو' : 'Morvo'}
                 </h1>
                 <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Morvo AI
+                  {currentLanguage === 'ar' ? 'منصة التسويق الذكية' : 'Smart Marketing Platform'}
                 </p>
               </div>
             </div>
@@ -64,20 +79,30 @@ export const Header = ({ onStartChat }: HeaderProps) => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#" className={`text-sm font-medium ${theme === 'dark' ? 'text-white hover:text-blue-400' : 'text-gray-900 hover:text-blue-600'}`}>
-              الرئيسية | Home
+            <a href="#" className={`text-sm font-medium transition-colors ${
+              theme === 'dark' ? 'text-white hover:text-purple-400' : 'text-gray-900 hover:text-purple-600'
+            }`}>
+              {currentLanguage === 'ar' ? 'الرئيسية' : 'Home'}
             </a>
-            <a href="#" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'}`}>
-              الوكلاء | Agents
+            <a href="#" className={`text-sm font-medium transition-colors ${
+              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+            }`}>
+              {currentLanguage === 'ar' ? 'الوكلاء' : 'Agents'}
             </a>
-            <a href="#" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'}`}>
-              الأسعار | Pricing
+            <a href="#" className={`text-sm font-medium transition-colors ${
+              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+            }`}>
+              {currentLanguage === 'ar' ? 'الأسعار' : 'Pricing'}
             </a>
-            <a href="#" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'}`}>
-              المساعدة | Support
+            <a href="#" className={`text-sm font-medium transition-colors ${
+              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+            }`}>
+              {currentLanguage === 'ar' ? 'المساعدة' : 'Support'}
             </a>
-            <a href="#" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'}`}>
-              من نحن | About
+            <a href="#" className={`text-sm font-medium transition-colors ${
+              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+            }`}>
+              {currentLanguage === 'ar' ? 'من نحن' : 'About'}
             </a>
           </nav>
 
@@ -88,25 +113,33 @@ export const Header = ({ onStartChat }: HeaderProps) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`${theme === 'dark' ? 'text-gray-300 hover:text-white hover:bg-gray-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`}
+                className={`transition-colors ${
+                  theme === 'dark' 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                }`}
               >
                 <User className="w-4 h-4 mr-2" />
-                تسجيل الدخول | Login
+                {currentLanguage === 'ar' ? 'تسجيل الدخول' : 'Login'}
               </Button>
               
               <Button
                 onClick={onStartChat}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
-                ابدأ الآن | Start Now
+                {currentLanguage === 'ar' ? 'ابدأ الآن' : 'Start Now'}
               </Button>
             </div>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`md:hidden p-2 rounded-md ${theme === 'dark' ? 'text-gray-300 hover:text-white hover:bg-gray-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`}
+              className={`md:hidden p-2 rounded-md transition-colors ${
+                theme === 'dark' 
+                  ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -115,22 +148,34 @@ export const Header = ({ onStartChat }: HeaderProps) => {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className={`md:hidden border-t ${theme === 'dark' ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'}`}>
+          <div className={`md:hidden border-t ${
+            theme === 'dark' ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
+          }`}>
             <div className="px-4 py-6 space-y-4">
-              <a href="#" className={`block text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                الرئيسية | Home
+              <a href="#" className={`block text-base font-medium ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>
+                {currentLanguage === 'ar' ? 'الرئيسية' : 'Home'}
               </a>
-              <a href="#" className={`block text-base font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                الوكلاء | Agents
+              <a href="#" className={`block text-base font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLanguage === 'ar' ? 'الوكلاء' : 'Agents'}
               </a>
-              <a href="#" className={`block text-base font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                الأسعار | Pricing
+              <a href="#" className={`block text-base font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLanguage === 'ar' ? 'الأسعار' : 'Pricing'}
               </a>
-              <a href="#" className={`block text-base font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                المساعدة | Support
+              <a href="#" className={`block text-base font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLanguage === 'ar' ? 'المساعدة' : 'Support'}
               </a>
-              <a href="#" className={`block text-base font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                من نحن | About
+              <a href="#" className={`block text-base font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLanguage === 'ar' ? 'من نحن' : 'About'}
               </a>
               
               <div className="pt-4 space-y-3">
@@ -139,15 +184,15 @@ export const Header = ({ onStartChat }: HeaderProps) => {
                   className="w-full justify-start"
                 >
                   <User className="w-4 h-4 mr-2" />
-                  تسجيل الدخول | Login
+                  {currentLanguage === 'ar' ? 'تسجيل الدخول' : 'Login'}
                 </Button>
                 
                 <Button
                   onClick={onStartChat}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  ابدأ الآن | Start Now
+                  {currentLanguage === 'ar' ? 'ابدأ الآن' : 'Start Now'}
                 </Button>
               </div>
             </div>

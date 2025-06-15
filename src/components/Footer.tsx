@@ -17,7 +17,7 @@ export const Footer = () => {
           {/* Company Info */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">M</span>
               </div>
               <div>
@@ -38,19 +38,39 @@ export const Footer = () => {
             
             {/* Social Media */}
             <div className="flex gap-4">
-              <a href="#" className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white' : 'bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-900'}`}>
+              <a href="#" className={`p-2 rounded-lg transition-colors ${
+                theme === 'dark' 
+                  ? 'bg-gray-800 hover:bg-purple-600 text-gray-400 hover:text-white' 
+                  : 'bg-white hover:bg-purple-50 text-gray-600 hover:text-purple-600 border border-gray-200'
+              }`}>
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white' : 'bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-900'}`}>
+              <a href="#" className={`p-2 rounded-lg transition-colors ${
+                theme === 'dark' 
+                  ? 'bg-gray-800 hover:bg-purple-600 text-gray-400 hover:text-white' 
+                  : 'bg-white hover:bg-purple-50 text-gray-600 hover:text-purple-600 border border-gray-200'
+              }`}>
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white' : 'bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-900'}`}>
+              <a href="#" className={`p-2 rounded-lg transition-colors ${
+                theme === 'dark' 
+                  ? 'bg-gray-800 hover:bg-purple-600 text-gray-400 hover:text-white' 
+                  : 'bg-white hover:bg-purple-50 text-gray-600 hover:text-purple-600 border border-gray-200'
+              }`}>
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white' : 'bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-900'}`}>
+              <a href="#" className={`p-2 rounded-lg transition-colors ${
+                theme === 'dark' 
+                  ? 'bg-gray-800 hover:bg-purple-600 text-gray-400 hover:text-white' 
+                  : 'bg-white hover:bg-purple-50 text-gray-600 hover:text-purple-600 border border-gray-200'
+              }`}>
                 <Linkedin className="w-5 h-5" />
               </a>
-              <a href="#" className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white' : 'bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-900'}`}>
+              <a href="#" className={`p-2 rounded-lg transition-colors ${
+                theme === 'dark' 
+                  ? 'bg-gray-800 hover:bg-purple-600 text-gray-400 hover:text-white' 
+                  : 'bg-white hover:bg-purple-50 text-gray-600 hover:text-purple-600 border border-gray-200'
+              }`}>
                 <Youtube className="w-5 h-5" />
               </a>
             </div>
@@ -63,32 +83,44 @@ export const Footer = () => {
             </h4>
             <ul className="space-y-4">
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   الرئيسية
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   الوكلاء المتخصصين
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   خطط الأسعار
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   قصص النجاح
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   المدونة
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   من نحن
                 </a>
               </li>
@@ -102,32 +134,44 @@ export const Footer = () => {
             </h4>
             <ul className="space-y-4">
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   تحسين محركات البحث
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   إدارة وسائل التواصل
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   التسويق بالمحتوى
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   الإعلانات المدفوعة
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   تحليل المنافسين
                 </a>
               </li>
               <li>
-                <a href="#" className={`text-sm hover:underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+                }`}>
                   التسويق الإلكتروني
                 </a>
               </li>
@@ -141,19 +185,19 @@ export const Footer = () => {
             </h4>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Mail className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
+                <Mail className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
                 <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   support@morvo.ai
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <Phone className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
+                <Phone className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
                 <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   +966 50 123 4567
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <MapPin className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
+                <MapPin className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
                 <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   الرياض، المملكة العربية السعودية
                 </span>
@@ -175,7 +219,7 @@ export const Footer = () => {
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   }`}
                 />
-                <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors">
+                <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm rounded-lg hover:from-purple-700 hover:to-blue-700 transition-colors">
                   اشتراك
                 </button>
               </div>
@@ -192,13 +236,19 @@ export const Footer = () => {
               © 2024 مورفو AI - جميع الحقوق محفوظة | Morvo AI - All rights reserved
             </p>
             <div className="flex gap-6">
-              <a href="#" className={`text-sm hover:underline ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+              <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+              }`}>
                 سياسة الخصوصية
               </a>
-              <a href="#" className={`text-sm hover:underline ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+              <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+              }`}>
                 الشروط والأحكام
               </a>
-              <a href="#" className={`text-sm hover:underline ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+              <a href="#" className={`text-sm hover:text-purple-600 transition-colors ${
+                theme === 'dark' ? 'text-gray-400 hover:text-purple-400' : 'text-gray-600'
+              }`}>
                 ملفات تعريف الارتباط
               </a>
             </div>
