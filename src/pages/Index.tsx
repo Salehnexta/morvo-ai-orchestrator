@@ -359,6 +359,10 @@ const Index = () => {
 
   const t = content[language];
 
+  if (isChatOpen) {
+    return <ChatInterface onBack={() => setIsChatOpen(false)} />;
+  }
+
   return (
     <div
       className={`min-h-screen ${
@@ -1013,7 +1017,6 @@ const Index = () => {
       </section>
 
       <Footer />
-      <ChatInterface isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 };
