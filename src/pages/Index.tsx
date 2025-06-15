@@ -10,7 +10,7 @@ import { ChatInterface } from "@/components/ChatInterface";
 const content = {
   ar: {
     hero: {
-      title: "مورفو: ذكاء يعمل… وأنت تتقدّم.",
+      title: "مورفو: الثورة التالية في الماركتينغ تبدأ هنا",
       subtitle: "لم نعد نتخيل فريق التسويق المثالي، بل نصممه معًا، ونطوره بلا توقف",
       description:
         `مع مورفو AI، لن تحتاج إلى توظيف فريق تسويق كامل أو التعامل مع عشرات الأدوات المتفرقة.
@@ -320,7 +320,7 @@ const Index = () => {
             <h1
               className={`${
                 language === "ar"
-                  ? "text-4xl md:text-5xl lg:text-6xl"
+                  ? "text-4xl md:text-5xl lg:text-5xl"
                   : "text-4xl md:text-6xl lg:text-7xl"
               } font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight`}
             >
