@@ -7,7 +7,26 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const Dashboard = () => {
   const { theme } = useTheme();
-  const { isRTL } = useLanguage();
+  const { language, isRTL } = useLanguage();
+
+  const content = {
+    ar: {
+      welcome: "مرحباً بلوحة التحكم",
+      overview: "نظرة عامة"
+    },
+    en: {
+      welcome: "Welcome to Dashboard", 
+      overview: "Overview"
+    }
+  };
+
+  // Mock data for dashboard
+  const mockData = {
+    totalUsers: 150,
+    activeProjects: 12,
+    revenue: 25000,
+    growth: 15.2
+  };
 
   return (
     <ProtectedDashboard>
@@ -39,7 +58,13 @@ const Dashboard = () => {
 
           {/* Dashboard Content - 60% width */}
           <div className="flex-1">
-            <DashboardContent />
+            <DashboardContent 
+              data={mockData}
+              theme={theme}
+              language={language}
+              isRTL={isRTL}
+              content={content}
+            />
           </div>
         </div>
       </div>
