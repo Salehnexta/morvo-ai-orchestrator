@@ -17,87 +17,108 @@ export const Pricing = () => {
       note: "* الأسعار لا تشمل ضريبة القيمة المضافة. الاشتراك شهري قابل للإلغاء في أي وقت، والسعر ثابت طالما الاشتراك فعّال.",
       plans: [
         {
-          name: "المؤسِّس",
-          description: "روّاد الأعمال والشركات الناشئة",
-          price: "1,870 ريال",
+          name: "الأساسي",
+          description: "للأفراد والشركات الناشئة",
+          price: "199$",
+          period: "شهرياً",
+          buttonText: "ابدأ الآن",
+          popular: false
+        },
+        {
+          name: "الاحترافي",
+          description: "للشركات المتنامية",
+          price: "299$",
           period: "شهرياً",
           buttonText: "ابدأ الآن",
           popular: true
         },
         {
           name: "الأعمال",
-          description: "شركات تنمو بسرعة وفرق تسويق",
-          price: "3,990 ريال",
+          description: "للمؤسسات الكبيرة",
+          price: "399$",
           period: "شهرياً",
-          buttonText: "ابدأ الآن",
-          popular: false
-        },
-        {
-          name: "المؤسسة",
-          description: "مجموعات كبرى ووكالات",
-          price: "سعر مخصّص",
-          period: "",
           buttonText: "تواصل معنا",
           popular: false
         }
       ],
       features: {
-        sources: {
-          title: "المصادر",
+        socialContent: {
+          title: "محتوى وسائل التواصل الاجتماعي بالذكاء الاصطناعي",
           items: [
-            { name: "فيسبوك", founder: true, business: true, enterprise: true },
-            { name: "إنستغرام", founder: true, business: true, enterprise: true },
-            { name: "X (تويتر)", founder: true, business: true, enterprise: true },
-            { name: "الأخبار", founder: true, business: true, enterprise: true },
-            { name: "المدونات", founder: true, business: true, enterprise: true },
-            { name: "منصات اجتماعية أخرى", founder: true, business: true, enterprise: true },
-            { name: "Reddit", founder: true, business: true, enterprise: true },
-            { name: "لينكدإن", founder: false, business: true, enterprise: true },
-            { name: "Medium", founder: false, business: true, enterprise: true },
-            { name: "Quora", founder: false, business: true, enterprise: true },
-            { name: "يوتيوب", founder: false, business: true, enterprise: true },
-            { name: "تيك توك", founder: false, business: true, enterprise: true },
-            { name: "المراجعات", founder: false, business: false, enterprise: true },
-            { name: "Twitch", founder: false, business: false, enterprise: true },
-            { name: "النشرات الإخبارية", founder: false, business: false, enterprise: true }
+            { name: "حد الإنتاج", base: "30", pro: "غير محدود", business: "غير محدود" },
+            { name: "إنشاء التسميات والصور والفيديو", base: true, pro: true, business: true },
+            { name: "أفكار مخصصة للعلامة التجارية", base: true, pro: true, business: true },
+            { name: "اقتراحات الترند بالذكاء الاصطناعي", base: true, pro: true, business: true },
+            { name: "تحويل الرابط إلى منشور", base: true, pro: true, business: true },
+            { name: "إنشاء الهاشتاجات", base: true, pro: true, business: true },
+            { name: "أداة التصميم المدمجة", base: true, pro: true, business: true }
           ]
         },
-        analytics: {
-          title: "التحليلات",
+        socialPoster: {
+          title: "ناشر وسائل التواصل الاجتماعي",
           items: [
-            { name: "حجم الذِّكر", founder: "2K ذكر/شهر", business: "10K ذكر/شهر", enterprise: "غير محدود" },
-            { name: "تتبع التفاعل", founder: true, business: true, enterprise: true },
-            { name: "تتبع الوصول", founder: true, business: true, enterprise: true },
-            { name: "التحديث", founder: "كل 12 ساعة", business: "كل ساعة", enterprise: "فوري" },
-            { name: "وكلاء AI", founder: "9 وكلاء", business: "9 وكلاء", enterprise: "غير محدود" },
-            { name: "Active Dashboard™", founder: true, business: true, enterprise: true },
-            { name: "تحليل المشاعر بـ AI", founder: true, business: true, enterprise: true },
-            { name: "كشف الأحداث", founder: true, business: true, enterprise: true },
-            { name: "مساعد العلامة التجارية AI", founder: "محدود", business: "متقدم", enterprise: "كامل" }
+            { name: "ملفات وسائل التواصل للنشر", base: "5", pro: "10 (المزيد عند الطلب)", business: "10 (المزيد عند الطلب)" },
+            { name: "المنشورات المجدولة شهرياً", base: "50", pro: "غير محدود", business: "غير محدود" },
+            { name: "التقويم التفاعلي", base: true, pro: true, business: true },
+            { name: "اقتراحات أفضل وقت للنشر", base: true, pro: true, business: true },
+            { name: "قصص إنستغرام والتعليق الأول", base: true, pro: true, business: true },
+            { name: "تكامل Bitly ومولد كود UTM", base: true, pro: true, business: true },
+            { name: "الوسوم", base: true, pro: true, business: true },
+            { name: "خلاصة RSS مخصصة", base: true, pro: true, business: true }
+          ]
+        },
+        socialTracker: {
+          title: "متتبع وسائل التواصل الاجتماعي",
+          items: [
+            { name: "ملفات وسائل التواصل للمراقبة", base: "10", pro: "20 (المزيد عند الطلب)", business: "20 (المزيد عند الطلب)" },
+            { name: "تحليل أداء المنافسين", base: true, pro: true, business: true },
+            { name: "مراقبة محتوى المنافسين", base: true, pro: true, business: true },
+            { name: "عرض المقارنة", base: true, pro: true, business: true },
+            { name: "البيانات التاريخية", base: true, pro: true, business: true },
+            { name: "تقارير البريد الإلكتروني", base: true, pro: true, business: true },
+            { name: "تقارير CSV وPDF بالعلامة البيضاء", base: true, pro: true, business: true }
+          ]
+        },
+        socialAnalytics: {
+          title: "تحليلات وسائل التواصل الاجتماعي",
+          items: [
+            { name: "الأداء حسب المنصة", base: true, pro: true, business: true },
+            { name: "تحليلات المنشورات", base: true, pro: true, business: true },
+            { name: "الاحتفاظ بالبيانات", base: "24 شهر", pro: "24 شهر", business: "24 شهر" },
+            { name: "تقارير البريد الإلكتروني", base: true, pro: true, business: true },
+            { name: "تقارير CSV وPDF بالعلامة البيضاء", base: true, pro: true, business: true }
+          ]
+        },
+        contentInsights: {
+          title: "رؤى المحتوى الاجتماعي",
+          items: [
+            { name: "الأداء حسب المنصة", base: true, pro: true, business: true },
+            { name: "الأداء حسب الوسم", base: true, pro: true, business: true },
+            { name: "الأداء حسب نوع المنشور", base: true, pro: true, business: true }
+          ]
+        },
+        influencerAnalytics: {
+          title: "تحليلات المؤثرين",
+          items: [
+            { name: "اكتشاف المؤثرين", base: false, pro: false, business: true },
+            { name: "تحليلات الأداء", base: false, pro: false, business: true },
+            { name: "إدارة الحملات", base: false, pro: false, business: "إضافة" },
+            { name: "بحث المنافسين", base: false, pro: false, business: "إضافة" }
+          ]
+        },
+        mediaMonitoring: {
+          title: "مراقبة الوسائط",
+          items: [
+            { name: "الكلمات المفتاحية للمراقبة", base: false, pro: false, business: "2 (المزيد عند الطلب)" },
+            { name: "تحليل المشاعر", base: false, pro: false, business: true },
+            { name: "ترند الوصول", base: false, pro: false, business: true },
+            { name: "تقارير البريد الإلكتروني", base: false, pro: false, business: true }
           ]
         },
         reporting: {
-          title: "التقارير والتنبيهات",
+          title: "التقارير",
           items: [
-            { name: "تقارير يومية", founder: true, business: true, enterprise: true },
-            { name: "تقارير أسبوعية", founder: true, business: true, enterprise: true },
-            { name: "تنبيهات الأزمات", founder: true, business: true, enterprise: true },
-            { name: "تنبيهات الجوال", founder: true, business: true, enterprise: true },
-            { name: "تكامل Slack/Teams", founder: false, business: true, enterprise: true },
-            { name: "تقارير بيضاء العلامة", founder: false, business: true, enterprise: true },
-            { name: "تقارير Excel", founder: false, business: true, enterprise: true },
-            { name: "عروض PowerPoint", founder: false, business: true, enterprise: true }
-          ]
-        },
-        support: {
-          title: "الدعم والتكامل",
-          items: [
-            { name: "دعم 24/7", founder: true, business: true, enterprise: true },
-            { name: "مقاعد الفريق", founder: "1 مقعد", business: "5 مقاعد", enterprise: "غير محدود" },
-            { name: "تكامل ERP", founder: false, business: true, enterprise: true },
-            { name: "API كامل", founder: false, business: false, enterprise: true },
-            { name: "مدير نجاح مخصّص", founder: false, business: false, enterprise: true },
-            { name: "تخصيص كامل", founder: false, business: false, enterprise: true }
+            { name: "التقارير الأساسية", base: "2", pro: "2", business: "2" }
           ]
         }
       }
@@ -108,87 +129,108 @@ export const Pricing = () => {
       note: "* Prices do not include VAT. Monthly subscription can be cancelled anytime, price remains fixed as long as subscription is active.",
       plans: [
         {
-          name: "Founder",
-          description: "Entrepreneurs and startups",
-          price: "1,870 SAR",
+          name: "Base",
+          description: "For individuals and startups",
+          price: "$199",
+          period: "monthly",
+          buttonText: "Get Started",
+          popular: false
+        },
+        {
+          name: "Pro",
+          description: "For growing businesses",
+          price: "$299",
           period: "monthly",
           buttonText: "Get Started",
           popular: true
         },
         {
           name: "Business",
-          description: "Fast-growing companies and marketing teams",
-          price: "3,990 SAR",
+          description: "For large enterprises",
+          price: "$399",
           period: "monthly",
-          buttonText: "Get Started",
-          popular: false
-        },
-        {
-          name: "Enterprise",
-          description: "Large corporations and agencies",
-          price: "Custom pricing",
-          period: "",
           buttonText: "Contact Us",
           popular: false
         }
       ],
       features: {
-        sources: {
-          title: "Sources",
+        socialContent: {
+          title: "Social Content AI",
           items: [
-            { name: "Facebook", founder: true, business: true, enterprise: true },
-            { name: "Instagram", founder: true, business: true, enterprise: true },
-            { name: "X (Twitter)", founder: true, business: true, enterprise: true },
-            { name: "News", founder: true, business: true, enterprise: true },
-            { name: "Blogs", founder: true, business: true, enterprise: true },
-            { name: "Other Socials", founder: true, business: true, enterprise: true },
-            { name: "Reddit", founder: true, business: true, enterprise: true },
-            { name: "LinkedIn", founder: false, business: true, enterprise: true },
-            { name: "Medium", founder: false, business: true, enterprise: true },
-            { name: "Quora", founder: false, business: true, enterprise: true },
-            { name: "YouTube", founder: false, business: true, enterprise: true },
-            { name: "TikTok", founder: false, business: true, enterprise: true },
-            { name: "Reviews", founder: false, business: false, enterprise: true },
-            { name: "Twitch", founder: false, business: false, enterprise: true },
-            { name: "Newsletters", founder: false, business: false, enterprise: true }
+            { name: "Generation limit", base: "30", pro: "unlimited", business: "unlimited" },
+            { name: "Caption, image, and video generation", base: true, pro: true, business: true },
+            { name: "AI-generated ideas tailored to your brand", base: true, pro: true, business: true },
+            { name: "AI trend suggestions", base: true, pro: true, business: true },
+            { name: "URL into social media post", base: true, pro: true, business: true },
+            { name: "Hashtag generation", base: true, pro: true, business: true },
+            { name: "Built-in graphic design tool", base: true, pro: true, business: true }
           ]
         },
-        analytics: {
-          title: "Analytics",
+        socialPoster: {
+          title: "Social Poster",
           items: [
-            { name: "Mentions Volume", founder: "2K mentions/mo", business: "10K mentions/mo", enterprise: "Unlimited" },
-            { name: "Engagement Tracking", founder: true, business: true, enterprise: true },
-            { name: "Reach Tracking", founder: true, business: true, enterprise: true },
-            { name: "Update Frequency", founder: "Every 12h", business: "Every hour", enterprise: "Real-time" },
-            { name: "AI Agents", founder: "9 agents", business: "9 agents", enterprise: "Unlimited" },
-            { name: "Active Dashboard™", founder: true, business: true, enterprise: true },
-            { name: "AI Sentiment Analysis", founder: true, business: true, enterprise: true },
-            { name: "Events Detection", founder: true, business: true, enterprise: true },
-            { name: "AI Brand Assistant", founder: "Limited", business: "Advanced", enterprise: "Full" }
+            { name: "Social media profiles for posting", base: "5", pro: "10 (more upon request)", business: "10 (more upon request)" },
+            { name: "Posts to schedule per month", base: "50", pro: "unlimited", business: "unlimited" },
+            { name: "Interactive calendar", base: true, pro: true, business: true },
+            { name: "Best time to post suggestions", base: true, pro: true, business: true },
+            { name: "Instagram stories, first comment, and link in bio", base: true, pro: true, business: true },
+            { name: "Bitly integration and UTM code generator", base: true, pro: true, business: true },
+            { name: "Tagging", base: true, pro: true, business: true },
+            { name: "Custom RSS feed", base: true, pro: true, business: true }
+          ]
+        },
+        socialTracker: {
+          title: "Social Tracker",
+          items: [
+            { name: "Social media profiles for monitoring", base: "10", pro: "20 (more upon request)", business: "20 (more upon request)" },
+            { name: "Competitor performance analysis", base: true, pro: true, business: true },
+            { name: "Competitor content monitoring", base: true, pro: true, business: true },
+            { name: "Compare view", base: true, pro: true, business: true },
+            { name: "Historical data", base: true, pro: true, business: true },
+            { name: "Email reports", base: true, pro: true, business: true },
+            { name: "CSV and white-labeled PDF reports", base: true, pro: true, business: true }
+          ]
+        },
+        socialAnalytics: {
+          title: "Social Analytics",
+          items: [
+            { name: "Performance by social media platform", base: true, pro: true, business: true },
+            { name: "Post analytics", base: true, pro: true, business: true },
+            { name: "Data retention", base: "24 months", pro: "24 months", business: "24 months" },
+            { name: "Email reports", base: true, pro: true, business: true },
+            { name: "CSV and white-labeled PDF reports", base: true, pro: true, business: true }
+          ]
+        },
+        contentInsights: {
+          title: "Social Content Insights",
+          items: [
+            { name: "Performance by social media platform", base: true, pro: true, business: true },
+            { name: "Performance by tag", base: true, pro: true, business: true },
+            { name: "Performance by post type", base: true, pro: true, business: true }
+          ]
+        },
+        influencerAnalytics: {
+          title: "Influencer Analytics",
+          items: [
+            { name: "Influencer discovery", base: false, pro: false, business: true },
+            { name: "Performance analytics", base: false, pro: false, business: true },
+            { name: "Campaign management", base: false, pro: false, business: "add-on" },
+            { name: "Competitor research", base: false, pro: false, business: "add-on" }
+          ]
+        },
+        mediaMonitoring: {
+          title: "Media Monitoring",
+          items: [
+            { name: "Keywords to monitor", base: false, pro: false, business: "2 (more upon request)" },
+            { name: "Sentiment analysis", base: false, pro: false, business: true },
+            { name: "Reach trend", base: false, pro: false, business: true },
+            { name: "Email reports", base: false, pro: false, business: true }
           ]
         },
         reporting: {
-          title: "Reporting & Alerts",
+          title: "Reporting",
           items: [
-            { name: "Daily Reports", founder: true, business: true, enterprise: true },
-            { name: "Weekly Reports", founder: true, business: true, enterprise: true },
-            { name: "Storm Alerts", founder: true, business: true, enterprise: true },
-            { name: "Push Notifications", founder: true, business: true, enterprise: true },
-            { name: "Slack/Teams Integration", founder: false, business: true, enterprise: true },
-            { name: "White-label Reports", founder: false, business: true, enterprise: true },
-            { name: "Excel Reports", founder: false, business: true, enterprise: true },
-            { name: "PowerPoint Presentations", founder: false, business: true, enterprise: true }
-          ]
-        },
-        support: {
-          title: "Support & Integration",
-          items: [
-            { name: "24/7 Support", founder: true, business: true, enterprise: true },
-            { name: "Team Seats", founder: "1 seat", business: "5 seats", enterprise: "Unlimited" },
-            { name: "ERP Integration", founder: false, business: true, enterprise: true },
-            { name: "Full API Access", founder: false, business: false, enterprise: true },
-            { name: "Dedicated Success Manager", founder: false, business: false, enterprise: true },
-            { name: "Full Customization", founder: false, business: false, enterprise: true }
+            { name: "Base reports", base: "2", pro: "2", business: "2" }
           ]
         }
       }
@@ -197,7 +239,7 @@ export const Pricing = () => {
 
   const t = content[language];
 
-  const renderFeatureValue = (feature: any, plan: 'founder' | 'business' | 'enterprise') => {
+  const renderFeatureValue = (feature: any, plan: 'base' | 'pro' | 'business') => {
     const value = feature[plan];
     
     if (typeof value === 'boolean') {
@@ -316,13 +358,13 @@ export const Pricing = () => {
                             {feature.name}
                           </td>
                           <td className="py-4 text-center">
-                            {renderFeatureValue(feature, 'founder')}
+                            {renderFeatureValue(feature, 'base')}
+                          </td>
+                          <td className="py-4 text-center">
+                            {renderFeatureValue(feature, 'pro')}
                           </td>
                           <td className="py-4 text-center">
                             {renderFeatureValue(feature, 'business')}
-                          </td>
-                          <td className="py-4 text-center">
-                            {renderFeatureValue(feature, 'enterprise')}
                           </td>
                         </tr>
                       ))}
