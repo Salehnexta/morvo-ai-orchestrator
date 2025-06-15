@@ -2,8 +2,6 @@
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 export const Footer = () => {
   const { theme } = useTheme();
@@ -20,10 +18,6 @@ export const Footer = () => {
       resourceItems: ["قصص النجاح", "التحديثات", "مركز المساعدة", "الأسئلة الشائعة"],
       supportLegal: "الدعم والقانونية",
       supportLegalItems: ["الدعم", "تواصل معنا", "حالة الخدمة", "الشروط والأحكام", "سياسة الخصوصية"],
-      newsletter: "اشترك في النشرة الإخبارية",
-      newsletterDesc: "احصل على آخر التحديثات والنصائح التسويقية المدعومة بالذكاء الاصطناعي",
-      emailPlaceholder: "أدخل بريدك الإلكتروني",
-      subscribe: "اشتراك",
       rights: "جميع الحقوق محفوظة",
       contactInfo: "معلومات الاتصال",
       address: "الرياض، المملكة العربية السعودية",
@@ -40,10 +34,6 @@ export const Footer = () => {
       resourceItems: ["Success Stories", "Updates", "Help Center", "FAQ"],
       supportLegal: "Support & Legal",
       supportLegalItems: ["Support", "Contact Us", "Service Status", "Terms & Conditions", "Privacy Policy"],
-      newsletter: "Subscribe to Newsletter",
-      newsletterDesc: "Get the latest updates and AI-powered marketing tips",
-      emailPlaceholder: "Enter your email address",
-      subscribe: "Subscribe",
       rights: "All rights reserved",
       contactInfo: "Contact Info",
       address: "Riyadh, Saudi Arabia",
@@ -56,30 +46,6 @@ export const Footer = () => {
 
   return (
     <footer className="bg-gray-900 text-white" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Newsletter Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            {t.newsletter}
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            {t.newsletterDesc}
-          </p>
-          <div className={`flex flex-col sm:flex-row gap-4 max-w-md mx-auto ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-            <Input
-              type="email"
-              placeholder={t.emailPlaceholder}
-              className="flex-1 px-4 py-3 text-gray-900 bg-white border-0 rounded-lg focus:ring-2 focus:ring-white"
-            />
-            <Button 
-              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 font-semibold rounded-lg transition-colors"
-            >
-              {t.subscribe}
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 ${isRTL ? 'text-right' : 'text-left'}`}>
