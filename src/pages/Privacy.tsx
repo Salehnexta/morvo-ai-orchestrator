@@ -10,110 +10,102 @@ export const Privacy = () => {
 
   const content = {
     ar: {
-      title: "سياسة الخصوصية",
+      title: "سياسة الخصوصية لـ Morvo AI",
       lastUpdated: "آخر تحديث: 15 يونيو 2024",
       sections: [
         {
-          title: "1. مقدمة",
-          content: "في مورفو، نحن ملتزمون بحماية خصوصيتك وبياناتك الشخصية. تشرح هذه السياسة كيف نجمع ونستخدم ونحمي معلوماتك عند استخدام منصتنا."
+          title: "المقدمة",
+          content: "ترحب بكم Morvo AI (\"نحن\"، \"لنا\"). نحن نلتزم بشدة بحماية خصوصية وأمن بياناتكم الشخصية. تقدم سياسة الخصوصية هذه (\"السياسة\") شرحًا شاملاً ومفصلاً حول الآلية التي نتبعها في جمع، واستخدام، وتخزين، ومعالجة، ومشاركة، وحماية بياناتكم الشخصية.\n\nتنطبق هذه السياسة عندما تقومون بالتسجيل، أو استخدام، أو الوصول، أو التفاعل مع أي من منصاتنا، أو مواقعنا الإلكترونية، أو منتجاتنا، أو خدماتنا.\n\nلأغراض هذه السياسة، نقوم بجمع واستخدام المعلومات من فئات المستخدمين التالية: التجار، العملاء، المستهلكون، الشركاء، والزوار."
         },
         {
-          title: "2. المعلومات التي نجمعها",
-          content: "نجمع المعلومات التي تقدمها لنا مباشرة مثل اسمك وعنوان بريدك الإلكتروني ومعلومات الدفع. كما نجمع معلومات حول كيفية استخدامك لمنصتنا تلقائياً."
+          title: "جمع البيانات والمعلومات",
+          content: "نقوم بجمع معلوماتكم الشخصية من خلال قنوات متعددة لتمكينكم من استخدام منصتنا وتحقيق مصالحنا المشروعة في الحفاظ على علاقتنا التجارية، ومنع المخاطر والاحتيال، وتقديم خدمات فعالة.\n\n1. المعلومات التي تقدمونها مباشرة: نجمع المعلومات التي تزودوننا بها طوعًا عند التسجيل في خدماتنا، أو ملء النماذج، أو التواصل مع فريق الدعم.\n\n2. المعلومات التي نجمعها تلقائيًا: عند استخدامكم لخدماتنا، نقوم تلقائيًا بجمع معلومات معينة حول جهازكم وأنشطتكم.\n\n3. المعلومات التي نحصل عليها من أطراف ثالثة: قد نتلقى معلومات عنكم من مصادر أخرى، مثل شركائنا في الدفع، وخدمات التحقق من الهوية."
         },
         {
-          title: "3. كيف نستخدم معلوماتك",
-          content: "نستخدم المعلومات المجمعة لتقديم وتحسين خدماتنا، ومعالجة المدفوعات، والتواصل معك، وتخصيص تجربتك، وضمان أمان منصتنا."
+          title: "أنواع المعلومات التي نجمعها",
+          content: "بصفتك تاجرًا: نجمع مجموعة واسعة من المعلومات لدعم أعمالك، بما في ذلك تفاصيل العمل الكاملة، معلومات الدفع، والمستندات التعريفية الرسمية.\n\nبصفتك مستهلكًا: نقوم بجمع معلومات الحساب ومعلومات الاتصال مثل اسمك، وعنوان الشحن، وتفاصيل الدفع، وعنوان بريدك الإلكتروني.\n\nبصفتك شريكًا: نقوم بجمع تفاصيل عملك، ومعلومات الدفع، والمستندات التعريفية لك ولموظفيك.\n\nبصفتك زائرًا: عند زيارتك لمواقعنا، نجمع معلومات حول سلوك التصفح الخاص بك، مثل عنوان IP، ونوع المتصفح، والصفحات التي تزورها."
         },
         {
-          title: "4. مشاركة المعلومات",
-          content: "لا نبيع أو نؤجر أو نشارك معلوماتك الشخصية مع أطراف ثالثة دون موافقتك الصريحة، باستثناء الحالات المطلوبة قانونياً أو لتقديم الخدمات الأساسية."
+          title: "المعالجة والاستخدام",
+          content: "تتم معالجة بياناتك الشخصية بشكل قانوني وعادل وشفاف، بما يتوافق مع مصالحنا المشروعة والتزاماتنا التعاقدية. نستخدم معلوماتك للأغراض التالية:\n\n• تقديم وتحسين خدماتنا: نستخدم بياناتك لتشغيل وصيانة وتوفير كافة ميزات منصتنا.\n• الاتصالات والتسويق: نستخدم معلومات الاتصال الخاصة بك لإرسال إشعارات هامة حول الخدمة.\n• الأمان ومنع الاحتيال: نستخدم البيانات لمراقبة الأنشطة المشبوهة، ومنع الاحتيال.\n• التحليلات والأبحاث: نقوم بتحليل بيانات الاستخدام لفهم كيفية تفاعل المستخدمين مع خدماتنا."
         },
         {
-          title: "5. أمان البيانات",
-          content: "نستخدم تدابير أمنية متقدمة لحماية بياناتك، بما في ذلك التشفير وأنظمة الأمان المتعددة الطبقات. جميع البيانات محفوظة في خوادم آمنة ومشفرة."
+          title: "مشاركة المعلومات والبيانات",
+          content: "نحن لا نبيع بياناتك الشخصية. ومع ذلك، قد نشارك معلوماتك مع أطراف ثالثة موثوقة في ظروف محددة:\n\n• مزودو الخدمات: نشارك المعلومات مع الشركات التي تساعدنا في عملياتنا التجارية، مثل بوابات الدفع، وخدمات الحوسبة السحابية.\n• الشركاء: عندما يقوم تاجر بتثبيت تطبيق أو خدمة من أحد شركائنا، فإننا نشارك معلومات التاجر اللازمة.\n• الامتثال القانوني: قد نكشف عن معلوماتك إذا كنا نعتقد بحسن نية أن الإفصاح ضروري للامتثال لقانون أو لائحة سارية.\n• بموافقتك: قد نشارك معلوماتك مع أطراف أخرى عندما نحصل على موافقتك الصريحة."
         },
         {
-          title: "6. ملفات تعريف الارتباط",
-          content: "نستخدم ملفات تعريف الارتباط لتحسين تجربتك وتذكر تفضيلاتك. يمكنك إدارة إعدادات ملفات تعريف الارتباط من خلال متصفحك."
+          title: "الحقوق المتعلقة بالمعلومات والبيانات",
+          content: "بصفتك مالكًا للبيانات الشخصية، تمنحك القوانين المعمول بها مجموعة من الحقوق:\n\n• الحق في العلم: الحق في أن يتم إخبارك بالأساس القانوني لجمع بياناتك والغرض منها.\n• الحق في الوصول: الحق في طلب الوصول إلى بياناتك الشخصية التي نحتفظ بها ومراجعتها.\n• الحق في التصحيح: الحق في طلب تصحيح أو استكمال أو تحديث أي بيانات شخصية غير دقيقة.\n• الحق في الحذف: الحق في طلب حذف بياناتك الشخصية عندما لا تعود هناك حاجة للاحتفاظ بها.\n• الحق في سحب الموافقة: الحق في سحب موافقتك على معالجة بياناتك الشخصية في أي وقت."
         },
         {
-          title: "7. حقوقك",
-          content: "لديك الحق في الوصول إلى بياناتك الشخصية وتصحيحها وحذفها. يمكنك أيضاً طلب نسخة من جميع البيانات التي نحتفظ بها عنك."
+          title: "حماية وأمن المعلومات",
+          content: "نحن نأخذ أمن البيانات على محمل الجد ونطبق تدابير تنظيمية وتقنية وإدارية قوية ومناسبة لحماية بياناتك الشخصية من الوصول غير المصرح به، أو التغيير، أو الإفصاح، أو الإتلاف.\n\nتشمل هذه الإجراءات استخدام التشفير للبيانات أثناء النقل والتخزين، وتطبيق ضوابط صارمة للوصول إلى البيانات، وإجراء تقييمات أمنية منتظمة. ومع ذلك، لا توجد طريقة نقل عبر الإنترنت أو تخزين إلكتروني آمنة بنسبة 100%، لذا لا يمكننا ضمان الأمان المطلق."
         },
         {
-          title: "8. الاحتفاظ بالبيانات",
-          content: "نحتفظ بمعلوماتك الشخصية طالما كان حسابك نشطاً أو حسب الحاجة لتقديم الخدمات. يمكنك طلب حذف بياناتك في أي وقت."
+          title: "نقل البيانات عبر الحدود",
+          content: "قد يتم نقل بياناتك الشخصية ومعالجتها وتخزينها في بلدان أخرى خارج بلد إقامتك، حيث قد تكون قوانين حماية البيانات مختلفة. عند نقل بياناتك عبر الحدود، سنتخذ جميع الخطوات اللازمة لضمان حماية بياناتك بشكل كافٍ ووفقًا لمتطلبات القوانين المعمول بها."
         },
         {
-          title: "9. خدمات الطرف الثالث",
-          content: "قد تحتوي منصتنا على روابط لخدمات الطرف الثالث. لسنا مسؤولين عن ممارسات الخصوصية لهذه الخدمات ونشجعك على مراجعة سياساتهم."
+          title: "الاحتفاظ بالبيانات",
+          content: "سنحتفظ ببياناتك الشخصية فقط طالما كان ذلك ضروريًا لتحقيق الأغراض التي تم جمعها من أجلها، بما في ذلك الامتثال لالتزاماتنا التعاقدية والقانونية، وحل النزاعات، وإنفاذ سياساتنا. بعد انتهاء الغرض من جمعها، سنقوم بإتلاف بياناتك الشخصية بشكل آمن، ما لم يكن هناك مبرر نظامي للاحتفاظ بها لفترة أطول."
         },
         {
-          title: "10. التغييرات على السياسة",
-          content: "قد نحدث هذه السياسة من وقت لآخر. سنقوم بإشعارك بأي تغييرات مهمة عبر البريد الإلكتروني أو من خلال إشعار على منصتنا."
+          title: "الإفصاح عن المعلومات",
+          content: "لن يتم الكشف عن بياناتك الشخصية للجمهور أو لأي طرف ثالث دون موافقتك المسبقة، إلا في الحالات الاستثنائية التي يتطلبها القانون، مثل طلب من جهة حكومية أو قضائية مختصة لأغراض أمنية أو لتنفيذ نظام معين."
         },
         {
-          title: "11. الامتثال القانوني",
-          content: "نلتزم بقوانين حماية البيانات المعمول بها في المملكة العربية السعودية ونظام حماية البيانات الشخصية."
-        },
-        {
-          title: "12. التواصل معنا",
-          content: "للأسئلة حول سياسة الخصوصية أو لممارسة حقوقك، يرجى التواصل معنا على: privacy@morvo.ai أو +966 50 123 4567"
+          title: "الاتصال بنا",
+          content: "إذا كان لديكم أي استفسارات أو مخاوف حول سياسة الخصوصية هذه أو كيفية تعاملنا مع معلوماتكم الشخصية، يرجى عدم التردد في التواصل مع مسؤول حماية البيانات لدينا:\n\nMorvo AI\nللعناية: مسؤول حماية البيانات\nالبريد الإلكتروني: privacy@morvo.ai"
         }
       ]
     },
     en: {
-      title: "Privacy Policy",
+      title: "Privacy Policy for Morvo AI",
       lastUpdated: "Last updated: June 15, 2024",
       sections: [
         {
-          title: "1. Introduction",
-          content: "At Morvo, we are committed to protecting your privacy and personal data. This policy explains how we collect, use, and protect your information when you use our platform."
+          title: "Introduction",
+          content: "Welcome to Morvo AI (\"we\", \"us\"). We are strongly committed to protecting the privacy and security of your personal data. This Privacy Policy (\"Policy\") provides a comprehensive and detailed explanation of how we collect, use, store, process, share, and protect your personal data.\n\nThis Policy applies when you register, use, access, or interact with any of our platforms, websites, products, or services.\n\nFor the purposes of this Policy, we collect and use information from the following user categories: merchants, customers, consumers, partners, and visitors."
         },
         {
-          title: "2. Information We Collect",
-          content: "We collect information you provide directly such as your name, email address, and payment information. We also automatically collect information about how you use our platform."
+          title: "Data and Information Collection",
+          content: "We collect your personal information through multiple channels to enable you to use our platform and achieve our legitimate interests in maintaining our business relationship, preventing risks and fraud, and providing effective services.\n\n1. Information you provide directly: We collect information you voluntarily provide when registering for our services, filling out forms, or contacting our support team.\n\n2. Information we collect automatically: When you use our services, we automatically collect certain information about your device and activities.\n\n3. Information we obtain from third parties: We may receive information about you from other sources, such as our payment partners and identity verification services."
         },
         {
-          title: "3. How We Use Your Information",
-          content: "We use collected information to provide and improve our services, process payments, communicate with you, personalize your experience, and ensure platform security."
+          title: "Types of Information We Collect",
+          content: "As a merchant: We collect a wide range of information to support your business, including complete business details, payment information, and official identification documents.\n\nAs a consumer: We collect account information and contact details such as your name, shipping address, payment details, and email address.\n\nAs a partner: We collect your business details, payment information, and identification documents for you and your employees.\n\nAs a visitor: When you visit our websites, we collect information about your browsing behavior, such as IP address, browser type, and pages you visit."
         },
         {
-          title: "4. Information Sharing",
-          content: "We do not sell, rent, or share your personal information with third parties without your explicit consent, except as required by law or to provide essential services."
+          title: "Processing and Use",
+          content: "Your personal data is processed legally, fairly, and transparently, in accordance with our legitimate interests and contractual obligations. We use your information for the following purposes:\n\n• Providing and improving our services: We use your data to operate, maintain, and provide all features of our platform.\n• Communications and marketing: We use your contact information to send important service notifications.\n• Security and fraud prevention: We use data to monitor suspicious activities and prevent fraud.\n• Analytics and research: We analyze usage data to understand how users interact with our services."
         },
         {
-          title: "5. Data Security",
-          content: "We use advanced security measures to protect your data, including encryption and multi-layered security systems. All data is stored on secure and encrypted servers."
+          title: "Information and Data Sharing",
+          content: "We do not sell your personal data. However, we may share your information with trusted third parties under specific circumstances:\n\n• Service providers: We share information with companies that help us with our business operations, such as payment gateways and cloud computing services.\n• Partners: When a merchant installs an app or service from one of our partners, we share necessary merchant information.\n• Legal compliance: We may disclose your information if we believe in good faith that disclosure is necessary to comply with applicable law or regulation.\n• With your consent: We may share your information with other parties when we obtain your explicit consent."
         },
         {
-          title: "6. Cookies",
-          content: "We use cookies to improve your experience and remember your preferences. You can manage cookie settings through your browser."
+          title: "Information and Data Rights",
+          content: "As a personal data owner, applicable laws grant you a set of rights:\n\n• Right to know: The right to be informed about the legal basis for collecting your data and its purpose.\n• Right to access: The right to request access to and review your personal data we hold.\n• Right to correction: The right to request correction, completion, or updating of any inaccurate personal data.\n• Right to deletion: The right to request deletion of your personal data when there is no longer a need to retain it.\n• Right to withdraw consent: The right to withdraw your consent to process your personal data at any time."
         },
         {
-          title: "7. Your Rights",
-          content: "You have the right to access, correct, and delete your personal data. You can also request a copy of all data we hold about you."
+          title: "Information Protection and Security",
+          content: "We take data security seriously and implement strong and appropriate organizational, technical, and administrative measures to protect your personal data from unauthorized access, alteration, disclosure, or destruction.\n\nThese procedures include using encryption for data in transit and storage, implementing strict data access controls, and conducting regular security assessments. However, no method of transmission over the Internet or electronic storage is 100% secure, so we cannot guarantee absolute security."
         },
         {
-          title: "8. Data Retention",
-          content: "We retain your personal information as long as your account is active or as needed to provide services. You can request deletion of your data at any time."
+          title: "Cross-Border Data Transfer",
+          content: "Your personal data may be transferred, processed, and stored in countries other than your country of residence, where data protection laws may be different. When transferring your data across borders, we will take all necessary steps to ensure your data is adequately protected and in accordance with applicable law requirements."
         },
         {
-          title: "9. Third Party Services",
-          content: "Our platform may contain links to third party services. We are not responsible for the privacy practices of these services and encourage you to review their policies."
+          title: "Data Retention",
+          content: "We will retain your personal data only as long as necessary to achieve the purposes for which it was collected, including compliance with our contractual and legal obligations, resolving disputes, and enforcing our policies. After the purpose of collection ends, we will securely destroy your personal data unless there is a legitimate reason to retain it for a longer period."
         },
         {
-          title: "10. Policy Changes",
-          content: "We may update this policy from time to time. We will notify you of any significant changes via email or through a notice on our platform."
+          title: "Information Disclosure",
+          content: "Your personal data will not be disclosed to the public or any third party without your prior consent, except in exceptional cases required by law, such as a request from a competent governmental or judicial authority for security purposes or to implement a specific system."
         },
         {
-          title: "11. Legal Compliance",
-          content: "We comply with applicable data protection laws in Saudi Arabia and the Personal Data Protection System."
-        },
-        {
-          title: "12. Contact Us",
-          content: "For questions about this privacy policy or to exercise your rights, please contact us at: privacy@morvo.ai or +966 50 123 4567"
+          title: "Contact Us",
+          content: "If you have any questions or concerns about this Privacy Policy or how we handle your personal information, please do not hesitate to contact our Data Protection Officer:\n\nMorvo AI\nAttn: Data Protection Officer\nEmail: privacy@morvo.ai"
         }
       ]
     }
@@ -149,11 +141,11 @@ export const Privacy = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className={`leading-relaxed ${
+                  <div className={`leading-relaxed whitespace-pre-line ${
                     theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                   } ${isRTL ? 'text-right' : 'text-left'}`}>
                     {section.content}
-                  </p>
+                  </div>
                 </CardContent>
               </Card>
             ))}
