@@ -1,4 +1,3 @@
-
 import { ChatInterface } from "@/components/ChatInterface";
 import { DashboardContent } from "@/components/DashboardContent";
 import { ProtectedDashboard } from "@/components/ProtectedDashboard";
@@ -47,19 +46,15 @@ const Dashboard = () => {
 
           {/* Dashboard Content - 60% width */}
           <div 
-            className="flex-1 relative bg-cover bg-center"
-            style={{ backgroundImage: `url('/lovable-uploads/7e7bed8d-ffc0-479e-8da9-0d358cca4983.png')` }}
+            className="flex-1 bg-gradient-to-b from-zinc-900 to-black"
           >
-            <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
-            <div className="relative z-10 h-full">
-              <DashboardContent 
-                data={mockData}
-                theme={theme}
-                language={language}
-                isRTL={isRTL}
-                content={content}
-              />
-            </div>
+            <DashboardContent 
+              data={mockData}
+              theme={theme}
+              language={language}
+              isRTL={isRTL}
+              content={content}
+            />
           </div>
         </div>
       </div>
