@@ -394,302 +394,293 @@ const Index = () => {
         </div>
       </section>
 
-      {language === "ar" && (
-        <>
-          {/* AI Agents Section */}
-          <section
-            className={`py-20 ${
-              theme === "dark" ? "bg-gray-800/50" : "bg-gray-50/50"
-            }`}
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-16">
-                <h2
-                  className={`text-3xl md:text-5xl font-bold mb-6 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  {t.agents.title}
-                </h2>
-                <p
-                  className={`text-xl ${
-                    theme === "dark" ? "text-gray-400" : "text-gray-600"
-                  } max-w-4xl mx-auto`}
-                >
-                  {t.agents.subtitle}
-                </p>
-              </div>
+      {/* AI Agents Section */}
+      <section
+        className={`py-20 ${
+          theme === "dark" ? "bg-gray-800/50" : "bg-gray-50/50"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2
+              className={`text-3xl md:text-5xl font-bold mb-6 ${
+                theme === "dark" ? "text-white" : "text-gray-900"
+              }`}
+            >
+              {t.agents.title}
+            </h2>
+            <p
+              className={`text-xl ${
+                theme === "dark" ? "text-gray-400" : "text-gray-600"
+              } max-w-4xl mx-auto`}
+            >
+              {t.agents.subtitle}
+            </p>
+          </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {t.agents.items.map((agent, index) => (
-                  <div
-                    key={index}
-                    className={`p-6 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
-                      theme === "dark"
-                        ? "bg-gray-900/50 border-gray-700 hover:border-gray-600"
-                        : "bg-white border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <h3
-                      className={`text-lg font-bold mb-2 ${
-                        theme === "dark" ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {agent.name}
-                    </h3>
-                    <p
-                      className={`text-sm mb-3 ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-500"
-                      }`}
-                    >
-                      {agent.englishName}
-                    </p>
-                    <p
-                      className={`${
-                        theme === "dark" ? "text-gray-300" : "text-gray-700"
-                      } leading-relaxed text-sm`}
-                    >
-                      {agent.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Process Section */}
-          <section className="py-20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-16">
-                <h2
-                  className={`text-3xl md:text-4xl font-bold mb-6 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  {t.process.title}
-                </h2>
-                <p
-                  className={`text-lg ${
-                    theme === "dark" ? "text-gray-400" : "text-gray-600"
-                  } max-w-4xl mx-auto leading-relaxed`}
-                >
-                  {t.process.subtitle}
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-8">
-                {t.process.steps.map((step, index) => (
-                  <div
-                    key={index}
-                    className={`text-center p-8 rounded-2xl border ${
-                      theme === "dark"
-                        ? "bg-gray-900/50 border-gray-700"
-                        : "bg-white border-gray-200"
-                    }`}
-                  >
-                    <div className="text-4xl mb-4">{step.icon}</div>
-                    <h3
-                      className={`text-xl font-bold mb-4 ${
-                        theme === "dark" ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {step.title}
-                    </h3>
-                    <p
-                      className={`${
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
-                      } leading-relaxed`}
-                    >
-                      {step.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Dashboard Section */}
-          <section
-            className={`py-20 ${
-              theme === "dark" ? "bg-gray-800/50" : "bg-gray-50/50"
-            }`}
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-16">
-                <h2
-                  className={`text-3xl md:text-4xl font-bold mb-6 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  {t.dashboard.title}
-                </h2>
-                <p
-                  className={`text-lg ${
-                    theme === "dark" ? "text-gray-400" : "text-gray-600"
-                  } max-w-3xl mx-auto`}
-                >
-                  {t.dashboard.subtitle}
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-8">
-                {t.dashboard.features.map((feature, index) => (
-                  <div
-                    key={index}
-                    className={`p-6 rounded-xl border flex items-start gap-4 ${
-                      theme === "dark"
-                        ? "bg-gray-900/50 border-gray-700"
-                        : "bg-white border-gray-200"
-                    }`}
-                  >
-                    <div className="text-3xl">{feature.icon}</div>
-                    <div>
-                      <h3
-                        className={`text-lg font-bold mb-2 ${
-                          theme === "dark" ? "text-white" : "text-gray-900"
-                        }`}
-                      >
-                        {feature.title}
-                      </h3>
-                      <p
-                        className={`${
-                          theme === "dark" ? "text-gray-400" : "text-gray-600"
-                        } leading-relaxed`}
-                      >
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Pricing Section */}
-          <section
-            className={`py-20 ${
-              theme === "dark" ? "bg-gray-800/50" : "bg-gray-50/50"
-            }`}
-          >
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {t.agents.items.map((agent, index) => (
               <div
-                className={`p-8 rounded-2xl border text-center ${
+                key={index}
+                className={`p-6 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
                   theme === "dark"
-                    ? "bg-gradient-to-r from-orange-900/50 to-red-900/50 border-orange-800/50"
-                    : "bg-gradient-to-r from-orange-50 to-red-50 border-orange-200"
+                    ? "bg-gray-900/50 border-gray-700 hover:border-gray-600"
+                    : "bg-white border-gray-200 hover:border-gray-300"
                 }`}
               >
-                <h2
-                  className={`text-3xl md:text-4xl font-bold mb-6 ${
+                <h3
+                  className={`text-lg font-bold mb-2 ${
                     theme === "dark" ? "text-white" : "text-gray-900"
                   }`}
                 >
-                  {t.pricing.title}
-                </h2>
-
-                <div className="mb-6">
+                  {agent.name}
+                </h3>
+                {language === "ar" && (
                   <p
-                    className={`text-3xl font-bold ${
-                      theme === "dark" ? "text-green-400" : "text-green-600"
-                    }`}
-                  >
-                    {t.pricing.price}
-                  </p>
-                  <p
-                    className={`text-sm ${
+                    className={`text-sm mb-3 ${
                       theme === "dark" ? "text-gray-400" : "text-gray-500"
                     }`}
                   >
-                    {t.pricing.subtitle}
+                    {agent.englishName}
                   </p>
-                </div>
-
-                <ul className="space-y-2 mb-8">
-                  {t.pricing.features.map((feature, index) => (
-                    <li
-                      key={index}
-                      className={`flex items-center justify-center gap-2 ${
-                        theme === "dark" ? "text-gray-300" : "text-gray-700"
-                      }`}
-                    >
-                      <span className="text-green-500">✅</span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mb-6">
-                  <p
-                    className={`${
-                      theme === "dark" ? "text-orange-400" : "text-orange-600"
-                    } font-semibold mb-2`}
-                  >
-                    {t.pricing.remaining}
-                  </p>
-                  <p
-                    className={`${
-                      theme === "dark" ? "text-red-400" : "text-red-600"
-                    } font-semibold`}
-                  >
-                    {t.pricing.urgency}
-                  </p>
-                </div>
-
-                <Button
-                  size="lg"
-                  onClick={() => setIsChatOpen(true)}
-                  className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold"
+                )}
+                <p
+                  className={`${
+                    theme === "dark" ? "text-gray-300" : "text-gray-700"
+                  } leading-relaxed text-sm`}
                 >
-                  {t.pricing.ctaButton}
-                </Button>
+                  {agent.description}
+                </p>
               </div>
-            </div>
-          </section>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          {/* Final CTA Section */}
-          <section className="py-20">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h2
-                className={`text-3xl md:text-5xl font-bold mb-6 ${
-                  theme === "dark" ? "text-white" : "text-gray-900"
+      {/* Process Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2
+              className={`text-3xl md:text-4xl font-bold mb-6 ${
+                theme === "dark" ? "text-white" : "text-gray-900"
+              }`}
+            >
+              {t.process.title}
+            </h2>
+            <p
+              className={`text-lg ${
+                theme === "dark" ? "text-gray-400" : "text-gray-600"
+              } max-w-4xl mx-auto leading-relaxed`}
+            >
+              {t.process.subtitle}
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {t.process.steps.map((step, index) => (
+              <div
+                key={index}
+                className={`text-center p-8 rounded-2xl border ${
+                  theme === "dark"
+                    ? "bg-gray-900/50 border-gray-700"
+                    : "bg-white border-gray-200"
                 }`}
               >
-                {t.finalCta.title}
-              </h2>
-              <p
-                className={`text-xl mb-8 ${
-                  theme === "dark" ? "text-gray-300" : "text-gray-700"
-                } leading-relaxed`}
-              >
-                {t.finalCta.description}
-              </p>
+                <div className="text-4xl mb-4">{step.icon}</div>
+                <h3
+                  className={`text-xl font-bold mb-4 ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {step.title}
+                </h3>
+                <p
+                  className={`${
+                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  } leading-relaxed`}
+                >
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              <p
-                className={`text-2xl font-bold mb-8 ${
-                  theme === "dark" ? "text-white" : "text-gray-900"
+      {/* Dashboard Section */}
+      <section
+        className={`py-20 ${
+          theme === "dark" ? "bg-gray-800/50" : "bg-gray-50/50"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2
+              className={`text-3xl md:text-4xl font-bold mb-6 ${
+                theme === "dark" ? "text-white" : "text-gray-900"
+              }`}
+            >
+              {t.dashboard.title}
+            </h2>
+            <p
+              className={`text-lg ${
+                theme === "dark" ? "text-gray-400" : "text-gray-600"
+              } max-w-3xl mx-auto`}
+            >
+              {t.dashboard.subtitle}
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {t.dashboard.features.map((feature, index) => (
+              <div
+                key={index}
+                className={`p-6 rounded-xl border flex items-start gap-4 ${
+                  theme === "dark"
+                    ? "bg-gray-900/50 border-gray-700"
+                    : "bg-white border-gray-200"
                 }`}
               >
-                {t.finalCta.question}
-              </p>
+                <div className="text-3xl">{feature.icon}</div>
+                <div>
+                  <h3
+                    className={`text-lg font-bold mb-2 ${
+                      theme === "dark" ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    {feature.title}
+                  </h3>
+                  <p
+                    className={`${
+                      theme === "dark" ? "text-gray-400" : "text-gray-600"
+                    } leading-relaxed`}
+                  >
+                    {feature.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              <Button
-                size="lg"
-                onClick={() => setIsChatOpen(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-6 text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-200"
+      {/* Pricing Section */}
+      <section
+        className={`py-20 ${
+          theme === "dark" ? "bg-gray-800/50" : "bg-gray-50/50"
+        }`}
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div
+            className={`p-8 rounded-2xl border text-center ${
+              theme === "dark"
+                ? "bg-gradient-to-r from-orange-900/50 to-red-900/50 border-orange-800/50"
+                : "bg-gradient-to-r from-orange-50 to-red-50 border-orange-200"
+            }`}
+          >
+            <h2
+              className={`text-3xl md:text-4xl font-bold mb-6 ${
+                theme === "dark" ? "text-white" : "text-gray-900"
+              }`}
+            >
+              {t.pricing.title}
+            </h2>
+
+            <div className="mb-6">
+              <p
+                className={`text-3xl font-bold ${
+                  theme === "dark" ? "text-green-400" : "text-green-600"
+                }`}
               >
-                {t.finalCta.button}
-              </Button>
+                {t.pricing.price}
+              </p>
+              <p
+                className={`text-sm ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                {t.pricing.subtitle}
+              </p>
             </div>
-          </section>
-        </>
-      )}
 
-      {language === "en" && (
-        <>
-          {/* Original English sections remain unchanged for now */}
-          {/* ... keep existing code (all English sections) the same ... */}
-        </>
-      )}
+            <ul className="space-y-2 mb-8">
+              {t.pricing.features.map((feature, index) => (
+                <li
+                  key={index}
+                  className={`flex items-center justify-center gap-2 ${
+                    theme === "dark" ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
+                  <span className="text-green-500">✅</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mb-6">
+              <p
+                className={`${
+                  theme === "dark" ? "text-orange-400" : "text-orange-600"
+                } font-semibold mb-2`}
+              >
+                {t.pricing.remaining}
+              </p>
+              <p
+                className={`${
+                  theme === "dark" ? "text-red-400" : "text-red-600"
+                } font-semibold`}
+              >
+                {t.pricing.urgency}
+              </p>
+            </div>
+
+            <Button
+              size="lg"
+              onClick={() => setIsChatOpen(true)}
+              className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold"
+            >
+              {t.pricing.ctaButton}
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2
+            className={`text-3xl md:text-5xl font-bold mb-6 ${
+              theme === "dark" ? "text-white" : "text-gray-900"
+            }`}
+          >
+            {t.finalCta.title}
+          </h2>
+          <p
+            className={`text-xl mb-8 ${
+              theme === "dark" ? "text-gray-300" : "text-gray-700"
+            } leading-relaxed`}
+          >
+            {t.finalCta.description}
+          </p>
+
+          <p
+            className={`text-2xl font-bold mb-8 ${
+              theme === "dark" ? "text-white" : "text-gray-900"
+            }`}
+          >
+            {t.finalCta.question}
+          </p>
+
+          <Button
+            size="lg"
+            onClick={() => setIsChatOpen(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-6 text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-200"
+          >
+            {t.finalCta.button}
+          </Button>
+        </div>
+      </section>
 
       <Footer />
     </div>
