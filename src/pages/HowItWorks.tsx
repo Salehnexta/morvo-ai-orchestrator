@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layouts/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, ArrowLeft, Play, Settings, BarChart, Rocket } from "lucide-react";
+import { ArrowRight, ArrowLeft, Play, Settings, BarChart, Rocket, Clock, Zap } from "lucide-react";
 
 export const HowItWorks = () => {
   const { language, isRTL } = useLanguage();
@@ -12,61 +12,85 @@ export const HowItWorks = () => {
   const content = {
     ar: {
       title: "كيف يعمل مورفو",
-      subtitle: "4 خطوات بسيطة لثورة تسويقية حقيقية",
+      subtitle: "6 خطوات بسيطة للحصول على ذكاء تسويقي فائق",
       steps: [
         {
-          icon: Play,
-          title: "ابدأ رحلتك",
-          description: "أنشئ حسابك واختر الباقة المناسبة لعملك. عملية بسيطة تستغرق دقائق قليلة",
+          icon: Clock,
+          title: "تسجيل فوري (≤ 2 دقيقة)",
+          description: "املأ بريدك → تبدأ فترة تجريبية مجانية 14 يوماً",
           number: "01"
         },
         {
           icon: Settings,
-          title: "اضبط الإعدادات",
-          description: "حدد أهدافك التسويقية ودع عملاء الذكاء الاصطناعي يتعلمون من بياناتك وتفضيلاتك",
+          title: "ربط القنوات بضغطة",
+          description: "شبّك حساباتك الاجتماعيّة ومتجرك الإلكتروني؛ يبدأ جمع البيانات مباشرة",
           number: "02"
         },
         {
           icon: BarChart,
-          title: "راقب الأداء",
-          description: "تابع النتائج في الوقت الفعلي واحصل على تقارير مفصلة عن أداء حملاتك",
+          title: "تعلّم تلقائي",
+          description: "وكلاء AI يتبادلون المعرفة عبر A2A، وMCP يبني ملفاً حيّاً لكل منتج وجمهور",
           number: "03"
         },
         {
-          icon: Rocket,
-          title: "احصد النتائج",
-          description: "شاهد نمو عملك مع زيادة العائد بنسبة 500% وتوفير 90% من الوقت والجهد",
+          icon: Play,
+          title: "لوحة تتحرّك أمامك",
+          description: "تشاهد الإحصاءات تتحدّث كل ثانية بدون أي تحديث يدوي",
           number: "04"
+        },
+        {
+          icon: Zap,
+          title: "أوامر طبيعية",
+          description: "قل: «فعّل حملة خصم 20 ٪» → مورفو يوزّع الميزانية ويجدول المحتوى أوتوماتيكياً",
+          number: "05"
+        },
+        {
+          icon: Rocket,
+          title: "ذكاء ينمو يومياً",
+          description: "كل تفاعل جديد = توصية أذكى، وكل حملة ناجحة = خوارزمية أدقّ",
+          number: "06"
         }
       ]
     },
     en: {
       title: "How Morvo Works",
-      subtitle: "4 simple steps to a real marketing revolution",
+      subtitle: "6 simple steps to get superior marketing intelligence",
       steps: [
         {
-          icon: Play,
-          title: "Start Your Journey",
-          description: "Create your account and choose the right package for your business. A simple process that takes just a few minutes",
+          icon: Clock,
+          title: "Instant Registration (≤ 2 minutes)",
+          description: "Fill in your email → Start a free 14-day trial",
           number: "01"
         },
         {
           icon: Settings,
-          title: "Configure Settings",
-          description: "Set your marketing goals and let AI agents learn from your data and preferences",
+          title: "One-Click Channel Connection",
+          description: "Connect your social accounts and e-store; data collection starts immediately",
           number: "02"
         },
         {
           icon: BarChart,
-          title: "Monitor Performance",
-          description: "Track results in real-time and get detailed reports on your campaign performance",
+          title: "Automatic Learning",
+          description: "AI agents exchange knowledge via A2A, and MCP builds a live profile for each product and audience",
           number: "03"
         },
         {
-          icon: Rocket,
-          title: "Reap Results",
-          description: "Watch your business grow with 500% increase in ROI and 90% time and effort savings",
+          icon: Play,
+          title: "Dashboard That Moves Before You",
+          description: "Watch statistics update every second without any manual refresh",
           number: "04"
+        },
+        {
+          icon: Zap,
+          title: "Natural Commands",
+          description: "Say: 'Activate 20% discount campaign' → Morvo distributes budget and schedules content automatically",
+          number: "05"
+        },
+        {
+          icon: Rocket,
+          title: "Intelligence That Grows Daily",
+          description: "Every new interaction = smarter recommendation, every successful campaign = more accurate algorithm",
+          number: "06"
         }
       ]
     }

@@ -2,9 +2,7 @@
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { MessageCircle, HelpCircle } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export const FAQ = () => {
   const { language, isRTL } = useLanguage();
@@ -13,79 +11,95 @@ export const FAQ = () => {
   const content = {
     ar: {
       title: "الأسئلة الشائعة",
-      subtitle: "إجابات على أكثر الأسئلة تكراراً حول مورفو",
-      contactSupport: "تواصل مع الدعم",
+      subtitle: "إجابات على أهم الأسئلة حول مورفو",
+      finalNote: "لا يزال لديك سؤال؟ راسلنا عبر الدردشة، أو جرّب مورفو مجاناً 14 يوماً واكتشف بنفسك.",
       faqs: [
         {
-          question: "ما هو مورفو وكيف يعمل؟",
-          answer: "مورفو هو أول نظام ذكاء اصطناعي متكامل للتسويق في السوق السعودي. يضم 9 عملاء ذكاء اصطناعي يعملون معاً لتحليل السوق وبناء الاستراتيجيات وتنفيذ الحملات التسويقية بشكل آلي."
+          question: "كم يستغرق الإعداد؟",
+          answer: "أقل من 5 دقائق: تسجيل، ربط القنوات، وتظهر البيانات تلقائياً."
         },
         {
-          question: "كم من الوقت يستغرق إعداد النظام؟",
-          answer: "يمكن إعداد النظام خلال 24 ساعة فقط. بمجرد التسجيل واختيار الباقة المناسبة، سيبدأ فريق الذكاء الاصطناعي في تحليل بياناتك وبناء استراتيجيتك التسويقية."
+          question: "هل النظام يدعم العربية؟",
+          answer: "نعم، يفهم ويحلّل وينشئ محتوى بالعربية والإنجليزية مع مراعاة اللهجة السعودية."
         },
         {
-          question: "هل يدعم النظام اللغة العربية؟",
-          answer: "نعم، مورفو مصمم خصيصاً للسوق السعودي والعربي. يدعم اللغة العربية بشكل كامل مع فهم عميق لثقافة وسلوك المستهلك في المنطقة."
+          question: "كيف يُؤمَّن البيانات؟",
+          answer: "تشفير 256-bit أثناء النقل والتخزين، وتوافق كامل مع GDPR وISO 27001."
         },
         {
-          question: "ما مدى دقة النتائج والتنبؤات؟",
-          answer: "يحقق مورفو دقة تصل إلى 94% في التنبؤات التسويقية، بفضل تقنيات الذكاء الاصطناعي المتقدمة والتعلم المستمر من البيانات."
+          question: "هل يمكن الإلغاء متى شئت؟",
+          answer: "بالتأكيد، لا عقود طويلة؛ يمكنك الإلغاء من لوحة التحكم بنقرة."
         },
         {
-          question: "هل يمكن تجربة النظام قبل الشراء؟",
-          answer: "نعم، نقدم عرضاً تجريبياً مجانياً لمدة 14 يوماً يتيح لك تجربة جميع مميزات النظام وقياس النتائج قبل اتخاذ قرار الشراء."
+          question: "ما الفرق بين مورفو والأدوات المتعددة؟",
+          answer: "يجمع 6–10 أدوات في منصة واحدة، ويقلّل الوقت التشغيلي 90 ٪ ويزيد العائد حتى 5×."
         },
         {
-          question: "كيف يتم تأمين البيانات؟",
-          answer: "نستخدم أحدث معايير الأمان والتشفير لحماية بياناتك. جميع البيانات محفوظة في خوادم آمنة ولا يتم مشاركتها مع أي جهة خارجية."
+          question: "هل تقدّمون خصماً للمنظمات غير الربحية؟",
+          answer: "نعم، خصم 25 ٪ على جميع الباقات. تواصل مع فريق المبيعات لتفعيله."
         },
         {
-          question: "هل يمكن التكامل مع الأنظمة الحالية؟",
-          answer: "نعم، مورفو يدعم التكامل مع أكثر من 100 منصة ونظام مختلف، بما في ذلك أنظمة إدارة علاقات العملاء ومنصات التجارة الإلكترونية."
+          question: "ما قنوات الدعم؟",
+          answer: "دردشة مباشرة داخل اللوحة، واتساب، أو تذكرة بريدية — متوفرة 24/7."
         },
         {
-          question: "ما هو مستوى الدعم الفني المتاح؟",
-          answer: "نوفر دعماً فنياً على مدار الساعة طوال أيام الأسبوع باللغة العربية، بالإضافة إلى مدير حساب مخصص للباقات المتقدمة."
+          question: "كيف أستفيد من تنبيهات الأزمات؟",
+          answer: "عند ارتفاع الذِّكر السلبي أو ظهور وسم مضرّ، يصلك تنبيه مع خطة استجابة فورية."
+        },
+        {
+          question: "هل أحتاج خبرة تقنية؟",
+          answer: "لا، الواجهة محادثة طبيعية ولوحة بصرية بسيطة؛ إذا كنت تعرف تستخدم واتساب فأنت جاهز."
+        },
+        {
+          question: "هل يمكن ربط منصات إضافية؟",
+          answer: "نعم، عبر تكاملات Zapier وAPI المفتوح في باقة المؤسسة."
         }
       ]
     },
     en: {
       title: "Frequently Asked Questions",
-      subtitle: "Answers to the most common questions about Morvo",
-      contactSupport: "Contact Support",
+      subtitle: "Answers to the most important questions about Morvo",
+      finalNote: "Still have a question? Contact us via chat, or try Morvo free for 14 days and discover for yourself.",
       faqs: [
         {
-          question: "What is Morvo and how does it work?",
-          answer: "Morvo is the first integrated AI marketing system in the Saudi market. It includes 9 AI agents working together to analyze markets, build strategies, and execute marketing campaigns automatically."
+          question: "How long does setup take?",
+          answer: "Less than 5 minutes: registration, connect channels, and data appears automatically."
         },
         {
-          question: "How long does it take to set up the system?",
-          answer: "The system can be set up in just 24 hours. Once you register and choose the right package, the AI team will start analyzing your data and building your marketing strategy."
-        },
-        {
-          question: "Does the system support Arabic language?",
-          answer: "Yes, Morvo is specifically designed for the Saudi and Arab markets. It fully supports Arabic with deep understanding of regional culture and consumer behavior."
-        },
-        {
-          question: "How accurate are the results and predictions?",
-          answer: "Morvo achieves up to 94% accuracy in marketing predictions, thanks to advanced AI technologies and continuous learning from data."
-        },
-        {
-          question: "Can I try the system before purchasing?",
-          answer: "Yes, we offer a free 14-day trial that allows you to experience all system features and measure results before making a purchase decision."
+          question: "Does the system support Arabic?",
+          answer: "Yes, it understands, analyzes and creates content in Arabic and English with consideration for Saudi dialect."
         },
         {
           question: "How is data secured?",
-          answer: "We use the latest security and encryption standards to protect your data. All data is stored on secure servers and is not shared with any external parties."
+          answer: "256-bit encryption during transit and storage, with full GDPR and ISO 27001 compliance."
         },
         {
-          question: "Can it integrate with existing systems?",
-          answer: "Yes, Morvo supports integration with over 100 different platforms and systems, including CRM systems and e-commerce platforms."
+          question: "Can I cancel anytime?",
+          answer: "Absolutely, no long contracts; you can cancel from the dashboard with one click."
         },
         {
-          question: "What level of technical support is available?",
-          answer: "We provide 24/7 technical support in Arabic, plus a dedicated account manager for advanced packages."
+          question: "What's the difference between Morvo and multiple tools?",
+          answer: "Combines 6-10 tools in one platform, reduces operational time by 90% and increases ROI up to 5×."
+        },
+        {
+          question: "Do you offer discounts for non-profit organizations?",
+          answer: "Yes, 25% discount on all plans. Contact the sales team to activate it."
+        },
+        {
+          question: "What are the support channels?",
+          answer: "Live chat within the dashboard, WhatsApp, or email ticket — available 24/7."
+        },
+        {
+          question: "How do I benefit from crisis alerts?",
+          answer: "When negative mentions rise or harmful tags appear, you get an alert with an immediate response plan."
+        },
+        {
+          question: "Do I need technical expertise?",
+          answer: "No, the interface is natural conversation and simple visual dashboard; if you know how to use WhatsApp you're ready."
+        },
+        {
+          question: "Can I connect additional platforms?",
+          answer: "Yes, via Zapier integrations and open API in the Enterprise plan."
         }
       ]
     }
@@ -110,50 +124,33 @@ export const FAQ = () => {
             </p>
           </div>
 
-          <div className="space-y-6">
+          <Accordion type="single" collapsible className="space-y-4">
             {t.faqs.map((faq, index) => (
-              <Card key={index} className={`transition-all duration-300 hover:shadow-lg ${
-                theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50'
-              }`}>
-                <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
-                  <CardTitle className={`flex items-center gap-3 ${
-                    isRTL ? 'flex-row-reverse' : ''
-                  } ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    <HelpCircle className="w-6 h-6 text-blue-500 flex-shrink-0" />
-                    {faq.question}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className={`text-base leading-relaxed ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                  } ${isRTL ? 'text-right' : 'text-left'}`}>
-                    {faq.answer}
-                  </CardDescription>
-                </CardContent>
-              </Card>
+              <AccordionItem 
+                key={index} 
+                value={`item-${index}`}
+                className={`border rounded-lg px-6 ${
+                  theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
+                }`}
+              >
+                <AccordionTrigger className={`text-lg font-medium ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                } ${isRTL ? 'text-right' : 'text-left'} hover:no-underline`}>
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className={`text-base ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                } ${isRTL ? 'text-right' : 'text-left'} pt-2 pb-6`}>
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
 
-          <div className="text-center mt-16">
-            <Card className={`p-8 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-blue-50'}`}>
-              <div className={`flex items-center justify-center gap-4 mb-6 ${
-                isRTL ? 'flex-row-reverse' : ''
-              }`}>
-                <MessageCircle className="w-8 h-8 text-blue-500" />
-                <h3 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  {language === 'ar' ? 'هل تحتاج مساعدة إضافية؟' : 'Need additional help?'}
-                </h3>
-              </div>
-              <p className={`text-lg mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                {language === 'ar' 
-                  ? 'فريق الدعم متاح لمساعدتك على مدار الساعة'
-                  : 'Our support team is available 24/7 to help you'
-                }
-              </p>
-              <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-                {t.contactSupport}
-              </Button>
-            </Card>
+          <div className={`text-center mt-16 ${isRTL ? 'text-right' : 'text-left'}`}>
+            <p className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              {t.finalNote}
+            </p>
           </div>
         </div>
       </div>

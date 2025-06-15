@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layouts/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot, Brain, Zap, Target, BarChart, Shield, Clock, Globe } from "lucide-react";
+import { Bot, Brain, Zap, Target, BarChart, Shield, Clock, Globe, Activity } from "lucide-react";
 
 export const Features = () => {
   const { language, isRTL } = useLanguage();
@@ -12,93 +12,103 @@ export const Features = () => {
   const content = {
     ar: {
       title: "المميزات",
-      subtitle: "اكتشف قوة الذكاء الاصطناعي في التسويق",
+      subtitle: "لوحة قيادة حيّة يقودها ذكاء صناعي فائق",
       features: [
         {
+          icon: Activity,
+          title: "Active Dashboard™",
+          description: "أرقام لحظيّة وتوصيات جاهزة بدون تحديث يدوي"
+        },
+        {
           icon: Bot,
-          title: "9 عملاء ذكاء اصطناعي",
-          description: "فريق متكامل من عملاء الذكاء الاصطناعي يعمل على مدار الساعة لتنفيذ استراتيجيتك التسويقية"
-        },
-        {
-          icon: Brain,
-          title: "تعلم ذكي",
-          description: "يتعلم من بياناتك ويحسن الأداء تلقائياً مع كل تفاعل"
-        },
-        {
-          icon: Zap,
-          title: "أسرع 100 مرة",
-          description: "سرعة تنفيذ استثنائية مقارنة بالطرق التقليدية"
-        },
-        {
-          icon: Target,
-          title: "استهداف دقيق",
-          description: "وصول للجمهور المناسب في الوقت المناسب بدقة 94%"
-        },
-        {
-          icon: BarChart,
-          title: "تحليلات متقدمة",
-          description: "رؤى عميقة وتقارير شاملة لقياس الأداء"
-        },
-        {
-          icon: Shield,
-          title: "أمان عالي",
-          description: "حماية متقدمة لبياناتك واستراتيجياتك التسويقية"
-        },
-        {
-          icon: Clock,
-          title: "متاح 24/7",
-          description: "يعمل دون توقف لضمان استمرارية حملاتك التسويقية"
+          title: "٩ وكلاء AI متخصّصون",
+          description: "SEO، محتوى، إعلانات، بيانات… يتواصلون عبر بروتوكول A2A ويتشاركون الذاكرة عبر MCP"
         },
         {
           icon: Globe,
-          title: "دعم متعدد اللغات",
-          description: "يدعم العربية والإنجليزية وعدة لغات أخرى"
+          title: "مسح 24 قناة رقمية",
+          description: "فيسبوك، إنستغرام، تويتر، تيك توك، يوتيوب، لينكدإن، Reddit، المدونات، الأخبار، البودكاست… كلّها في مكان واحد"
+        },
+        {
+          icon: BarChart,
+          title: "تحليلات ذكيّة متكاملة",
+          description: "حجم الذِّكر، التفاعل، الوصول، سحابة الكلمات، تحليل المؤثّرين، Presence Score، وقيمة AVE الإعلانية"
+        },
+        {
+          icon: Brain,
+          title: "ذكاء مشاعر ومواضيع",
+          description: "يلتقط المزاج العام (إيجابي/سلبي) ويكشف الترندات قبل المنافسين"
+        },
+        {
+          icon: Zap,
+          title: "AI Insights & Alerts",
+          description: "نصائح تنفيذية وتنبيهات أزمات لحظيّة مع خطّة استجابة مقترَحة"
+        },
+        {
+          icon: Target,
+          title: "تقارير بيضاء العلامة",
+          description: "PDF، Excel، PowerPoint جاهزة لعملائك بعلامتك الخاصّة"
+        },
+        {
+          icon: Clock,
+          title: "تكاملات سريعة",
+          description: "Slack، Microsoft Teams، WooCommerce، Shopify، Zapier"
+        },
+        {
+          icon: Shield,
+          title: "أمان على مستوى المؤسسات",
+          description: "تشفير 256-bit، توافق GDPR و ISO 27001"
         }
       ]
     },
     en: {
       title: "Features",
-      subtitle: "Discover the power of AI in marketing",
+      subtitle: "Live command center powered by superior artificial intelligence",
       features: [
         {
+          icon: Activity,
+          title: "Active Dashboard™",
+          description: "Real-time numbers and ready recommendations without manual updates"
+        },
+        {
           icon: Bot,
-          title: "9 AI Agents",
-          description: "Complete team of AI agents working 24/7 to execute your marketing strategy"
-        },
-        {
-          icon: Brain,
-          title: "Smart Learning",
-          description: "Learns from your data and automatically improves performance with every interaction"
-        },
-        {
-          icon: Zap,
-          title: "100x Faster",
-          description: "Exceptional execution speed compared to traditional methods"
-        },
-        {
-          icon: Target,
-          title: "Precise Targeting",
-          description: "Reach the right audience at the right time with 94% accuracy"
-        },
-        {
-          icon: BarChart,
-          title: "Advanced Analytics",
-          description: "Deep insights and comprehensive reports to measure performance"
-        },
-        {
-          icon: Shield,
-          title: "High Security",
-          description: "Advanced protection for your data and marketing strategies"
-        },
-        {
-          icon: Clock,
-          title: "Available 24/7",
-          description: "Works non-stop to ensure continuity of your marketing campaigns"
+          title: "9 Specialized AI Agents",
+          description: "SEO, content, ads, data... communicating via A2A protocol and sharing memory via MCP"
         },
         {
           icon: Globe,
-          title: "Multi-language Support",
-          description: "Supports Arabic, English, and several other languages"
+          title: "24 Digital Channel Scanning",
+          description: "Facebook, Instagram, Twitter, TikTok, YouTube, LinkedIn, Reddit, blogs, news, podcasts... all in one place"
+        },
+        {
+          icon: BarChart,
+          title: "Integrated Smart Analytics",
+          description: "Mention volume, engagement, reach, word clouds, influencer analysis, Presence Score, and AVE advertising value"
+        },
+        {
+          icon: Brain,
+          title: "Sentiment & Topic Intelligence",
+          description: "Captures general mood (positive/negative) and discovers trends before competitors"
+        },
+        {
+          icon: Zap,
+          title: "AI Insights & Alerts",
+          description: "Actionable advice and instant crisis alerts with suggested response plan"
+        },
+        {
+          icon: Target,
+          title: "White Label Reports",
+          description: "PDF, Excel, PowerPoint ready for your clients with your own branding"
+        },
+        {
+          icon: Clock,
+          title: "Quick Integrations",
+          description: "Slack, Microsoft Teams, WooCommerce, Shopify, Zapier"
+        },
+        {
+          icon: Shield,
+          title: "Enterprise-Level Security",
+          description: "256-bit encryption, GDPR and ISO 27001 compliance"
         }
       ]
     }
@@ -123,7 +133,7 @@ export const Features = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {t.features.map((feature, index) => (
               <Card key={index} className={`transition-all duration-300 hover:shadow-lg ${
                 theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'
