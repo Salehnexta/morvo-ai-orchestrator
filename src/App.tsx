@@ -17,6 +17,12 @@ import Privacy from "./pages/Privacy";
 import Support from "./pages/Support";
 import Contact from "./pages/Contact";
 import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Billing from "./pages/Billing";
 import SuccessStories from "./pages/SuccessStories";
 import Updates from "./pages/Updates";
 import HelpCenter from "./pages/HelpCenter";
@@ -43,6 +49,12 @@ const App = () => (
               <Route path="/support" element={<Support />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/register" element={<Register />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/billing" element={<Billing />} />
               <Route path="/success-stories" element={<SuccessStories />} />
               <Route path="/updates" element={<Updates />} />
               <Route path="/help-center" element={<HelpCenter />} />
