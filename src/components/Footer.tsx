@@ -2,6 +2,7 @@
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Footer = () => {
   const { theme } = useTheme();
@@ -9,15 +10,30 @@ export const Footer = () => {
 
   const content = {
     ar: {
-      companyName: "Morvo",
+      companyName: "مورفو",
       companySubtitle: "النظام الاصطناعي يقود نجاحك التسويقي",
       description: "منصة التسويق الرقمي والذكاء الاصطناعي التي تساعدك على تحليل السوق وبناء استراتيجيات تسويقية فعالة باستخدام الذكاء الاصطناعي.",
       product: "المنتج",
-      productItems: ["المميزات", "كيف يعمل", "الأسعار", "الأسئلة الشائعة", "الاتصال بالذكي"],
+      productItems: [
+        { name: "المميزات", href: "/features" },
+        { name: "كيف يعمل", href: "/how-it-works" },
+        { name: "الأسعار", href: "/pricing" },
+        { name: "الأسئلة الشائعة", href: "/faq" }
+      ],
       resources: "المصادر", 
-      resourceItems: ["قصص النجاح", "التحديثات", "مركز المساعدة", "الأسئلة الشائعة"],
+      resourceItems: [
+        { name: "قصص النجاح", href: "/success-stories" },
+        { name: "التحديثات", href: "/updates" },
+        { name: "مركز المساعدة", href: "/help-center" }
+      ],
       supportLegal: "الدعم والقانونية",
-      supportLegalItems: ["الدعم", "تواصل معنا", "حالة الخدمة", "الشروط والأحكام", "سياسة الخصوصية"],
+      supportLegalItems: [
+        { name: "الدعم", href: "/support" },
+        { name: "تواصل معنا", href: "/contact" },
+        { name: "حالة الخدمة", href: "/service-status" },
+        { name: "الشروط والأحكام", href: "/terms" },
+        { name: "سياسة الخصوصية", href: "/privacy" }
+      ],
       rights: "جميع الحقوق محفوظة",
       contactInfo: "معلومات الاتصال",
       address: "الرياض، المملكة العربية السعودية",
@@ -29,11 +45,26 @@ export const Footer = () => {
       companySubtitle: "AI System Drives Your Marketing Success",
       description: "Digital marketing and AI platform that helps you analyze the market and build effective marketing strategies using artificial intelligence.",
       product: "Product",
-      productItems: ["Features", "How it Works", "Pricing", "FAQ", "AI Contact"],
+      productItems: [
+        { name: "Features", href: "/features" },
+        { name: "How it Works", href: "/how-it-works" },
+        { name: "Pricing", href: "/pricing" },
+        { name: "FAQ", href: "/faq" }
+      ],
       resources: "Resources",
-      resourceItems: ["Success Stories", "Updates", "Help Center", "FAQ"],
+      resourceItems: [
+        { name: "Success Stories", href: "/success-stories" },
+        { name: "Updates", href: "/updates" },
+        { name: "Help Center", href: "/help-center" }
+      ],
       supportLegal: "Support & Legal",
-      supportLegalItems: ["Support", "Contact Us", "Service Status", "Terms & Conditions", "Privacy Policy"],
+      supportLegalItems: [
+        { name: "Support", href: "/support" },
+        { name: "Contact Us", href: "/contact" },
+        { name: "Service Status", href: "/service-status" },
+        { name: "Terms & Conditions", href: "/terms" },
+        { name: "Privacy Policy", href: "/privacy" }
+      ],
       rights: "All rights reserved",
       contactInfo: "Contact Info",
       address: "Riyadh, Saudi Arabia",
@@ -51,7 +82,7 @@ export const Footer = () => {
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 ${isRTL ? 'text-right' : 'text-left'}`}>
           {/* Company Info */}
           <div className="lg:col-span-1">
-            <div className={`flex items-center gap-3 mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-3 mb-6 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">M</span>
               </div>
@@ -64,23 +95,23 @@ export const Footer = () => {
                 </p>
               </div>
             </div>
-            <p className="text-sm leading-relaxed mb-6 text-gray-300">
+            <p className={`text-sm leading-relaxed mb-6 text-gray-300 ${isRTL ? 'text-right' : 'text-left'}`}>
               {t.description}
             </p>
             
             {/* Contact Info */}
             <div className="space-y-3 mb-6">
-              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <MapPin className="w-4 h-4 text-blue-400" />
+              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
+                <MapPin className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <span className="text-sm text-gray-300">{t.address}</span>
               </div>
-              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <Phone className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-gray-300">{t.phone}</span>
+              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
+                <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <span className="text-sm text-gray-300" dir="ltr">{t.phone}</span>
               </div>
-              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <Mail className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-gray-300">{t.email}</span>
+              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
+                <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <span className="text-sm text-gray-300" dir="ltr">{t.email}</span>
               </div>
             </div>
             
@@ -105,48 +136,57 @@ export const Footer = () => {
           </div>
 
           {/* Product Links */}
-          <div>
+          <div className={isRTL ? 'text-right' : 'text-left'}>
             <h4 className="text-lg font-semibold mb-6 text-white">
               {t.product}
             </h4>
             <ul className="space-y-4">
               {t.productItems.map((item, index) => (
                 <li key={index}>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-                    {item}
-                  </a>
+                  <Link 
+                    to={item.href} 
+                    className="text-sm text-gray-300 hover:text-white transition-colors block"
+                  >
+                    {item.name}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* Resources */}
-          <div>
+          <div className={isRTL ? 'text-right' : 'text-left'}>
             <h4 className="text-lg font-semibold mb-6 text-white">
               {t.resources}
             </h4>
             <ul className="space-y-4">
               {t.resourceItems.map((item, index) => (
                 <li key={index}>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-                    {item}
-                  </a>
+                  <Link 
+                    to={item.href} 
+                    className="text-sm text-gray-300 hover:text-white transition-colors block"
+                  >
+                    {item.name}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* Support & Legal */}
-          <div>
+          <div className={isRTL ? 'text-right' : 'text-left'}>
             <h4 className="text-lg font-semibold mb-6 text-white">
               {t.supportLegal}
             </h4>
             <ul className="space-y-4">
               {t.supportLegalItems.map((item, index) => (
                 <li key={index}>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-                    {item}
-                  </a>
+                  <Link 
+                    to={item.href} 
+                    className="text-sm text-gray-300 hover:text-white transition-colors block"
+                  >
+                    {item.name}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -164,15 +204,15 @@ export const Footer = () => {
               © 2024 {t.companyName} - {t.rights}
             </p>
             <div className={`flex gap-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
+              <Link to="/privacy" className="text-sm text-gray-400 hover:text-white transition-colors">
                 {language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
-              </a>
-              <a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
+              </Link>
+              <Link to="/terms" className="text-sm text-gray-400 hover:text-white transition-colors">
                 {language === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions'}
-              </a>
-              <a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
+              </Link>
+              <Link to="/cookies" className="text-sm text-gray-400 hover:text-white transition-colors">
                 {language === 'ar' ? 'ملفات تعريف الارتباط' : 'Cookies'}
-              </a>
+              </Link>
             </div>
           </div>
         </div>
