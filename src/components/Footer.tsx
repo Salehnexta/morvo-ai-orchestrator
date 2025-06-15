@@ -74,22 +74,22 @@ export const Footer = () => {
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
               </div>
               <div className={isRTL ? 'text-right' : 'text-left'}>
-                <h3 className="text-2xl font-bold text-white group-hover:text-blue-300 transition-colors duration-300">
+                <h3 className="text-2xl font-bold text-white group-hover:text-blue-300 transition-colors duration-300 font-cairo">
                   {t.companyName}
                 </h3>
-                <p className="text-sm text-blue-300 font-medium">
+                <p className="text-sm text-blue-300 font-medium font-cairo">
                   {t.companySubtitle}
                 </p>
               </div>
             </Link>
             
-            <p className={`text-gray-300 leading-relaxed text-sm ${isRTL ? 'text-right' : 'text-left'}`}>
+            <p className={`text-gray-300 leading-relaxed text-sm font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>
               {t.description}
             </p>
             
             {/* Social Media */}
             <div>
-              <h4 className="text-lg font-semibold mb-4 text-white">{t.followUs}</h4>
+              <h4 className={`text-lg font-semibold mb-4 text-white font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>{t.followUs}</h4>
               <div className={`flex gap-3 ${isRTL ? 'justify-end' : 'justify-start'}`}>
                 {[
                   { Icon: Facebook, href: "#", color: "hover:bg-blue-600" },
@@ -113,7 +113,7 @@ export const Footer = () => {
 
           {/* Quick Links */}
           <div className={`space-y-6 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <h4 className="text-xl font-bold text-white relative">
+            <h4 className={`text-xl font-bold text-white relative font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>
               {t.quickLinks}
               <div className={`absolute bottom-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full ${isRTL ? 'right-0' : 'left-0'}`}></div>
             </h4>
@@ -122,9 +122,9 @@ export const Footer = () => {
                 <li key={index}>
                   <Link 
                     to={item.href} 
-                    className={`group inline-flex items-center gap-2 text-gray-300 hover:text-white transition-all duration-300 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}
+                    className={`group inline-flex items-center gap-2 text-gray-300 hover:text-white transition-all duration-300 py-2 font-cairo ${isRTL ? 'flex-row-reverse' : ''}`}
                   >
-                    <ArrowRight className={`w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isRTL ? 'rotate-180 group-hover:translate-x-1' : 'group-hover:translate-x-1'}`} />
+                    <ArrowRight className={`w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                     <span className="relative">
                       {item.name}
                       <span className={`absolute bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full ${isRTL ? 'right-0' : 'left-0'}`}></span>
@@ -137,21 +137,26 @@ export const Footer = () => {
 
           {/* Contact Info */}
           <div className={`space-y-6 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <h4 className="text-xl font-bold text-white relative">
+            <h4 className={`text-xl font-bold text-white relative font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>
               {t.contactInfo}
               <div className={`absolute bottom-0 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full ${isRTL ? 'right-0' : 'left-0'}`}></div>
             </h4>
             <div className="space-y-4">
               {[
-                { Icon: MapPin, text: t.address, color: "text-green-400" },
-                { Icon: Phone, text: t.phone, color: "text-blue-400", dir: "ltr" },
-                { Icon: Mail, text: t.email, color: "text-purple-400", dir: "ltr" }
-              ].map(({ Icon, text, color, dir }, index) => (
-                <div key={index} className={`group flex items-start gap-4 p-3 rounded-xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/30 hover:border-gray-600/50 transition-all duration-300 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                { Icon: MapPin, text: t.address, color: "text-green-400", shouldBeLTR: false },
+                { Icon: Phone, text: t.phone, color: "text-blue-400", shouldBeLTR: true },
+                { Icon: Mail, text: t.email, color: "text-purple-400", shouldBeLTR: true }
+              ].map(({ Icon, text, color, shouldBeLTR }, index) => (
+                <div key={index} className={`group flex items-start gap-4 p-3 rounded-xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/30 hover:border-gray-600/50 transition-all duration-300 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <div className={`flex-shrink-0 p-2 rounded-lg bg-gray-700/50 ${color}`}>
                     <Icon className="w-4 h-4" />
                   </div>
-                  <span className={`text-gray-300 group-hover:text-white transition-colors duration-300 text-sm ${dir === 'ltr' ? 'direction-ltr' : ''}`} dir={dir}>
+                  <span 
+                    className={`text-gray-300 group-hover:text-white transition-colors duration-300 text-sm font-cairo ${
+                      shouldBeLTR ? 'ltr' : ''
+                    } ${isRTL && !shouldBeLTR ? 'text-right' : ''} ${isRTL && shouldBeLTR ? 'text-left' : ''}`} 
+                    dir={shouldBeLTR ? 'ltr' : (isRTL ? 'rtl' : 'ltr')}
+                  >
                     {text}
                   </span>
                 </div>
@@ -171,7 +176,7 @@ export const Footer = () => {
               <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xs">M</span>
               </div>
-              <p className="text-sm text-gray-400">
+              <p className={`text-sm text-gray-400 font-cairo ${isRTL ? 'text-right' : 'text-left'}`}>
                 © 2024 <span className="text-white font-medium">{t.companyName}</span> - {t.rights}
               </p>
             </div>
@@ -184,7 +189,7 @@ export const Footer = () => {
                 <Link 
                   key={index}
                   to={link.href} 
-                  className="text-sm text-gray-400 hover:text-white transition-colors duration-300 relative group"
+                  className={`text-sm text-gray-400 hover:text-white transition-colors duration-300 relative group font-cairo ${isRTL ? 'text-right' : 'text-left'}`}
                 >
                   {link.text}
                   <span className={`absolute bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full ${isRTL ? 'right-0' : 'left-0'}`}></span>
