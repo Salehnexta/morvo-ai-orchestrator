@@ -597,6 +597,60 @@ export type Database = {
           },
         ]
       }
+      billing_history: {
+        Row: {
+          amount: number
+          billing_period_end: string
+          billing_period_start: string
+          created_at: string | null
+          currency: string | null
+          id: string
+          invoice_url: string | null
+          payment_transaction_id: string | null
+          status: string | null
+          subscription_id: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end: string
+          billing_period_start: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_url?: string | null
+          payment_transaction_id?: string | null
+          status?: string | null
+          subscription_id: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string
+          billing_period_start?: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_url?: string | null
+          payment_transaction_id?: string | null
+          status?: string | null
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_history_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand24_data: {
         Row: {
           brand_name: string
@@ -1500,6 +1554,66 @@ export type Database = {
           },
         ]
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string | null
+          currency: string | null
+          id: string
+          metadata: Json | null
+          moyasar_payment_id: string | null
+          moyasar_response: Json | null
+          payment_method: string | null
+          status: string | null
+          subscription_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          moyasar_payment_id?: string | null
+          moyasar_response?: Json | null
+          payment_method?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          moyasar_payment_id?: string | null
+          moyasar_response?: Json | null
+          payment_method?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       predictive_analytics: {
         Row: {
           client_id: string | null
@@ -2009,6 +2123,33 @@ export type Database = {
           },
         ]
       }
+      webhook_events: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          moyasar_payment_id: string | null
+          payload: Json
+          processed: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          moyasar_payment_id?: string | null
+          payload: Json
+          processed?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          moyasar_payment_id?: string | null
+          payload?: Json
+          processed?: boolean | null
+        }
+        Relationships: []
+      }
       website_intel_data: {
         Row: {
           client_id: string | null
@@ -2056,25 +2197,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_feature_access: {
+        Args:
+          | { p_client_id: string; p_feature_name: string }
+          | { p_client_id: string; p_feature_name: string }
+        Returns: boolean
+      }
+      check_usage_limit: {
+        Args:
+          | {
+              p_client_id: string
+              p_feature_name: string
+              p_increment?: number
+            }
+          | {
+              p_client_id: string
+              p_feature_name: string
+              p_limit_type?: string
+            }
+        Returns: Json
+      }
       handle_user_onboarding_update: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
       initialize_conversation_system: {
         Args: Record<PropertyKey, never>
-        Returns: {
-          client_id: string
-          conversation_id: string
-          client_name: string
-        }[]
+        Returns: undefined
       }
       link_clients_to_auth: {
         Args: Record<PropertyKey, never>
-        Returns: {
-          client_id: string
-          auth_user_id: string
-          client_name: string
-        }[]
+        Returns: undefined
       }
       user_owns_company: {
         Args:

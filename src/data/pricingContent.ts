@@ -1,4 +1,3 @@
-
 import { Shield, Star, Zap, LucideIcon } from "lucide-react";
 
 export type Plan = {
@@ -172,7 +171,7 @@ export const pricingContent: { [key: string]: PricingContent } = {
           id: 'base',
           name: "Base",
           description: "",
-          price: "199 SAR",
+          price: "749 SAR",
           period: "monthly",
           buttonText: "Get Started",
           popular: false,
@@ -182,8 +181,8 @@ export const pricingContent: { [key: string]: PricingContent } = {
           id: 'pro',
           name: "Pro",
           description: "",
-          price: "299 SAR",
-          originalPrice: "599 SAR",
+          price: "899 SAR",
+          originalPrice: "1,999 SAR",
           period: "monthly",
           buttonText: "Get Started",
           popular: true,
@@ -205,7 +204,7 @@ export const pricingContent: { [key: string]: PricingContent } = {
           title: "Tokens",
           items: [
             { name: "Monthly tokens", base: "10,000", pro: "25,000", business: "50,000" },
-            { name: "Additional tokens", base: "0.02 SAR per token", pro: "0.015 SAR per token", business: "0.01 SAR per token" }
+            { name: "Additional tokens", base: "0.05 SAR per token", pro: "0.04 SAR per token", business: "0.03 SAR per token" }
           ]
         },
         socialContent: {
