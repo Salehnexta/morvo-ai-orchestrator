@@ -123,10 +123,7 @@ const content = {
         },
       ],
     },
-    successStory: {
-      title: "قصة نجاح سحابة العود: قصة نمو لا تتوقف",
-      content: "بدأت سحابة العود مع مورفو بتصميم رحلة عميل أولية. بعد أسبوع، لاحظ الوكلاء أنماط بحث جديدة واقترحوا هاشتاق #عطور_رمضان، مما أدى لارتفاع المبيعات 27%. بعد شهر، اكتشف مورفو تغيرًا في مشاعر العملاء حول تأخير الشحن، وتفاعل الوكلاء فورًا بتصميم استراتيجية اعتذار مع كود خصم، مما خفض التفاعل السلبي 43%. إجمالي العائد على الاستثمار بعد 90 يومًا: +340%، مع استمرار مورفو في تحسين كل جانب من جوانب رحلتهم التسويقية.",
-    },
+    // تم حذف successStory من العربية
     pricing: {
       title: "باقة المؤسس (عرض حصري ومحدود)",
       price: "1,870 ريال/شهر",
@@ -263,10 +260,7 @@ const content = {
         },
       ],
     },
-    successStory: {
-      title: "Success Story: A Journey of Unstoppable Growth",
-      content: "A retail company started with Morvo by designing an initial customer journey. After one week, agents noticed new search patterns and suggested #SeasonalDeals, leading to a 27% sales increase. After a month, Morvo detected changing customer sentiment about shipping delays and agents immediately responded with an apology strategy plus discount code, reducing negative feedback by 43%. Total ROI after 90 days: +340%, with Morvo continuing to improve every aspect of their marketing journey.",
-    },
+    // تم حذف successStory من العربية
     pricing: {
       title: "Founder's Package (Exclusive Limited Offer)",
       price: "$497/month",
@@ -567,37 +561,6 @@ const Index = () => {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Success Story Section */}
-          <section className="py-20">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <h2
-                  className={`text-3xl md:text-4xl font-bold mb-6 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  {t.successStory.title}
-                </h2>
-              </div>
-
-              <div
-                className={`p-8 rounded-2xl border ${
-                  theme === "dark"
-                    ? "bg-gradient-to-r from-blue-900/50 to-purple-900/50 border-blue-800/50"
-                    : "bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200"
-                }`}
-              >
-                <p
-                  className={`text-lg leading-relaxed ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  {t.successStory.content}
-                </p>
               </div>
             </div>
           </section>
