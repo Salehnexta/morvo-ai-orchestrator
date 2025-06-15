@@ -1280,6 +1280,54 @@ export type Database = {
           },
         ]
       }
+      feature_usage: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          feature_name: string
+          id: string
+          metadata: Json | null
+          subscription_id: string
+          usage_count: number | null
+          usage_date: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          feature_name: string
+          id?: string
+          metadata?: Json | null
+          subscription_id: string
+          usage_count?: number | null
+          usage_date?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          feature_name?: string
+          id?: string
+          metadata?: Json | null
+          subscription_id?: string
+          usage_count?: number | null
+          usage_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_usage_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_usage_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integrated_analytics: {
         Row: {
           analysis_type: string
@@ -1665,6 +1713,51 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          limits: Json | null
+          plan_code: string
+          plan_name: string
+          price_monthly: number
+          price_yearly: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          limits?: Json | null
+          plan_code: string
+          plan_name: string
+          price_monthly: number
+          price_yearly?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          limits?: Json | null
+          plan_code?: string
+          plan_name?: string
+          price_monthly?: number
+          price_yearly?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       system_metrics: {
         Row: {
           cpu_load: number | null
@@ -1852,6 +1945,69 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          auto_renew: boolean | null
+          billing_cycle: string | null
+          client_id: string
+          created_at: string | null
+          end_date: string | null
+          id: string
+          metadata: Json | null
+          payment_method: Json | null
+          plan_id: string
+          start_date: string | null
+          status: string | null
+          trial_end_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
+          client_id: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method?: Json | null
+          plan_id: string
+          start_date?: string | null
+          status?: string | null
+          trial_end_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
+          client_id?: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method?: Json | null
+          plan_id?: string
+          start_date?: string | null
+          status?: string | null
+          trial_end_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       website_intel_data: {
         Row: {
