@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Users, ShoppingCart, TrendingUp, Plus, Settings, PieChart, LineChart } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart as RechartsLineChart, Line, PieChart as RechartsPieChart, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart as RechartsLineChart, Line, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
 
 interface DashboardContentProps {
   data: any;
@@ -112,7 +111,7 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
               <ChartContainer config={chartConfig} className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsPieChart>
-                    <pie
+                    <Pie
                       data={data.data || pieData}
                       cx="50%"
                       cy="50%"
@@ -124,7 +123,7 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
                       {(data.data || pieData).map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
-                    </pie>
+                    </Pie>
                     <ChartTooltip content={<ChartTooltipContent />} />
                   </RechartsPieChart>
                 </ResponsiveContainer>
