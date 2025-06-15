@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Message {
   id: string;
@@ -24,10 +24,13 @@ interface ChatInterfaceProps {
 
 export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
   const { theme, toggleTheme } = useTheme();
+  const { language, isRTL } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: 'مرحباً! أنا الوكيل الرئيسي في منصة Morvo AI. كيف يمكنني مساعدتك في استراتيجية التسويق اليوم؟\n\nHello! I\'m the Master Agent at Morvo AI. How can I help you with your marketing strategy today?',
+      content: language === 'ar' 
+        ? 'مرحباً! أنا مساعدك الذكي في منصة زد. كيف يمكنني مساعدتك في إدارة متجرك الإلكتروني اليوم؟\n\nHello! I\'m your smart assistant at Zid platform. How can I help you manage your online store today?'
+        : 'Hello! I\'m your smart assistant at Zid platform. How can I help you manage your online store today?\n\nمرحباً! أنا مساعدك الذكي في منصة زد. كيف يمكنني مساعدتك في إدارة متجرك الإلكتروني اليوم؟',
       sender: 'agent',
       timestamp: new Date()
     }
@@ -36,6 +39,27 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const content = {
+    ar: {
+      back: "رجوع",
+      masterAgent: "المساعد الذكي",
+      clientAgent: "وكيل خدمة العملاء",
+      active: "نشط",
+      thinking: "المساعد الذكي يفكر...",
+      placeholder: "اكتب رسالتك بالعربية أو الإنجليزية..."
+    },
+    en: {
+      back: "Back",
+      masterAgent: "Smart Assistant",
+      clientAgent: "Customer Service Agent",
+      active: "Active",
+      thinking: "Smart Assistant is thinking...",
+      placeholder: "Type your message in Arabic or English..."
+    }
+  };
+
+  const t = content[language];
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -115,45 +139,45 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
       theme === 'dark' 
-        ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
+        ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' 
         : 'bg-gradient-to-br from-white via-blue-50 to-purple-50'
-    }`}>
+    }`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className={`backdrop-blur-sm border-b p-4 ${
         theme === 'dark' 
           ? 'bg-white/10 border-white/20' 
           : 'bg-white/80 border-gray-200'
       }`}>
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
+        <div className={`max-w-4xl mx-auto flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className={`${
+            className={`${isRTL ? 'flex-row-reverse' : ''} ${
               theme === 'dark' 
                 ? 'text-white hover:bg-white/10' 
                 : 'text-gray-900 hover:bg-gray-100'
             }`}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            رجوع | Back
+            <ArrowLeft className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+            {t.back}
           </Button>
           
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
             </div>
-            <div>
+            <div className={isRTL ? 'text-right' : 'text-left'}>
               <h1 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                الوكيل الرئيسي | Master Agent
+                {t.masterAgent}
               </h1>
               <p className={`text-sm ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
-                وكيل تجربة العملاء • ClientExperienceAgent
+                {t.clientAgent}
               </p>
             </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className={`${isRTL ? 'mr-auto' : 'ml-auto'} flex items-center gap-2`}>
             <Button
               variant="ghost"
               size="sm"
@@ -167,10 +191,10 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
             
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span className={`text-sm ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
-                نشط | Active
+                {t.active}
               </span>
             </div>
           </div>
@@ -184,9 +208,13 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-3 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-3 ${
+                  message.sender === 'user' 
+                    ? isRTL ? 'justify-start' : 'justify-end'
+                    : isRTL ? 'justify-end' : 'justify-start'
+                }`}
               >
-                {message.sender === 'agent' && (
+                {message.sender === 'agent' && !isRTL && (
                   <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
@@ -195,11 +223,12 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                 <div
                   className={`max-w-[80%] p-4 rounded-2xl ${
                     message.sender === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white ml-auto'
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
                       : theme === 'dark'
                       ? 'bg-white/10 backdrop-blur-sm border border-white/20 text-white'
                       : 'bg-white border border-gray-200 text-gray-900 shadow-sm'
                   }`}
+                  style={{ direction: 'auto' }}
                 >
                   <div className="whitespace-pre-wrap leading-relaxed">
                     {message.content}
@@ -211,7 +240,7 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                       : theme === 'dark'
                       ? 'border-white/10 text-white/60'
                       : 'border-gray-200 text-gray-500'
-                  }`}>
+                  } ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <span>{message.timestamp.toLocaleTimeString()}</span>
                     {message.processing_time && (
                       <span>{message.processing_time}s</span>
@@ -222,7 +251,21 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                   </div>
                 </div>
 
-                {message.sender === 'user' && (
+                {message.sender === 'user' && isRTL && (
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
+                    theme === 'dark' ? 'bg-white/20' : 'bg-gray-200'
+                  }`}>
+                    <User className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
+                  </div>
+                )}
+
+                {message.sender === 'agent' && isRTL && (
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <Bot className="w-4 h-4 text-white" />
+                  </div>
+                )}
+
+                {message.sender === 'user' && !isRTL && (
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
                     theme === 'dark' ? 'bg-white/20' : 'bg-gray-200'
                   }`}>
@@ -233,22 +276,29 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
             ))}
             
             {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
+              <div className={`flex gap-3 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+                {!isRTL && (
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
+                  </div>
+                )}
                 <div className={`p-4 rounded-2xl ${
                   theme === 'dark' 
                     ? 'bg-white/10 backdrop-blur-sm border border-white/20' 
                     : 'bg-white border border-gray-200 shadow-sm'
                 }`}>
-                  <div className={`flex items-center gap-2 ${
+                  <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} ${
                     theme === 'dark' ? 'text-white/70' : 'text-gray-600'
                   }`}>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>الوكيل الرئيسي يفكر... | Master Agent is thinking...</span>
+                    <span>{t.thinking}</span>
                   </div>
                 </div>
+                {isRTL && (
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -261,18 +311,19 @@ export const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
           ? 'bg-white/10 border-white/20' 
           : 'bg-white/80 border-gray-200'
       }`}>
-        <div className="max-w-4xl mx-auto flex gap-2">
+        <div className={`max-w-4xl mx-auto flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="اكتب رسالتك بالعربية أو الإنجليزية... | Type your message in Arabic or English..."
+            placeholder={t.placeholder}
             className={`flex-1 ${
               theme === 'dark' 
                 ? 'bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-blue-400' 
                 : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500'
-            }`}
+            } ${isRTL ? 'text-right' : 'text-left'}`}
             disabled={isLoading}
+            dir="auto"
           />
           <Button
             onClick={handleSend}

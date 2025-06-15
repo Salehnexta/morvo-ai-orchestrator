@@ -5,18 +5,65 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const [showChat, setShowChat] = useState(false);
   const { theme } = useTheme();
+  const { language, isRTL } = useLanguage();
+
+  const content = {
+    ar: {
+      badge: "منصة التجارة الإلكترونية الذكية",
+      title1: "متجر زد",
+      title2: "Zid Store",
+      subtitle: "ثورة التجارة الإلكترونية",
+      description1: "منصة التجارة الإلكترونية الرائدة في المملكة العربية السعودية",
+      description2: "Leading e-commerce platform in Saudi Arabia",
+      startChat: "ابدأ المحادثة",
+      watchDemo: "شاهد العرض",
+      featuresTitle1: "مدعوم بتقنيات ذكية متطورة",
+      featuresTitle2: "Powered by Advanced Smart Technologies",
+      featuresDesc: "اختبر مستقبل التجارة الإلكترونية مع منصة زد المدعومة بالذكاء الاصطناعي",
+      whyChoose1: "لماذا تختار متجر زد؟",
+      whyChoose2: "Why Choose Zid Store?",
+      platformStats: "إحصائيات المنصة",
+      ctaTitle1: "هل أنت مستعد لبدء رحلتك التجارية؟",
+      ctaTitle2: "Ready to start your business journey?",
+      ctaDesc1: "انضم لآلاف التجار الناجحين واختبر قوة منصة زد",
+      ctaDesc2: "Join thousands of successful merchants and experience the power of Zid platform",
+      getStarted: "ابدأ الآن"
+    },
+    en: {
+      badge: "Smart E-commerce Platform",
+      title1: "Zid Store",
+      title2: "متجر زد",
+      subtitle: "E-commerce Revolution",
+      description1: "Leading e-commerce platform in Saudi Arabia",
+      description2: "منصة التجارة الإلكترونية الرائدة في المملكة العربية السعودية",
+      startChat: "Start Chat",
+      watchDemo: "Watch Demo",
+      featuresTitle1: "Powered by Advanced Smart Technologies",
+      featuresTitle2: "مدعوم بتقنيات ذكية متطورة",
+      featuresDesc: "Experience the future of e-commerce with Zid's AI-powered platform",
+      whyChoose1: "Why Choose Zid Store?",
+      whyChoose2: "لماذا تختار متجر زد؟",
+      platformStats: "Platform Stats",
+      ctaTitle1: "Ready to start your business journey?",
+      ctaTitle2: "هل أنت مستعد لبدء رحلتك التجارية؟",
+      ctaDesc1: "Join thousands of successful merchants and experience the power of Zid platform",
+      ctaDesc2: "انضم لآلاف التجار الناجحين واختبر قوة منصة زد",
+      getStarted: "Get Started Now"
+    }
+  };
 
   const features = [
     {
       icon: <MessageSquare className="w-8 h-8" />,
-      title: "Master Agent",
-      titleAr: "الوكيل الرئيسي",
-      description: "Intelligent coordinator managing 9 specialized AI agents for comprehensive marketing solutions",
-      descriptionAr: "منسق ذكي يدير 9 وكلاء متخصصين بالذكاء الاصطناعي لحلول تسويقية شاملة"
+      title: language === 'ar' ? "نظام إدارة المتاجر" : "Store Management System",
+      titleSecondary: language === 'ar' ? "Store Management" : "نظام إدارة المتاجر",
+      description: language === 'ar' ? "نظام شامل لإدارة متجرك الإلكتروني بكل سهولة ومرونة" : "Comprehensive system to manage your online store with ease and flexibility",
+      descriptionSecondary: language === 'ar' ? "Comprehensive store management with ease and flexibility" : "نظام شامل لإدارة متجرك الإلكتروني بكل سهولة ومرونة"
     },
     {
       icon: <Sparkles className="w-8 h-8" />,
@@ -56,13 +103,14 @@ const Index = () => {
   ];
 
   const stats = [
-    { number: "9", label: "Specialized Agents", labelAr: "وكلاء متخصصين" },
-    { number: "99.9%", label: "Uptime", labelAr: "وقت التشغيل" },
-    { number: "<10s", label: "Response Time", labelAr: "وقت الاستجابة" },
-    { number: "1000+", label: "Concurrent Clients", labelAr: "عملاء متزامنين" }
+    { number: "1000+", label: language === 'ar' ? "متجر نشط" : "Active Stores", labelSecondary: language === 'ar' ? "Active Stores" : "متجر نشط" },
+    { number: "99.9%", label: language === 'ar' ? "وقت التشغيل" : "Uptime", labelSecondary: language === 'ar' ? "Uptime" : "وقت التشغيل" },
+    { number: "24/7", label: language === 'ar' ? "الدعم الفني" : "Support", labelSecondary: language === 'ar' ? "Support" : "الدعم الفني" },
+    { number: "50+", label: language === 'ar' ? "ميزة متقدمة" : "Advanced Features", labelSecondary: language === 'ar' ? "Features" : "ميزة متقدمة" }
   ];
 
   const benefits = [
+    { text: language === 'ar' ? "منصة متكاملة للتجارة الإلكترونية" : "Complete e-commerce platform", textSecondary: language === 'ar' ? "Complete e-commerce platform" : "منصة متكاملة للتجارة الإلكترونية" },
     { text: "AI-powered marketing automation", textAr: "أتمتة التسويق بالذكاء الاصطناعي" },
     { text: "24/7 expert consultation", textAr: "استشارة خبراء 24/7" },
     { text: "Multi-language support", textAr: "دعم متعدد اللغات" },
@@ -71,6 +119,8 @@ const Index = () => {
     { text: "Scalable infrastructure", textAr: "بنية تحتية قابلة للتوسع" }
   ];
 
+  const t = content[language];
+
   if (showChat) {
     return <ChatInterface onBack={() => setShowChat(false)} />;
   }
@@ -78,15 +128,15 @@ const Index = () => {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       theme === 'dark' 
-        ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
+        ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' 
         : 'bg-gradient-to-br from-white via-blue-50 to-purple-50'
-    }`}>
+    }`} dir={isRTL ? 'rtl' : 'ltr'}>
       <Header onStartChat={() => setShowChat(true)} />
 
       {/* Hero Section */}
       <section className="relative py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
+          <div className={`text-center ${isRTL ? 'text-right' : 'text-left'} md:text-center`}>
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8 ${
               theme === 'dark' 
                 ? 'bg-white/10 backdrop-blur-sm border border-white/20' 
@@ -94,52 +144,56 @@ const Index = () => {
             }`}>
               <Sparkles className={`w-4 h-4 ${theme === 'dark' ? 'text-yellow-400' : 'text-blue-600'}`} />
               <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/90' : 'text-blue-900'}`}>
-                منصة الذكاء الاصطناعي للتسويق | AI Marketing Platform
+                {t.badge}
               </span>
             </div>
             
             <h1 className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              <span className="block">مورفو AI</span>
+              <span className="block">{t.title1}</span>
               <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Morvo AI
+                {t.title2}
               </span>
               <span className={`block text-lg md:text-xl lg:text-2xl font-normal mt-4 ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
               }`}>
-                ثورة التسويق بالذكاء الاصطناعي
+                {t.subtitle}
               </span>
             </h1>
             
             <p className={`text-xl md:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed ${
               theme === 'dark' ? 'text-white/80' : 'text-gray-700'
             }`}>
-              9 وكلاء ذكاء اصطناعي متخصصين يعملون بتناغم لثورة استراتيجية التسويق الرقمي
+              {t.description1}
               <br />
               <span className="text-lg md:text-xl">
-                9 Specialized AI Agents working in harmony to revolutionize your digital marketing strategy
+                {t.description2}
               </span>
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className={`flex flex-col sm:flex-row gap-4 justify-center ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
               <Button 
                 onClick={() => setShowChat(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className={`bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
+                  isRTL ? 'flex-row-reverse' : ''
+                }`}
               >
-                <MessageSquare className="w-5 h-5 mr-2" />
-                ابدأ المحادثة | Start Chat
+                <MessageSquare className={`w-5 h-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                {t.startChat}
               </Button>
               <Button 
                 variant="outline" 
                 className={`px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm ${
+                  isRTL ? 'flex-row-reverse' : ''
+                } ${
                   theme === 'dark' 
                     ? 'border-white/30 text-white hover:bg-white/10' 
                     : 'border-gray-300 text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                <Play className="w-5 h-5 mr-2" />
-                شاهد العرض | Watch Demo
+                <Play className={`w-5 h-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                {t.watchDemo}
               </Button>
             </div>
           </div>
@@ -153,9 +207,9 @@ const Index = () => {
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              مدعوم بتنسيق الوكلاء الذكي
+              مدعوم بتقنيات ذكية متطورة
               <br />
-              <span className="text-2xl md:text-3xl">Powered by Intelligent Agent Coordination</span>
+              <span className="text-2xl md:text-3xl">Powered by Advanced Smart Technologies</span>
             </h2>
             <p className={`text-xl max-w-3xl mx-auto ${
               theme === 'dark' ? 'text-white/70' : 'text-gray-600'
@@ -219,9 +273,9 @@ const Index = () => {
               <h2 className={`text-3xl md:text-4xl font-bold mb-6 ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
-                لماذا تختار مورفو AI؟
+                لماذا تختار متجر زد؟
                 <br />
-                <span className="text-2xl md:text-3xl">Why Choose Morvo AI?</span>
+                <span className="text-2xl md:text-3xl">Why Choose Zid Store?</span>
               </h2>
               <div className="space-y-4">
                 {benefits.map((benefit, index) => (
