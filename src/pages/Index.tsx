@@ -326,7 +326,7 @@ const Index = () => {
             <h1
               className={`${
                 language === "ar"
-                  ? "text-3xl md:text-4xl lg:text-5xl"
+                  ? "text-4xl md:text-5xl lg:text-6xl"
                   : "text-4xl md:text-6xl lg:text-7xl"
               } font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight`}
             >
