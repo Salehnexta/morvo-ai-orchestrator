@@ -27,7 +27,6 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       login: "تسجيل الدخول",
       register: "إنشاء حساب",
       startNow: "ابدأ الآن",
-      smartPlatform: "النظام الذكي للتسويق",
       storeName: "مورفو"
     },
     en: {
@@ -41,7 +40,6 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       login: "Login",
       register: "Sign Up",
       startNow: "Start Now",
-      smartPlatform: "Smart Marketing System",
       storeName: "Morvo"
     }
   };
@@ -101,9 +99,6 @@ export const Header = ({ onStartChat }: HeaderProps) => {
                 <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                   {t.storeName}
                 </h1>
-                <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {t.smartPlatform}
-                </p>
               </div>
             </Link>
           </div>
@@ -260,3 +255,5 @@ export const Header = ({ onStartChat }: HeaderProps) => {
     </header>
   );
 };
+
+export default Header;
