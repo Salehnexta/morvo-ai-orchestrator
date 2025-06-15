@@ -14,12 +14,12 @@ export const Pricing = () => {
     ar: {
       title: "الأسعار",
       subtitle: "اختر الباقة المناسبة لنمو عملك",
-      note: "* الأسعار لا تشمل ضريبة القيمة المضافة. الاشتراك شهري قابل للإلغاء في أي وقت، والسعر ثابت طالما الاشتراك فعّال.",
+      note: "* الأسعار تشمل ضريبة القيمة المضافة. الاشتراك شهري قابل للإلغاء في أي وقت، والسعر ثابت طالما الاشتراك فعّال.",
       plans: [
         {
           name: "الأساسي",
           description: "للأفراد والشركات الناشئة",
-          price: "199$",
+          price: "749 ر.س",
           period: "شهرياً",
           buttonText: "ابدأ الآن",
           popular: false
@@ -27,7 +27,7 @@ export const Pricing = () => {
         {
           name: "الاحترافي",
           description: "للشركات المتنامية",
-          price: "299$",
+          price: "1,124 ر.س",
           period: "شهرياً",
           buttonText: "ابدأ الآن",
           popular: true
@@ -35,13 +35,20 @@ export const Pricing = () => {
         {
           name: "الأعمال",
           description: "للمؤسسات الكبيرة",
-          price: "399$",
+          price: "1,499 ر.س",
           period: "شهرياً",
           buttonText: "تواصل معنا",
           popular: false
         }
       ],
       features: {
+        tokens: {
+          title: "الرموز المميزة",
+          items: [
+            { name: "الرموز الشهرية", base: "10,000", pro: "25,000", business: "50,000" },
+            { name: "رموز إضافية", base: "0.05 ر.س لكل رمز", pro: "0.04 ر.س لكل رمز", business: "0.03 ر.س لكل رمز" }
+          ]
+        },
         socialContent: {
           title: "محتوى وسائل التواصل الاجتماعي بالذكاء الاصطناعي",
           items: [
@@ -71,30 +78,30 @@ export const Pricing = () => {
           title: "متتبع وسائل التواصل الاجتماعي",
           items: [
             { name: "ملفات وسائل التواصل للمراقبة", base: "10", pro: "20 (المزيد عند الطلب)", business: "20 (المزيد عند الطلب)" },
-            { name: "تحليل أداء المنافسين", base: true, pro: true, business: true },
-            { name: "مراقبة محتوى المنافسين", base: true, pro: true, business: true },
-            { name: "عرض المقارنة", base: true, pro: true, business: true },
-            { name: "البيانات التاريخية", base: true, pro: true, business: true },
-            { name: "تقارير البريد الإلكتروني", base: true, pro: true, business: true },
-            { name: "تقارير CSV وPDF بالعلامة البيضاء", base: true, pro: true, business: true }
+            { name: "تحليل أداء المنافسين", base: false, pro: true, business: true },
+            { name: "مراقبة محتوى المنافسين", base: false, pro: true, business: true },
+            { name: "عرض المقارنة", base: false, pro: true, business: true },
+            { name: "البيانات التاريخية", base: false, pro: true, business: true },
+            { name: "تقارير البريد الإلكتروني", base: false, pro: true, business: true },
+            { name: "تقارير CSV وPDF بالعلامة البيضاء", base: false, pro: true, business: true }
           ]
         },
         socialAnalytics: {
           title: "تحليلات وسائل التواصل الاجتماعي",
           items: [
-            { name: "الأداء حسب المنصة", base: true, pro: true, business: true },
-            { name: "تحليلات المنشورات", base: true, pro: true, business: true },
-            { name: "الاحتفاظ بالبيانات", base: "24 شهر", pro: "24 شهر", business: "24 شهر" },
-            { name: "تقارير البريد الإلكتروني", base: true, pro: true, business: true },
-            { name: "تقارير CSV وPDF بالعلامة البيضاء", base: true, pro: true, business: true }
+            { name: "الأداء حسب المنصة", base: false, pro: true, business: true },
+            { name: "تحليلات المنشورات", base: false, pro: true, business: true },
+            { name: "الاحتفاظ بالبيانات", base: false, pro: "24 شهر", business: "24 شهر" },
+            { name: "تقارير البريد الإلكتروني", base: false, pro: true, business: true },
+            { name: "تقارير CSV وPDF بالعلامة البيضاء", base: false, pro: true, business: true }
           ]
         },
         contentInsights: {
           title: "رؤى المحتوى الاجتماعي",
           items: [
-            { name: "الأداء حسب المنصة", base: true, pro: true, business: true },
-            { name: "الأداء حسب الوسم", base: true, pro: true, business: true },
-            { name: "الأداء حسب نوع المنشور", base: true, pro: true, business: true }
+            { name: "الأداء حسب المنصة", base: false, pro: true, business: true },
+            { name: "الأداء حسب الوسم", base: false, pro: true, business: true },
+            { name: "الأداء حسب نوع المنشور", base: false, pro: true, business: true }
           ]
         },
         influencerAnalytics: {
@@ -126,12 +133,12 @@ export const Pricing = () => {
     en: {
       title: "Pricing",
       subtitle: "Choose the right plan for your business growth",
-      note: "* Prices do not include VAT. Monthly subscription can be cancelled anytime, price remains fixed as long as subscription is active.",
+      note: "* Prices include VAT. Monthly subscription can be cancelled anytime, price remains fixed as long as subscription is active.",
       plans: [
         {
           name: "Base",
           description: "For individuals and startups",
-          price: "$199",
+          price: "199 SAR",
           period: "monthly",
           buttonText: "Get Started",
           popular: false
@@ -139,7 +146,7 @@ export const Pricing = () => {
         {
           name: "Pro",
           description: "For growing businesses",
-          price: "$299",
+          price: "299 SAR",
           period: "monthly",
           buttonText: "Get Started",
           popular: true
@@ -147,13 +154,20 @@ export const Pricing = () => {
         {
           name: "Business",
           description: "For large enterprises",
-          price: "$399",
+          price: "399 SAR",
           period: "monthly",
           buttonText: "Contact Us",
           popular: false
         }
       ],
       features: {
+        tokens: {
+          title: "Tokens",
+          items: [
+            { name: "Monthly tokens", base: "10,000", pro: "25,000", business: "50,000" },
+            { name: "Additional tokens", base: "0.02 SAR per token", pro: "0.015 SAR per token", business: "0.01 SAR per token" }
+          ]
+        },
         socialContent: {
           title: "Social Content AI",
           items: [
@@ -183,30 +197,30 @@ export const Pricing = () => {
           title: "Social Tracker",
           items: [
             { name: "Social media profiles for monitoring", base: "10", pro: "20 (more upon request)", business: "20 (more upon request)" },
-            { name: "Competitor performance analysis", base: true, pro: true, business: true },
-            { name: "Competitor content monitoring", base: true, pro: true, business: true },
-            { name: "Compare view", base: true, pro: true, business: true },
-            { name: "Historical data", base: true, pro: true, business: true },
-            { name: "Email reports", base: true, pro: true, business: true },
-            { name: "CSV and white-labeled PDF reports", base: true, pro: true, business: true }
+            { name: "Competitor performance analysis", base: false, pro: true, business: true },
+            { name: "Competitor content monitoring", base: false, pro: true, business: true },
+            { name: "Compare view", base: false, pro: true, business: true },
+            { name: "Historical data", base: false, pro: true, business: true },
+            { name: "Email reports", base: false, pro: true, business: true },
+            { name: "CSV and white-labeled PDF reports", base: false, pro: true, business: true }
           ]
         },
         socialAnalytics: {
           title: "Social Analytics",
           items: [
-            { name: "Performance by social media platform", base: true, pro: true, business: true },
-            { name: "Post analytics", base: true, pro: true, business: true },
-            { name: "Data retention", base: "24 months", pro: "24 months", business: "24 months" },
-            { name: "Email reports", base: true, pro: true, business: true },
-            { name: "CSV and white-labeled PDF reports", base: true, pro: true, business: true }
+            { name: "Performance by social media platform", base: false, pro: true, business: true },
+            { name: "Post analytics", base: false, pro: true, business: true },
+            { name: "Data retention", base: false, pro: "24 months", business: "24 months" },
+            { name: "Email reports", base: false, pro: true, business: true },
+            { name: "CSV and white-labeled PDF reports", base: false, pro: true, business: true }
           ]
         },
         contentInsights: {
           title: "Social Content Insights",
           items: [
-            { name: "Performance by social media platform", base: true, pro: true, business: true },
-            { name: "Performance by tag", base: true, pro: true, business: true },
-            { name: "Performance by post type", base: true, pro: true, business: true }
+            { name: "Performance by social media platform", base: false, pro: true, business: true },
+            { name: "Performance by tag", base: false, pro: true, business: true },
+            { name: "Performance by post type", base: false, pro: true, business: true }
           ]
         },
         influencerAnalytics: {
