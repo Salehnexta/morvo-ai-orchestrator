@@ -55,26 +55,30 @@ export default function Dashboard() {
       <div 
         className="min-h-screen flex w-full" 
         dir="rtl"
-        style={{
-          backgroundImage: 'url(/lovable-uploads/39febb03-65a7-47c5-9aca-0d3db40793e8.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
       >
         {/* Dashboard/Image Area - 60% (Left side in RTL) */}
-        <div className={`w-3/5 ${theme === 'dark' ? 'bg-gray-900/60' : 'bg-white/60'} backdrop-blur-sm`}>
-          <DashboardContent 
-            data={dashboardData} 
-            theme={theme} 
-            language={language}
-            isRTL={true}
-            content={t}
-          />
+        <div 
+          className="w-3/5 relative"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        >
+          <div className={`absolute inset-0 ${theme === 'dark' ? 'bg-gray-900/80' : 'bg-white/85'} backdrop-blur-sm`}>
+            <DashboardContent 
+              data={dashboardData} 
+              theme={theme} 
+              language={language}
+              isRTL={true}
+              content={t}
+            />
+          </div>
         </div>
 
         {/* Chat Area - 40% (Right side in RTL) */}
-        <div className={`w-2/5 ${theme === 'dark' ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-sm border-l border-gray-200`}>
+        <div className={`w-2/5 ${theme === 'dark' ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-sm border-r border-gray-200`}>
           <ChatInterface onBack={() => {}} onDashboardUpdate={handleDashboardUpdate} />
         </div>
       </div>

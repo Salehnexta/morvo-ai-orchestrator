@@ -1,7 +1,6 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Users, ShoppingCart, TrendingUp, Plus, Settings, PieChart, LineChart } from "lucide-react";
+import { BarChart3, Users, ShoppingCart, TrendingUp, Plus, Settings, PieChart, LineChart, FileBarChart, UserCog } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart as RechartsLineChart, Line, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
 
@@ -48,12 +47,12 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
     },
   };
 
-  // Arabic action buttons
+  // Enhanced Arabic action buttons with improved styling
   const arabicActions = [
-    { text: "عرض التقارير", icon: BarChart3, color: "from-blue-500 to-blue-600" },
-    { text: "إدارة المستخدمين", icon: Users, color: "from-green-500 to-green-600" },
-    { text: "إضافة منتج", icon: Plus, color: "from-purple-500 to-purple-600" },
-    { text: "الإعدادات", icon: Settings, color: "from-orange-500 to-orange-600" }
+    { text: "عرض التقارير المالية", icon: FileBarChart, color: "from-indigo-500 via-purple-500 to-pink-500", bgOpacity: "bg-white/10" },
+    { text: "إدارة المستخدمين", icon: UserCog, color: "from-emerald-500 via-teal-500 to-cyan-500", bgOpacity: "bg-white/10" },
+    { text: "إضافة منتج جديد", icon: Plus, color: "from-orange-500 via-red-500 to-pink-500", bgOpacity: "bg-white/10" },
+    { text: "إعدادات النظام", icon: Settings, color: "from-violet-500 via-purple-500 to-blue-500", bgOpacity: "bg-white/10" }
   ];
 
   const renderChart = () => {
@@ -148,49 +147,65 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
 
   return (
     <div className="h-screen overflow-y-auto p-6 font-cairo" dir="rtl">
-      {/* Arabic Header with Overlay */}
+      {/* Enhanced Arabic Header with Premium Styling */}
       <div className="mb-8 text-right relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent rounded-lg"></div>
-        <div className="relative p-6">
-          <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-2">
+        <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-black/20 to-transparent rounded-3xl"></div>
+        <div className="relative p-8 backdrop-blur-sm">
+          <h1 className="text-5xl font-bold text-white drop-shadow-2xl mb-3 leading-tight">
             مرحباً بك في منصة زد
           </h1>
-          <p className="text-xl text-white/90 drop-shadow-md">
-            لوحة التحكم الذكية لإدارة أعمالك
+          <p className="text-2xl text-white/95 drop-shadow-lg font-medium">
+            لوحة التحكم الذكية لإدارة أعمالك بكفاءة عالية
           </p>
+          <div className="mt-4 flex items-center justify-end gap-4">
+            <div className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-full">
+              <span className="text-white font-medium">نشط الآن</span>
+            </div>
+            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+          </div>
         </div>
       </div>
 
-      {/* Arabic Action Buttons */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      {/* Premium Arabic Action Buttons */}
+      <div className="grid grid-cols-2 gap-6 mb-8">
         {arabicActions.map((action, index) => (
           <Button
             key={index}
-            className={`h-16 bg-gradient-to-r ${action.color} hover:scale-105 transform transition-all duration-200 text-white font-bold text-lg rounded-2xl shadow-lg border-0`}
+            className={`h-20 bg-gradient-to-br ${action.color} hover:scale-105 transform transition-all duration-300 text-white font-bold text-lg rounded-3xl shadow-2xl border-0 backdrop-blur-md ${action.bgOpacity} hover:shadow-3xl group relative overflow-hidden`}
           >
-            <action.icon className="w-6 h-6 ml-3" />
-            {action.text}
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl"></div>
+            <div className="relative flex items-center gap-4">
+              <action.icon className="w-7 h-7 drop-shadow-lg" />
+              <span className="drop-shadow-lg">{action.text}</span>
+            </div>
           </Button>
         ))}
       </div>
 
-      {/* Stats Grid */}
+      {/* Enhanced Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {(data?.stats || defaultStats).map((stat: any, index: number) => (
-          <Card key={index} className={`${theme === 'dark' ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90'} backdrop-blur-sm rounded-2xl shadow-lg`}>
+          <Card key={index} className={`${theme === 'dark' ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95'} backdrop-blur-md rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-0`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 {stat.title}
               </CardTitle>
-              <stat.icon className={`h-4 w-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
+                <stat.icon className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
                 {stat.value}
               </div>
-              <p className="text-xs text-green-600 mt-1">
-                {stat.change} from last month
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                  {stat.change}
+                </span>
+                <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  من الشهر الماضي
+                </span>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -199,38 +214,38 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
       {/* Dynamic Chart Section */}
       {data && renderChart()}
 
-      {/* Default Content when no specific data */}
+      {/* Enhanced Default Content */}
       {!data && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Activity */}
           <div className="lg:col-span-2">
-            <Card className={`${theme === 'dark' ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90'} backdrop-blur-sm rounded-2xl shadow-lg`}>
+            <Card className={`${theme === 'dark' ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95'} backdrop-blur-md rounded-3xl shadow-xl border-0`}>
               <CardHeader>
-                <CardTitle className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-right`}>
+                <CardTitle className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-right text-xl`}>
                   النشاط الأخير
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { title: "طلب جديد تم استلامه", desc: "طلب رقم #1234", time: "منذ ساعة" },
-                    { title: "تم إتمام عملية بيع", desc: "بقيمة 150 ريال", time: "منذ ساعتين" },
-                    { title: "عميل جديد انضم", desc: "أحمد محمد", time: "منذ 3 ساعات" },
-                    { title: "تحديث المخزون", desc: "تم إضافة 50 منتج", time: "منذ 4 ساعات" }
+                    { title: "طلب جديد تم استلامه", desc: "طلب رقم #1234", time: "منذ ساعة", color: "from-blue-500 to-purple-600" },
+                    { title: "تم إتمام عملية بيع", desc: "بقيمة 150 ريال", time: "منذ ساعتين", color: "from-green-500 to-teal-600" },
+                    { title: "عميل جديد انضم", desc: "أحمد محمد", time: "منذ 3 ساعات", color: "from-orange-500 to-red-600" },
+                    { title: "تحديث المخزون", desc: "تم إضافة 50 منتج", time: "منذ 4 ساعات", color: "from-purple-500 to-pink-600" }
                   ].map((item, index) => (
-                    <div key={index} className={`flex items-center gap-4 p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-semibold text-sm">{index + 1}</span>
+                    <div key={index} className={`flex items-center gap-4 p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-700/70' : 'bg-gray-50/90'} backdrop-blur-sm hover:scale-102 transition-transform duration-200`}>
+                      <div className={`w-12 h-12 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center shadow-lg`}>
+                        <span className="text-white font-bold text-sm">{index + 1}</span>
                       </div>
                       <div className="flex-1 text-right">
-                        <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1`}>
                           {item.title}
                         </p>
                         <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                           {item.desc}
                         </p>
                       </div>
-                      <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} bg-gray-100 dark:bg-gray-600 px-3 py-1 rounded-full`}>
                         {item.time}
                       </span>
                     </div>
@@ -240,36 +255,36 @@ export const DashboardContent = ({ data, theme, language, isRTL, content }: Dash
             </Card>
           </div>
 
-          {/* Quick Stats */}
+          {/* Enhanced Quick Stats */}
           <div>
-            <Card className={`${theme === 'dark' ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90'} backdrop-blur-sm rounded-2xl shadow-lg`}>
+            <Card className={`${theme === 'dark' ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95'} backdrop-blur-md rounded-3xl shadow-xl border-0`}>
               <CardHeader>
-                <CardTitle className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-right`}>
+                <CardTitle className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-right text-xl`}>
                   إحصائيات سريعة
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl">
-                  <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              <CardContent className="space-y-6">
+                <div className="text-center p-6 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-2xl backdrop-blur-sm">
+                  <div className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
                     127
                   </div>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                     عدد الطلبات اليوم
                   </p>
                 </div>
-                <div className="text-center p-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-xl">
-                  <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <div className="text-center p-6 bg-gradient-to-br from-green-500/20 via-teal-500/20 to-cyan-500/20 rounded-2xl backdrop-blur-sm">
+                  <div className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
                     ٨٥٪
                   </div>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                     معدل رضا العملاء
                   </p>
                 </div>
-                <div className="text-center p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl">
-                  <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <div className="text-center p-6 bg-gradient-to-br from-orange-500/20 via-red-500/20 to-pink-500/20 rounded-2xl backdrop-blur-sm">
+                  <div className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
                     ١٢٫٣ك
                   </div>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                     إجمالي المبيعات (ريال)
                   </p>
                 </div>
