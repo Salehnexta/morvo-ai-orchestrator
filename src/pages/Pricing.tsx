@@ -1,10 +1,9 @@
-
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { Check, X, Star, Zap, Shield } from "lucide-react";
 
 export const Pricing = () => {
   const { language, isRTL } = useLanguage();
@@ -22,7 +21,8 @@ export const Pricing = () => {
           price: "749 ر.س",
           period: "شهرياً",
           buttonText: "ابدأ الآن",
-          popular: false
+          popular: false,
+          icon: Shield
         },
         {
           name: "الاحترافي",
@@ -30,7 +30,8 @@ export const Pricing = () => {
           price: "1,124 ر.س",
           period: "شهرياً",
           buttonText: "ابدأ الآن",
-          popular: true
+          popular: true,
+          icon: Zap
         },
         {
           name: "الأعمال",
@@ -38,7 +39,8 @@ export const Pricing = () => {
           price: "1,499 ر.س",
           period: "شهرياً",
           buttonText: "تواصل معنا",
-          popular: false
+          popular: false,
+          icon: Star
         }
       ],
       features: {
@@ -141,7 +143,8 @@ export const Pricing = () => {
           price: "199 SAR",
           period: "monthly",
           buttonText: "Get Started",
-          popular: false
+          popular: false,
+          icon: Shield
         },
         {
           name: "Pro",
@@ -149,7 +152,8 @@ export const Pricing = () => {
           price: "299 SAR",
           period: "monthly",
           buttonText: "Get Started",
-          popular: true
+          popular: true,
+          icon: Zap
         },
         {
           name: "Business",
@@ -157,7 +161,8 @@ export const Pricing = () => {
           price: "399 SAR",
           period: "monthly",
           buttonText: "Contact Us",
-          popular: false
+          popular: false,
+          icon: Star
         }
       ],
       features: {
@@ -266,7 +271,7 @@ export const Pricing = () => {
     
     if (typeof value === 'string') {
       return (
-        <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
           {value}
         </span>
       );
@@ -277,124 +282,197 @@ export const Pricing = () => {
 
   return (
     <MainLayout>
-      <div className={`py-16 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`text-center mb-16 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${
-              theme === 'dark' ? 'text-white' : 'text-gray-900'
-            }`}>
-              {t.title}
-            </h1>
-            <p className={`text-xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} max-w-3xl ${
-              isRTL ? 'mr-auto' : 'ml-auto'
-            }`}>
-              {t.subtitle}
-            </p>
+      <div className={`min-h-screen ${theme === 'dark' 
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
+        : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'
+      }`} dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="relative overflow-hidden">
+          {/* Background decorative elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className={`absolute top-10 ${isRTL ? 'right-10' : 'left-10'} w-72 h-72 ${
+              theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-400/20'
+            } rounded-full blur-3xl`}></div>
+            <div className={`absolute bottom-10 ${isRTL ? 'left-10' : 'right-10'} w-96 h-96 ${
+              theme === 'dark' ? 'bg-purple-500/10' : 'bg-purple-400/20'
+            } rounded-full blur-3xl`}></div>
           </div>
 
-          {/* Plan Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            {t.plans.map((plan, index) => (
-              <Card key={index} className={`relative transition-all duration-300 hover:shadow-lg ${
-                plan.popular ? 'border-blue-500 shadow-lg transform scale-105' : ''
-              } ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
-                {plan.popular && (
-                  <div className={`absolute -top-4 ${isRTL ? 'right-4' : 'left-4'} bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium`}>
-                    {language === 'ar' ? 'الأكثر شعبية' : 'Most Popular'}
-                  </div>
-                )}
-                <CardHeader className={`text-center ${isRTL ? 'text-right' : 'text-left'}`}>
-                  <CardTitle className={`text-2xl ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {plan.name}
-                  </CardTitle>
-                  <CardDescription className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {plan.description}
-                  </CardDescription>
-                  <div className="mt-4">
-                    <span className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      {plan.price}
-                    </span>
-                    {plan.period && (
-                      <span className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} ${
-                        isRTL ? 'mr-2' : 'ml-2'
-                      }`}>
-                        {plan.period}
-                      </span>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                    variant={plan.popular ? 'default' : 'outline'}
-                  >
-                    {plan.buttonText}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Feature Comparison Table */}
-          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg p-8`}>
-            <h2 className={`text-2xl font-bold mb-8 text-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              {language === 'ar' ? 'مقارنة تفصيلية للمزايا' : 'Detailed Feature Comparison'}
-            </h2>
-            
-            {Object.entries(t.features).map(([categoryKey, category]) => (
-              <div key={categoryKey} className="mb-12">
-                <h3 className={`text-xl font-semibold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  {category.title}
-                </h3>
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-                        <th className={`${isRTL ? 'text-right' : 'text-left'} py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                          {language === 'ar' ? 'الميزة' : 'Feature'}
-                        </th>
-                        <th className={`text-center py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                          {t.plans[0].name}
-                        </th>
-                        <th className={`text-center py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                          {t.plans[1].name}
-                        </th>
-                        <th className={`text-center py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                          {t.plans[2].name}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {category.items.map((feature, featureIndex) => (
-                        <tr key={featureIndex} className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-                          <td className={`py-4 ${isRTL ? 'text-right' : 'text-left'} ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {feature.name}
-                          </td>
-                          <td className="py-4 text-center">
-                            {renderFeatureValue(feature, 'base')}
-                          </td>
-                          <td className="py-4 text-center">
-                            {renderFeatureValue(feature, 'pro')}
-                          </td>
-                          <td className="py-4 text-center">
-                            {renderFeatureValue(feature, 'business')}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            {/* Header Section */}
+            <div className={`text-center mb-20 ${isRTL ? 'text-right' : 'text-left'}`}>
+              <div className="flex justify-center mb-6">
+                <div className={`px-4 py-2 rounded-full text-sm font-medium ${
+                  theme === 'dark' 
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
+                    : 'bg-blue-100 text-blue-600 border border-blue-200'
+                }`}>
+                  {language === 'ar' ? 'الأسعار والباقات' : 'Pricing Plans'}
                 </div>
               </div>
-            ))}
-          </div>
+              <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold mb-8 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              } leading-tight`}>
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {t.title}
+                </span>
+              </h1>
+              <p className={`text-xl md:text-2xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} max-w-4xl mx-auto leading-relaxed`}>
+                {t.subtitle}
+              </p>
+            </div>
 
-          <div className={`text-center mt-12 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} max-w-4xl ${
-              isRTL ? 'mr-auto' : 'ml-auto'
-            }`}>
-              {t.note}
-            </p>
+            {/* Plan Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+              {t.plans.map((plan, index) => (
+                <Card key={index} className={`relative group transition-all duration-500 hover:scale-105 ${
+                  plan.popular 
+                    ? `border-2 ${theme === 'dark' 
+                        ? 'border-blue-500 bg-gradient-to-br from-blue-900/50 to-purple-900/50 shadow-2xl shadow-blue-500/20' 
+                        : 'border-blue-500 bg-gradient-to-br from-blue-50 to-purple-50 shadow-2xl shadow-blue-200/50'
+                      }` 
+                    : `${theme === 'dark' 
+                        ? 'bg-gray-800/50 border-gray-700/50 hover:bg-gray-800/70' 
+                        : 'bg-white/70 border-gray-200/50 hover:bg-white'
+                      } backdrop-blur-sm`
+                }`}>
+                  {plan.popular && (
+                    <div className={`absolute -top-4 ${isRTL ? 'right-1/2' : 'left-1/2'} transform ${isRTL ? 'translate-x-1/2' : '-translate-x-1/2'}`}>
+                      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2">
+                        <Star className="w-4 h-4 fill-current" />
+                        {language === 'ar' ? 'الأكثر شعبية' : 'Most Popular'}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <CardHeader className={`text-center pb-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <div className="flex justify-center mb-4">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                        plan.popular
+                          ? 'bg-gradient-to-br from-blue-500 to-purple-600'
+                          : theme === 'dark' 
+                            ? 'bg-gray-700' 
+                            : 'bg-gray-100'
+                      }`}>
+                        <plan.icon className={`w-8 h-8 ${
+                          plan.popular ? 'text-white' : theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                        }`} />
+                      </div>
+                    </div>
+                    <CardTitle className={`text-3xl mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {plan.name}
+                    </CardTitle>
+                    <CardDescription className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {plan.description}
+                    </CardDescription>
+                    <div className="mt-8">
+                      <span className={`text-5xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        {plan.price}
+                      </span>
+                      {plan.period && (
+                        <span className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} ${
+                          isRTL ? 'mr-2' : 'ml-2'
+                        }`}>
+                          /{plan.period}
+                        </span>
+                      )}
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-6">
+                    <Button 
+                      className={`w-full h-12 text-lg font-semibold transition-all duration-300 ${
+                        plan.popular 
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl' 
+                          : 'hover:scale-105'
+                      }`}
+                      variant={plan.popular ? 'default' : 'outline'}
+                    >
+                      {plan.buttonText}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Feature Comparison Table */}
+            <div className={`${
+              theme === 'dark' 
+                ? 'bg-gray-800/50 border border-gray-700/50' 
+                : 'bg-white/70 border border-gray-200/50'
+            } backdrop-blur-sm rounded-3xl p-8 md:p-12 shadow-2xl`}>
+              <div className="text-center mb-12">
+                <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  {language === 'ar' ? 'مقارنة تفصيلية للمزايا' : 'Detailed Feature Comparison'}
+                </h2>
+                <div className={`w-24 h-1 ${
+                  theme === 'dark' ? 'bg-gradient-to-r from-blue-500 to-purple-500' : 'bg-gradient-to-r from-blue-600 to-purple-600'
+                } mx-auto rounded-full`}></div>
+              </div>
+              
+              {Object.entries(t.features).map(([categoryKey, category]) => (
+                <div key={categoryKey} className="mb-16 last:mb-0">
+                  <h3 className={`text-2xl font-bold mb-8 ${theme === 'dark' ? 'text-white' : 'text-gray-900'} flex items-center gap-3`}>
+                    <div className={`w-3 h-3 rounded-full ${
+                      theme === 'dark' ? 'bg-blue-500' : 'bg-blue-600'
+                    }`}></div>
+                    {category.title}
+                  </h3>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className={`border-b-2 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                          <th className={`${isRTL ? 'text-right' : 'text-left'} py-6 px-4 text-lg font-semibold ${
+                            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            {language === 'ar' ? 'الميزة' : 'Feature'}
+                          </th>
+                          {t.plans.map((plan, planIndex) => (
+                            <th key={planIndex} className={`text-center py-6 px-4 text-lg font-semibold ${
+                              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              <div className="flex flex-col items-center gap-2">
+                                <plan.icon className="w-6 h-6" />
+                                {plan.name}
+                              </div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {category.items.map((feature, featureIndex) => (
+                          <tr key={featureIndex} className={`border-b transition-colors hover:${
+                            theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50/50'
+                          } ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+                            <td className={`py-6 px-4 ${isRTL ? 'text-right' : 'text-left'} font-medium ${
+                              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              {feature.name}
+                            </td>
+                            <td className="py-6 px-4 text-center">
+                              {renderFeatureValue(feature, 'base')}
+                            </td>
+                            <td className="py-6 px-4 text-center">
+                              {renderFeatureValue(feature, 'pro')}
+                            </td>
+                            <td className="py-6 px-4 text-center">
+                              {renderFeatureValue(feature, 'business')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer Note */}
+            <div className="text-center mt-16">
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} max-w-4xl mx-auto leading-relaxed`}>
+                {t.note}
+              </p>
+            </div>
           </div>
         </div>
       </div>
