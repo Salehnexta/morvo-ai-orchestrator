@@ -46,14 +46,20 @@ const Dashboard = () => {
           </div>
 
           {/* Dashboard Content - 60% width */}
-          <div className="flex-1">
-            <DashboardContent 
-              data={mockData}
-              theme={theme}
-              language={language}
-              isRTL={isRTL}
-              content={content}
-            />
+          <div 
+            className="flex-1 relative bg-cover bg-center"
+            style={{ backgroundImage: `url('/lovable-uploads/7e7bed8d-ffc0-479e-8da9-0d358cca4983.png')` }}
+          >
+            <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
+            <div className="relative z-10 h-full">
+              <DashboardContent 
+                data={mockData}
+                theme={theme}
+                language={language}
+                isRTL={isRTL}
+                content={content}
+              />
+            </div>
           </div>
         </div>
       </div>
