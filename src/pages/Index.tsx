@@ -1,13 +1,14 @@
-
 import { useState } from "react";
-import { MessageSquare, Sparkles, Zap, Globe, BarChart3, Users, Moon, Sun, Play, ArrowRight, CheckCircle } from "lucide-react";
+import { MessageSquare, Sparkles, Zap, Globe, BarChart3, Users, Play, ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatInterface } from "@/components/ChatInterface";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const Index = () => {
   const [showChat, setShowChat] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
   const features = [
     {
@@ -80,45 +81,7 @@ const Index = () => {
         ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
         : 'bg-gradient-to-br from-white via-blue-50 to-purple-50'
     }`}>
-      {/* Header */}
-      <header className="relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center`}>
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Morvo AI
-                </h1>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Next-Gen Marketing Intelligence
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleTheme}
-                className={`${theme === 'dark' ? 'text-white hover:bg-white/10' : 'text-gray-900 hover:bg-gray-100'}`}
-              >
-                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </Button>
-              
-              <Button
-                onClick={() => setShowChat(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                تجربة مجانية | Try Free
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header onStartChat={() => setShowChat(true)} />
 
       {/* Hero Section */}
       <section className="relative py-20">
@@ -345,18 +308,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className={`border-t py-8 ${
-        theme === 'dark' 
-          ? 'border-white/10 bg-white/5' 
-          : 'border-gray-200 bg-gray-50'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-            © 2024 Morvo AI. جميع الحقوق محفوظة | All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
