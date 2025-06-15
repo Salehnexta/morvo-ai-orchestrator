@@ -28,7 +28,7 @@ export default function Dashboard() {
       <div 
         className="w-3/5 relative"
         style={{
-          backgroundImage: 'url(/lovable-uploads/ac9c9c9b-a4db-48f3-ae39-d0ae9a8c5ed4.png)',
+          backgroundImage: 'url(/lovable-uploads/f7658506-ad00-4cf7-a7c1-fb72fdbe720d.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
