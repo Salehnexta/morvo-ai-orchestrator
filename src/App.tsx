@@ -17,6 +17,10 @@ import Privacy from "./pages/Privacy";
 import Support from "./pages/Support";
 import Contact from "./pages/Contact";
 import Login from "./pages/auth/Login";
+import SuccessStories from "./pages/SuccessStories";
+import Updates from "./pages/Updates";
+import HelpCenter from "./pages/HelpCenter";
+import Cookies from "./pages/Cookies";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +43,10 @@ const App = () => (
               <Route path="/support" element={<Support />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/auth/login" element={<Login />} />
+              <Route path="/success-stories" element={<SuccessStories />} />
+              <Route path="/updates" element={<Updates />} />
+              <Route path="/help-center" element={<HelpCenter />} />
+              <Route path="/cookies" element={<Cookies />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
