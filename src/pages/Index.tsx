@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Globe, Brain } from "lucide-react";
+import { Globe, Brain, User, Rocket, Star } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Header } from "@/components/Header";
@@ -122,7 +122,20 @@ const content = {
         },
       ],
     },
-    // تم حذف successStory من العربية
+    successStory: {
+      title: "قصة نجاح: كيف يغير مورفو قواعد اللعبة",
+      subtitle: "اكتشف كيف يصمم مورفو تجربة مخصصة يومًا بعد يوم، مما يمكّن المبتدئين والخبراء على حد سواء من إحداث ثورة في عالمهم.",
+      before: {
+        title: "قبل مورفو: عالم من التعقيدات",
+        description: "كانت البداية مليئة بالتحديات. أدوات متفرقة، بيانات لا تنتهي، وشعور بأن تحقيق النمو حكر على الخبراء فقط. كان من الصعب ترجمة الأفكار إلى استراتيجيات ناجحة."
+      },
+      after: {
+        title: "بعد مورفو: شريكك في التطور",
+        description: "مع مورفو، تحولت الفوضى إلى وضوح. يومًا بعد يوم، يبني مورفو فهمًا أعمق لعملك وعملائك، ويصمم لك تجربة فريدة تتطور باستمرار. لم يعد الأمر يتعلق فقط بأداء المهام، بل بامتلاك ذكاء تسويقي ينمو معك، ويفتح الأبواب أمام المبتدئين لينافسوا الكبار، ويمنح الخبراء الأدوات اللازمة للوصول إلى آفاق جديدة."
+      },
+      quote: "مورفو ليس مجرد أداة، إنه العقل المدبر الذي كان ينقصني. كل يوم أكتشف إمكانية جديدة لم أكن أتخيلها.",
+      author: "أحمد، صاحب متجر إلكتروني"
+    },
     pricing: {
       title: "باقة المؤسس (عرض حصري ومحدود)",
       price: "999 ريال/شهر",
@@ -261,7 +274,20 @@ const content = {
         },
       ],
     },
-    // تم حذف successStory من العربية
+    successStory: {
+      title: "Success Story: How Morvo Changes the Game",
+      subtitle: "Discover how Morvo designs a customized experience day by day, empowering both beginners and experts to revolutionize their world.",
+      before: {
+        title: "Before Morvo: A World of Complexity",
+        description: "The beginning was challenging. Disparate tools, endless data, and a feeling that growth was reserved for experts only. It was difficult to translate ideas into successful strategies."
+      },
+      after: {
+        title: "After Morvo: Your Partner in Evolution",
+        description: "With Morvo, chaos turned into clarity. Day by day, Morvo builds a deeper understanding of your business and customers, designing a unique, ever-evolving experience for you. It's no longer just about performing tasks, but about having a marketing intelligence that grows with you, opening doors for beginners to compete with the pros, and giving experts the tools to reach new horizons."
+      },
+      quote: "Morvo isn't just a tool; it's the mastermind I was missing. Every day, I discover a new possibility I never imagined.",
+      author: "Alex, E-commerce Store Owner"
+    },
     pricing: {
       title: "Founder's Package (Exclusive Limited Offer)",
       price: "$497/month",
@@ -555,6 +581,110 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Success Story Section */}
+      {t.successStory && (
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2
+                className={`text-3xl md:text-4xl font-bold mb-6 ${
+                  theme === "dark" ? "text-white" : "text-gray-900"
+                }`}
+              >
+                {t.successStory.title}
+              </h2>
+              <p
+                className={`text-lg ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                } max-w-3xl mx-auto`}
+              >
+                {t.successStory.subtitle}
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+              {/* Before */}
+              <div
+                className={`p-8 rounded-2xl border ${
+                  theme === "dark"
+                    ? "bg-gray-900/50 border-gray-700"
+                    : "bg-white border-gray-200"
+                }`}
+              >
+                <div className={`flex items-center gap-4 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <User className="w-8 h-8 text-red-500 flex-shrink-0" />
+                  <h3
+                    className={`text-2xl font-bold ${
+                      theme === "dark" ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    {t.successStory.before.title}
+                  </h3>
+                </div>
+                <p
+                  className={`${
+                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  } leading-relaxed`}
+                >
+                  {t.successStory.before.description}
+                </p>
+              </div>
+              {/* After */}
+              <div
+                className={`p-8 rounded-2xl border ${
+                  theme === "dark"
+                    ? "bg-gradient-to-br from-gray-900 to-gray-800 border-green-500/30"
+                    : "bg-white border-green-200"
+                }`}
+              >
+                <div className={`flex items-center gap-4 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <Rocket className="w-8 h-8 text-green-500 flex-shrink-0" />
+                  <h3
+                    className={`text-2xl font-bold ${
+                      theme === "dark" ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    {t.successStory.after.title}
+                  </h3>
+                </div>
+                <p
+                  className={`${
+                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  } leading-relaxed`}
+                >
+                  {t.successStory.after.description}
+                </p>
+              </div>
+            </div>
+
+            {/* Quote */}
+            <div
+              className={`relative p-8 rounded-2xl border text-center ${
+                theme === "dark"
+                  ? "bg-gray-900/50 border-yellow-500/30"
+                  : "bg-white border-yellow-200"
+              }`}
+            >
+              <Star className="w-10 h-10 text-yellow-400 absolute -top-5 left-1/2 -translate-x-1/2" />
+              <p
+                className={`text-xl italic mb-4 ${
+                  theme === "dark" ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
+                "{t.successStory.quote}"
+              </p>
+              <p
+                className={`font-semibold ${
+                  theme === "dark" ? "text-white" : "text-gray-900"
+                }`}
+              >
+                - {t.successStory.author}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Pricing Section */}
       <section
