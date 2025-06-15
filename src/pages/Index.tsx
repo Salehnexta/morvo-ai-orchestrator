@@ -99,7 +99,7 @@ const content = {
     },
     dashboard: {
       title: "Active Dashboard™: مركز قيادتك المتطور والمتعلم",
-      subtitle: "ليست مجرد تقارير، بل هي مختبر حي للنمو والتطوير المستمر",
+      subtitle: "يعرض لك الواقع بدقة... ويكشف لك القادم",
       features: [
         {
           title: "تحليل المشاعر المتعمق",
@@ -722,7 +722,7 @@ const Index = () => {
       {language === "en" && (
         <>
           {/* Original English sections remain unchanged for now */}
-          {/* ... keep existing code (all English sections) */}
+          {/* ... keep existing code (all English sections) the same ... */}
         </>
       )}
 
