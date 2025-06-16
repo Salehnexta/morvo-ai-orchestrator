@@ -2198,9 +2198,7 @@ export type Database = {
     }
     Functions: {
       check_feature_access: {
-        Args:
-          | { p_client_id: string; p_feature_name: string }
-          | { p_client_id: string; p_feature_name: string }
+        Args: { p_client_id: string; p_feature_name: string }
         Returns: boolean
       }
       check_usage_limit: {
@@ -2210,11 +2208,7 @@ export type Database = {
               p_feature_name: string
               p_increment?: number
             }
-          | {
-              p_client_id: string
-              p_feature_name: string
-              p_limit_type?: string
-            }
+          | { p_client_id: string; p_feature_name: string; p_period?: string }
         Returns: Json
       }
       handle_user_onboarding_update: {

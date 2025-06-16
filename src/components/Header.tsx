@@ -1,4 +1,3 @@
-
 import { ShoppingCart, User, Globe, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -165,13 +164,12 @@ export const Header = ({ onStartChat }: HeaderProps) => {
                 </Button>
               </Link>
               
-              <Button
-                onClick={onStartChat}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                {t.startNow}
-              </Button>
+              <Link to="/pricing">
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {t.startNow}
+                </Button>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -240,13 +238,12 @@ export const Header = ({ onStartChat }: HeaderProps) => {
                   </Button>
                 </Link>
                 
-                <Button
-                  onClick={onStartChat}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  {t.startNow}
-                </Button>
+                <Link to="/pricing">
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    {t.startNow}
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

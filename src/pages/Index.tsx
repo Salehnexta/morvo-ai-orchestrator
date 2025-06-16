@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Globe, Brain, User, Rocket, Star } from "lucide-react";
@@ -7,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatInterface } from "@/components/ChatInterface";
+import { Link } from "react-router-dom";
 
 const content = {
   ar: {
@@ -15,7 +15,7 @@ const content = {
       subtitle: "لم نعد نتخيل فريق التسويق المثالي، بل نصممه معًا، ونطوره بلا توقف",
       description:
         `مع مورفو AI، لن تحتاج إلى توظيف فريق تسويق كامل أو التعامل مع عشرات الأدوات المتفرقة.
-أنت الآن تملك وكيل تسويق ذكي يعمل نيابةً عنك على مدار الساعة،
+أنت الآن تملك وكيل تسويق ذكي يعمل نيابةً عنك على مدار الساعة，
 يقوم تلقائيًا بـ صياغة الاستراتيجية، إنشاء المحتوى العربي والإنجليزي، تحسين نتائج البحث، إدارة الحملات الإعلانية، متابعة المنافسين، تحليل الأداء، والتفاعل مع جمهورك — كل ذلك دون تدخل يدوي`,
       startButton: "اكتشف رحلتك المخصصة اليوم",
       stats: [
@@ -377,14 +377,15 @@ const Index = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <Button
-                size="lg"
-                onClick={() => setIsChatOpen(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold shadow-2xl transform hover:scale-105 transition-all duration-200"
-              >
-                <Brain className="w-5 h-5 mr-2" />
-                {t.hero.startButton}
-              </Button>
+              <Link to="/pricing">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold shadow-2xl transform hover:scale-105 transition-all duration-200"
+                >
+                  <Brain className="w-5 h-5 mr-2" />
+                  {t.hero.startButton}
+                </Button>
+              </Link>
             </div>
 
             {/* Stats */}
@@ -598,7 +599,7 @@ const Index = () => {
               <p
                 className={`text-lg ${
                   theme === "dark" ? "text-gray-400" : "text-gray-600"
-                } max-w-3xl mx-auto`}
+                } max-w-3xl mx-auto leading-relaxed`}
               >
                 {t.successStory.subtitle}
               </p>
@@ -777,13 +778,14 @@ const Index = () => {
               </p>
             </div>
 
-            <Button
-              size="lg"
-              onClick={() => setIsChatOpen(true)}
-              className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold"
-            >
-              {t.pricing.ctaButton}
-            </Button>
+            <Link to="/pricing">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold"
+              >
+                {t.pricing.ctaButton}
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -814,13 +816,14 @@ const Index = () => {
             {t.finalCta.question}
           </p>
 
-          <Button
-            size="lg"
-            onClick={() => setIsChatOpen(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-6 text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-200"
-          >
-            {t.finalCta.button}
-          </Button>
+          <Link to="/pricing">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-6 text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-200"
+            >
+              {t.finalCta.button}
+            </Button>
+          </Link>
         </div>
       </section>
 
