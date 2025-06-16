@@ -158,7 +158,7 @@ export const AgentMonitoring = () => {
 
   const getMessageStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'success';
+      case 'completed': return 'default';
       case 'processing': return 'secondary';
       case 'failed': return 'destructive';
       case 'sent': return 'outline';

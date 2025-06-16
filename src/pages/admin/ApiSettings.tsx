@@ -188,7 +188,7 @@ export default function ApiSettings() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'connected': return 'success';
+      case 'connected': return 'default';
       case 'disconnected': return 'secondary';
       case 'error': return 'destructive';
       case 'testing': return 'outline';
@@ -434,7 +434,7 @@ export default function ApiSettings() {
                       <p className="text-sm text-muted-foreground">بيانات الموقع الإلكتروني</p>
                       <div className="mt-2 text-sm">
                         <div>{t.refreshRate}: 60 {t.minutes}</div>
-                        <Badge variant="success" className="mt-1">نشط</Badge>
+                        <Badge variant="default" className="mt-1">نشط</Badge>
                       </div>
                     </div>
                     
@@ -443,7 +443,7 @@ export default function ApiSettings() {
                       <p className="text-sm text-muted-foreground">بيانات وسائل التواصل</p>
                       <div className="mt-2 text-sm">
                         <div>{t.refreshRate}: 15 {t.minutes}</div>
-                        <Badge variant="success" className="mt-1">نشط</Badge>
+                        <Badge variant="default" className="mt-1">نشط</Badge>
                       </div>
                     </div>
                     
