@@ -1,6 +1,7 @@
+
 import { ChatInterface } from "@/components/ChatInterface";
 import { DashboardContent } from "@/components/DashboardContent";
-import { ProtectedDashboard } from "@/components/ProtectedDashboard";
+import { ProtectedChat } from "@/components/ProtectedChat";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -28,7 +29,7 @@ const Dashboard = () => {
   };
 
   return (
-    <ProtectedDashboard>
+    <ProtectedChat>
       <div 
         className="min-h-screen bg-cover bg-center"
         style={{ backgroundImage: `url('/lovable-uploads/ac9c9c9b-a4db-48f3-ae39-d0ae9a8c5ed4.png')` }}
@@ -53,7 +54,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </ProtectedDashboard>
+    </ProtectedChat>
   );
 };
 
