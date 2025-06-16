@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,6 +28,7 @@ import Billing from "./pages/Billing";
 import Admin from "./pages/Admin";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import ApiSettings from "./pages/admin/ApiSettings";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +63,7 @@ const App = () => (
               <Route path="/profile-setup" element={<ProfileSetup />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/api-settings" element={<ApiSettings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

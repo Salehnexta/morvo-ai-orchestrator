@@ -1,15 +1,17 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedAdmin } from "@/components/ProtectedAdmin";
+import { AgentMonitoring } from "@/components/admin/AgentMonitoring";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Database, Activity, MessageSquare, Shield, UserCheck } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, Database, Activity, MessageSquare, Shield, UserCheck, Settings, Bot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface AdminStats {
   totalUsers: number;
@@ -38,6 +40,7 @@ export default function Admin() {
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const content = {
     ar: {
@@ -206,17 +209,26 @@ export default function Admin() {
       }`} dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className={`text-3xl font-bold mb-2 ${
-              theme === 'dark' ? 'text-white' : 'text-gray-900'
-            }`}>
-              {t.title}
-            </h1>
-            <p className={`${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-            }`}>
-              إدارة شاملة لنظام مورفو
-            </p>
+          <div className="mb-8 flex justify-between items-center">
+            <div>
+              <h1 className={`text-3xl font-bold mb-2 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>
+                {t.title}
+              </h1>
+              <p className={`${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                إدارة شاملة لنظام مورفو
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate('/admin/api-settings')}
+              variant="outline"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              إعدادات APIs
+            </Button>
           </div>
 
           {/* Stats Cards */}
@@ -263,71 +275,92 @@ export default function Admin() {
             </Card>
           </div>
 
-          {/* User Management */}
-          <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
+          {/* Main Tabs */}
+          <Tabs defaultValue="agents" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="agents">
+                <Bot className="w-4 h-4 mr-2" />
+                مراقبة الوكلاء
+              </TabsTrigger>
+              <TabsTrigger value="users">
+                <Shield className="w-4 h-4 mr-2" />
                 {t.userManagement}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8">
-                  <p>{t.loading}</p>
-                </div>
-              ) : users.length === 0 ? (
-                <div className="text-center py-8">
-                  <p>{t.noUsers}</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t.email}</TableHead>
-                      <TableHead>{t.joinDate}</TableHead>
-                      <TableHead>{t.lastLogin}</TableHead>
-                      <TableHead>{t.roles}</TableHead>
-                      <TableHead>{t.actions}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.email}</TableCell>
-                        <TableCell>{formatDate(user.created_at)}</TableCell>
-                        <TableCell>{formatDate(user.last_sign_in_at)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            {user.roles.map((role) => (
-                              <Badge key={role} variant={role === 'admin' ? 'default' : 'secondary'}>
-                                {role}
-                              </Badge>
-                            ))}
-                            {user.roles.length === 0 && (
-                              <Badge variant="outline">user</Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant={user.roles.includes('admin') ? 'destructive' : 'default'}
-                              onClick={() => toggleAdminRole(user.id, user.roles.includes('admin'))}
-                            >
-                              <UserCheck className="h-4 w-4 mr-1" />
-                              {user.roles.includes('admin') ? t.removeAdmin : t.makeAdmin}
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Agent Monitoring Tab */}
+            <TabsContent value="agents">
+              <AgentMonitoring />
+            </TabsContent>
+
+            {/* User Management Tab */}
+            <TabsContent value="users">
+              <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    {t.userManagement}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <div className="text-center py-8">
+                      <p>{t.loading}</p>
+                    </div>
+                  ) : users.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p>{t.noUsers}</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t.email}</TableHead>
+                          <TableHead>{t.joinDate}</TableHead>
+                          <TableHead>{t.lastLogin}</TableHead>
+                          <TableHead>{t.roles}</TableHead>
+                          <TableHead>{t.actions}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.email}</TableCell>
+                            <TableCell>{formatDate(user.created_at)}</TableCell>
+                            <TableCell>{formatDate(user.last_sign_in_at)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                {user.roles.map((role) => (
+                                  <Badge key={role} variant={role === 'admin' ? 'default' : 'secondary'}>
+                                    {role}
+                                  </Badge>
+                                ))}
+                                {user.roles.length === 0 && (
+                                  <Badge variant="outline">user</Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant={user.roles.includes('admin') ? 'destructive' : 'default'}
+                                  onClick={() => toggleAdminRole(user.id, user.roles.includes('admin'))}
+                                >
+                                  <UserCheck className="h-4 w-4 mr-1" />
+                                  {user.roles.includes('admin') ? t.removeAdmin : t.makeAdmin}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </ProtectedAdmin>
