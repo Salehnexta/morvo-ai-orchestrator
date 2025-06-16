@@ -8,9 +8,78 @@ export interface TokenUsage {
   accountType: 'free' | 'paid' | 'guest';
 }
 
+export interface CreateAccountResult {
+  success: boolean;
+  clientId?: string;
+  error?: string;
+}
+
 export class TokenService {
   private static readonly FREE_ACCOUNT_LIMIT = 20000; // 20,000 tokens for free accounts
   private static readonly GUEST_LIMIT = 100;
+
+  // Create free account
+  static async createFreeAccount(email: string, additionalData: any): Promise<CreateAccountResult> {
+    try {
+      // First, check if user already exists
+      const { data: existingUser } = await supabase.auth.getUser();
+      
+      if (existingUser?.user) {
+        // User is already logged in, just get their client
+        const { data: client, error: clientError } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('user_id', existingUser.user.id)
+          .single();
+
+        if (clientError) {
+          return { success: false, error: 'Failed to find user account' };
+        }
+
+        return { success: true, clientId: client.id };
+      }
+
+      // Sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password: Math.random().toString(36).substring(2, 15), // Generate random password
+        options: {
+          data: {
+            full_name: additionalData.name || '',
+            ...additionalData
+          }
+        }
+      });
+
+      if (authError) {
+        return { success: false, error: authError.message };
+      }
+
+      if (!authData.user) {
+        return { success: false, error: 'Failed to create user account' };
+      }
+
+      // The trigger will automatically create the client and subscription
+      // Wait a moment for the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Get the created client
+      const { data: client, error: clientError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      if (clientError) {
+        return { success: false, error: 'Account created but failed to retrieve client data' };
+      }
+
+      return { success: true, clientId: client.id };
+    } catch (error) {
+      console.error('Error creating free account:', error);
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  }
 
   // Track token usage
   static async trackTokenUsage(clientId: string, tokensUsed: number): Promise<void> {
