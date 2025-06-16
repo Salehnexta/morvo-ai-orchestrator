@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Globe, Brain, User, Rocket, Star } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatInterface } from "@/components/ChatInterface";
 import { Link } from "react-router-dom";
@@ -336,8 +335,6 @@ const Index = () => {
       } ${language === "ar" ? "font-cairo" : ""}`}
       dir={isRTL ? "rtl" : "ltr"}
     >
-      <Header onStartChat={() => setIsChatOpen(true)} />
-
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">
         {/* Background Elements */}
