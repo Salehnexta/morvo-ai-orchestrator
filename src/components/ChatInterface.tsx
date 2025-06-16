@@ -1,17 +1,15 @@
 
-import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState, useEffect } from "react";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
 import { AgentControlService, AgentCommand, AgentResponse } from "@/services/agent";
-import AgentCommands from "./AgentCommands";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { ChatHeader } from "./chat/ChatHeader";
+import { MessageList } from "./chat/MessageList";
+import { ChatInput } from "./chat/ChatInput";
 
 interface Message {
   id: string;
@@ -37,7 +35,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const content = {
@@ -140,12 +137,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       setIsConnecting(false);
     }
   };
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [messages]);
 
   const analyzeMessageForDashboard = (message: string) => {
     const lowerMessage = message.toLowerCase();
@@ -347,206 +338,33 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
   return (
     <div className={`h-screen flex flex-col bg-transparent transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <div className={`backdrop-blur-md border-b p-4 ${
-        theme === 'dark' 
-          ? 'bg-black/20 border-white/10' 
-          : 'bg-white/20 border-white/30'
-      }`}>
-        <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-              <Bot className="w-5 h-5 text-white" />
-            </div>
-            <div className={isRTL ? 'text-right' : 'text-left'}>
-              <h1 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                {t.masterAgent}
-              </h1>
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                {t.clientAgent}
-              </p>
-            </div>
-          </div>
+      <ChatHeader 
+        theme={theme}
+        isRTL={isRTL}
+        content={t}
+        isConnecting={isConnecting}
+        onToggleTheme={toggleTheme}
+      />
 
-          <div className={`${isRTL ? 'mr-auto' : 'ml-auto'} flex items-center gap-2`}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className={`${
-                theme === 'dark' 
-                  ? 'text-white hover:bg-gray-800' 
-                  : 'text-gray-900 hover:bg-white/50'
-              }`}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
-            
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className={`w-2 h-2 rounded-full animate-pulse ${
-                isConnecting ? 'bg-yellow-500' : 'bg-green-500'
-              }`}></div>
-              <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                {isConnecting ? t.connecting : t.connected}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MessageList 
+        messages={messages}
+        isLoading={isLoading}
+        theme={theme}
+        isRTL={isRTL}
+        thinkingText={t.thinking}
+        onCommandResponse={handleAgentCommandResponse}
+      />
 
-      {/* Messages */}
-      <div className="flex-1 p-4">
-        <ScrollArea className="h-[calc(100vh-200px)]" ref={scrollAreaRef}>
-          <div className="space-y-4 pb-4">
-            {messages.map((message) => (
-              <div key={message.id} className="space-y-2">
-                <div
-                  className={`flex gap-3 ${
-                    message.sender === 'user' 
-                      ? isRTL ? 'justify-start' : 'justify-end'
-                      : isRTL ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  {message.sender === 'agent' && !isRTL && (
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                  
-                  <div
-                    className={`max-w-[80%] p-4 rounded-2xl shadow-md ${
-                      message.sender === 'user'
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                        : theme === 'dark'
-                        ? 'bg-black/40 border border-white/20 text-white'
-                        : 'bg-white/50 border border-gray-200 text-gray-900'
-                    }`}
-                    style={{ direction: isRTL ? 'rtl' : 'ltr' }}
-                  >
-                    <div className="whitespace-pre-wrap leading-relaxed">
-                      {message.content}
-                    </div>
-                    
-                    <div className={`flex items-center justify-between mt-2 pt-2 border-t text-xs ${
-                      message.sender === 'user'
-                        ? 'border-white/20 text-white/70'
-                        : theme === 'dark'
-                        ? 'border-gray-600 text-gray-400'
-                        : 'border-gray-200 text-gray-500'
-                    } ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <span>{message.timestamp.toLocaleTimeString()}</span>
-                      {message.processing_time && (
-                        <span>{message.processing_time}s</span>
-                      )}
-                      {message.cost && (
-                        <span>${message.cost.toFixed(4)}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {message.sender === 'user' && isRTL && (
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
-                      theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
-                    }`}>
-                      <User className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
-                    </div>
-                  )}
-
-                  {message.sender === 'agent' && isRTL && (
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-
-                  {message.sender === 'user' && !isRTL && (
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
-                      theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
-                    }`}>
-                      <User className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
-                    </div>
-                  )}
-                </div>
-
-                {message.commands && message.commands.length > 0 && (
-                  <div className={`${
-                    isRTL ? 'mr-11' : 'ml-11'
-                  }`}>
-                    {message.commands.map((command) => (
-                      <AgentCommands
-                        key={command.id}
-                        command={command}
-                        onResponse={handleAgentCommandResponse}
-                        theme={theme}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className={`flex gap-3 ${isRTL ? 'justify-end' : 'justify-start'}`}>
-                {!isRTL && (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                <div className={`p-4 rounded-2xl shadow-md ${
-                  theme === 'dark' 
-                    ? 'bg-black/40 border border-white/20' 
-                    : 'bg-white/50 border border-gray-200'
-                }`}>
-                  <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{t.thinking}</span>
-                  </div>
-                </div>
-                {isRTL && (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* Input */}
-      <div className={`backdrop-blur-md border-t p-4 ${
-        theme === 'dark' 
-          ? 'bg-black/20 border-white/10' 
-          : 'bg-white/20 border-white/30'
-      }`}>
-        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={t.placeholder}
-            className={`flex-1 transition-colors ${
-              theme === 'dark' 
-                ? 'bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-blue-500' 
-                : 'bg-black/5 border-black/20 text-black placeholder:text-gray-700 focus:border-blue-500'
-            } ${isRTL ? 'text-right' : 'text-left'}`}
-            disabled={isLoading}
-            dir={isRTL ? 'rtl' : 'ltr'}
-          />
-          <Button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
-      </div>
+      <ChatInput 
+        input={input}
+        isLoading={isLoading}
+        theme={theme}
+        isRTL={isRTL}
+        placeholder={t.placeholder}
+        onInputChange={setInput}
+        onSend={handleSend}
+        onKeyPress={handleKeyPress}
+      />
     </div>
   );
 };
