@@ -1,16 +1,9 @@
-import { ShoppingCart, User, Globe, Menu, X, ChevronDown, Settings, LogOut, MessageSquare } from "lucide-react";
+import { ShoppingCart, User, Globe, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 interface HeaderProps {
   onStartChat: () => void;
@@ -20,35 +13,6 @@ export const Header = ({ onStartChat }: HeaderProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, toggleLanguage, isRTL } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check current session
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      setLoading(false);
-    };
-
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-  };
 
   const content = {
     ar: {
@@ -59,13 +23,10 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       pricing: "الأسعار",
       support: "الدعم",
       about: "من نحن",
-      authButton: "تسجيل الدخول",
+      login: "تسجيل الدخول",
+      register: "إنشاء حساب",
       startNow: "ابدأ الآن",
-      storeName: "مورفو",
-      dashboard: "لوحة التحكم",
-      profile: "الملف الشخصي",
-      logout: "تسجيل الخروج",
-      tryChat: "جرب المحادثة"
+      storeName: "مورفو"
     },
     en: {
       welcome: "Welcome to Morvo",
@@ -75,13 +36,10 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       pricing: "Pricing",
       support: "Support",
       about: "About",
-      authButton: "Sign In",
+      login: "Login",
+      register: "Sign Up",
       startNow: "Start Now",
-      storeName: "Morvo",
-      dashboard: "Dashboard",
-      profile: "Profile",
-      logout: "Sign Out",
-      tryChat: "Try Chat"
+      storeName: "Morvo"
     }
   };
 
@@ -151,11 +109,6 @@ export const Header = ({ onStartChat }: HeaderProps) => {
             }`}>
               {t.home}
             </Link>
-            <Link to="/public-chat" className={`text-sm font-medium transition-colors ${
-              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
-            }`}>
-              {t.tryChat}
-            </Link>
             <Link to="/features" className={`text-sm font-medium transition-colors ${
               theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
             }`}>
@@ -182,82 +135,41 @@ export const Header = ({ onStartChat }: HeaderProps) => {
           <div className="flex items-center gap-4">
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
-              {!loading && (
-                <>
-                  {user ? (
-                    // User is logged in - show user menu and start now button
-                    <>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className={`transition-colors ${
-                              theme === 'dark' 
-                                ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
-                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                            }`}
-                          >
-                            <User className="w-4 h-4 mr-2" />
-                            {user.email?.split('@')[0]}
-                            <ChevronDown className="w-3 h-3 ml-1" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
-                          <DropdownMenuItem asChild>
-                            <Link to="/dashboard" className="flex items-center">
-                              <Settings className="w-4 h-4 mr-2" />
-                              {t.dashboard}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link to="/profile" className="flex items-center">
-                              <User className="w-4 h-4 mr-2" />
-                              {t.profile}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-red-600">
-                            <LogOut className="w-4 h-4 mr-2" />
-                            {t.logout}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      
-                      <Link to="/pricing">
-                        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          {t.startNow}
-                        </Button>
-                      </Link>
-                    </>
-                  ) : (
-                    // User is not logged in - show auth button and start now button
-                    <>
-                      <Link to="/auth/login">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={`transition-colors ${
-                            theme === 'dark' 
-                              ? 'border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800' 
-                              : 'border-gray-300 text-gray-700 hover:text-gray-900 hover:bg-gray-50'
-                          }`}
-                        >
-                          <User className="w-4 h-4 mr-2" />
-                          {t.authButton}
-                        </Button>
-                      </Link>
-                      
-                      <Link to="/pricing">
-                        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          {t.startNow}
-                        </Button>
-                      </Link>
-                    </>
-                  )}
-                </>
-              )}
+              <Link to="/auth/login">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`transition-colors ${
+                    theme === 'dark' 
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  {t.login}
+                </Button>
+              </Link>
+              
+              <Link to="/auth/register">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`transition-colors ${
+                    theme === 'dark' 
+                      ? 'border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800' 
+                      : 'border-gray-300 text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {t.register}
+                </Button>
+              </Link>
+              
+              <Link to="/pricing">
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {t.startNow}
+                </Button>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -285,11 +197,6 @@ export const Header = ({ onStartChat }: HeaderProps) => {
               }`}>
                 {t.home}
               </Link>
-              <Link to="/public-chat" className={`block text-base font-medium ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {t.tryChat}
-              </Link>
               <Link to="/features" className={`block text-base font-medium ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}>
@@ -312,52 +219,31 @@ export const Header = ({ onStartChat }: HeaderProps) => {
               </Link>
               
               <div className="pt-4 space-y-3">
-                {!loading && (
-                  <>
-                    {user ? (
-                      // Mobile user menu
-                      <>
-                        <Link to="/dashboard">
-                          <Button variant="outline" className="w-full justify-start">
-                            <Settings className="w-4 h-4 mr-2" />
-                            {t.dashboard}
-                          </Button>
-                        </Link>
-                        
-                        <Link to="/profile">
-                          <Button variant="outline" className="w-full justify-start">
-                            <User className="w-4 h-4 mr-2" />
-                            {t.profile}
-                          </Button>
-                        </Link>
-                        
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50"
-                          onClick={handleSignOut}
-                        >
-                          <LogOut className="w-4 h-4 mr-2" />
-                          {t.logout}
-                        </Button>
-                      </>
-                    ) : (
-                      // Mobile auth button
-                      <Link to="/auth/login">
-                        <Button variant="outline" className="w-full justify-start">
-                          <User className="w-4 h-4 mr-2" />
-                          {t.authButton}
-                        </Button>
-                      </Link>
-                    )}
-                    
-                    <Link to="/pricing">
-                      <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        {t.startNow}
-                      </Button>
-                    </Link>
-                  </>
-                )}
+                <Link to="/auth/login">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    {t.login}
+                  </Button>
+                </Link>
+                
+                <Link to="/auth/register">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    {t.register}
+                  </Button>
+                </Link>
+                
+                <Link to="/pricing">
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    {t.startNow}
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

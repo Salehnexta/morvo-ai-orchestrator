@@ -20,7 +20,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <main className="flex-1">
         {children}
       </main>
-      {/* Footer is now handled by individual pages */}
+      <Footer />
     </div>
   );
 };

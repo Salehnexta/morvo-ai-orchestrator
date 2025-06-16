@@ -1,8 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
 import { AgentControlService, AgentCommand, AgentResponse } from "@/services/agent";
-import { TokenService, TokenUsage } from "@/services/tokenService";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatHeader } from "./chat/ChatHeader";
 import { MessageList } from "./chat/MessageList";
 import { ChatInput } from "./chat/ChatInput";
-import { FreeAccountDialog } from "./chat/FreeAccountDialog";
 
 interface Message {
   id: string;
@@ -36,9 +35,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
-  const [isPublicMode, setIsPublicMode] = useState(false);
-  const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { toast } = useToast();
 
   const content = {
@@ -76,23 +72,15 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.id) {
         setClientId(session.user.id);
-        setIsPublicMode(false);
         
         // تحديث حالة العميل كمدفوع إذا كان saleh@nexta.sa
         if (session.user.email === 'saleh@nexta.sa') {
           await AgentControlService.markCustomerAsPaid(session.user.id);
           console.log('✅ تم تحديث حالة العميل saleh@nexta.sa كمدفوع');
         }
-      } else {
-        // Public mode - generate a temporary client ID
-        setClientId('public-' + Date.now());
-        setIsPublicMode(true);
-        console.log('🌐 وضع المحادثة العامة مُفعّل');
       }
     } catch (error) {
       console.error('Error getting session:', error);
-      setIsPublicMode(true);
-      setClientId('public-' + Date.now());
     }
   };
 
@@ -118,9 +106,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        content: isPublicMode 
-          ? "مرحباً بك في المحادثة التجريبية لمورفو! 🌟\n\nأنا المساعد الذكي مورفو. يمكنني مساعدتك في:\n- التسويق الرقمي\n- تطوير الاستراتيجيات\n- تحليل البيانات\n- الإجابة على الأسئلة العامة\n\nكيف يمكنني مساعدتك اليوم؟\n\n💡 للحصول على الميزات الكاملة، يرجى تسجيل الدخول"
-          : testResponse.message || "مرحباً بك! أنا المساعد الذكي مورفو. لديّ الآن كامل معلوماتك وتاريخ أعمالك، وأستطيع تقديم نصائح مخصصة تماماً لك. كيف يمكنني مساعدتك اليوم؟",
+        content: testResponse.message || "مرحباً بك! أنا المساعد الذكي مورفو. لديّ الآن كامل معلوماتك وتاريخ أعمالك، وأستطيع تقديم نصائح مخصصة تماماً لك. كيف يمكنني مساعدتك اليوم؟",
         sender: 'agent',
         timestamp: new Date(),
         processing_time: testResponse.processing_time,
@@ -220,47 +206,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     await handleSend(updateMessage, false);
   };
 
-  const updateTokenUsage = async (clientId: string) => {
-    const usage = await TokenService.checkTokenLimit(clientId);
-    setTokenUsage(usage);
-    
-    if (usage.isLimitReached) {
-      toast({
-        title: "تم الوصول للحد الأقصى",
-        description: usage.accountType === 'guest' 
-          ? "تم استنفاد التوكنز المجانية. يرجى إنشاء حساب مجاني للحصول على المزيد."
-          : "تم استنفاد التوكنز الشهرية. يرجى الترقية للحساب المدفوع.",
-        variant: "destructive",
-        duration: 5000,
-      });
-    }
-  };
-
   const handleSend = async (messageText?: string, shouldClearInput: boolean = true) => {
     const messageToSend = messageText || input.trim();
     if (!messageToSend || isLoading) return;
-
-    // فحص حد التوكنز قبل الإرسال
-    if (tokenUsage?.isLimitReached) {
-      if (tokenUsage.accountType === 'guest') {
-        toast({
-          title: "حد التوكنز المجانية",
-          description: "تم استنفاد التوكنز المجانية. أنشئ حساباً مجانياً للحصول على 20,000 توكن!",
-          variant: "destructive",
-          action: (
-            <button 
-              onClick={() => setShowUpgradeDialog(true)}
-              className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-            >
-              إنشاء حساب مجاني
-            </button>
-          ),
-        });
-      } else {
-        setShowUpgradeDialog(true);
-      }
-      return;
-    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -271,8 +219,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
     setMessages(prev => [...prev, userMessage]);
     
-    // Only save customer data if not in public mode
-    if (clientId && !isPublicMode) {
+    if (clientId) {
       await CustomerDataService.extractAndSaveCustomerData(
         messageToSend, 
         clientId, 
@@ -291,30 +238,17 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     setIsLoading(true);
 
     try {
-      console.log('إرسال رسالة إلى Morvo AI:', messageToSend);
+      console.log('إرسال رسالة إلى Morvo AI مع السياق الكامل:', messageToSend);
       
-      // For public mode, send message without enriched context
-      let finalMessage = messageToSend;
-      if (!isPublicMode && clientId) {
-        finalMessage = await AgentControlService.enrichAgentContext(clientId, messageToSend);
-        console.log('الرسالة المُحسّنة بالسياق:', finalMessage.substring(0, 500) + '...');
-      } else {
-        console.log('وضع المحادثة العامة - بدون سياق مُحسّن');
-      }
+      // استخدام البيانات الشاملة للعميل
+      const enrichedMessage = clientId 
+        ? await AgentControlService.enrichAgentContext(clientId, messageToSend)
+        : messageToSend;
 
-      const response = await MorvoAIService.sendMessage(finalMessage);
+      console.log('الرسالة المُحسّنة بالسياق:', enrichedMessage.substring(0, 500) + '...');
+
+      const response = await MorvoAIService.sendMessage(enrichedMessage);
       console.log('استجابة Morvo AI:', response);
-
-      // تتبع استخدام التوكنز
-      const estimatedTokens = Math.ceil(messageToSend.length / 4) + Math.ceil((response.message || '').length / 4);
-      await TokenService.trackTokenUsage(clientId, estimatedTokens);
-      
-      if (clientId.startsWith('public-')) {
-        TokenService.updateGuestTokenUsage(clientId, estimatedTokens);
-      }
-      
-      // تحديث عداد التوكنز
-      await updateTokenUsage(clientId);
 
       const { message: cleanMessage, commands } = AgentControlService.parseAgentResponse(response.message);
 
@@ -331,46 +265,44 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       setMessages(prev => [...prev, agentMessage]);
 
-      // Only process commands and save data if not in public mode
-      if (!isPublicMode) {
-        for (const command of commands) {
-          if (command.type === 'save_data' && clientId) {
-            await AgentControlService.saveCustomerData(clientId, command.data);
-            console.log('تم حفظ البيانات تلقائياً:', command.data);
-          }
+      for (const command of commands) {
+        if (command.type === 'save_data' && clientId) {
+          await AgentControlService.saveCustomerData(clientId, command.data);
+          console.log('تم حفظ البيانات تلقائياً:', command.data);
         }
+      }
 
-        if (clientId) {
-          const serializableCommands = commands.map(cmd => ({
-            type: cmd.type,
-            data: cmd.data,
-            id: cmd.id
-          }));
+      if (clientId) {
+        // Convert commands to serializable format for database storage
+        const serializableCommands = commands.map(cmd => ({
+          type: cmd.type,
+          data: cmd.data,
+          id: cmd.id
+        }));
 
-          await supabase
-            .from('conversation_messages')
-            .insert({
-              client_id: clientId,
-              conversation_id: MorvoAIService.getConversationInfo().conversationId || 'default',
-              content: cleanMessage,
-              sender_type: 'agent',
-              sender_id: response.agents_involved?.[0] || 'morvo_ai',
-              metadata: {
-                processing_time: response.processing_time,
-                cost: response.cost_tracking?.total_cost,
-                agents_involved: response.agents_involved,
-                commands: serializableCommands,
-                context_enriched: true
-              } as any,
-              timestamp: new Date().toISOString()
-            });
-        }
+        await supabase
+          .from('conversation_messages')
+          .insert({
+            client_id: clientId,
+            conversation_id: MorvoAIService.getConversationInfo().conversationId || 'default',
+            content: cleanMessage,
+            sender_type: 'agent',
+            sender_id: response.agents_involved?.[0] || 'morvo_ai',
+            metadata: {
+              processing_time: response.processing_time,
+              cost: response.cost_tracking?.total_cost,
+              agents_involved: response.agents_involved,
+              commands: serializableCommands,
+              context_enriched: true
+            } as any,
+            timestamp: new Date().toISOString()
+          });
       }
 
       if (response.processing_time) {
         toast({
           title: "تم إنشاء الاستجابة",
-          description: `تمت المعالجة في ${response.processing_time}s${response.cost_tracking?.total_cost ? ` - التكلفة: $${response.cost_tracking.total_cost.toFixed(4)}` : ''}${isPublicMode ? ' (وضع تجريبي)' : ''}${tokenUsage ? ` - التوكنز المتبقية: ${tokenUsage.remainingTokens}` : ''}`,
+          description: `تمت المعالجة في ${response.processing_time}s${response.cost_tracking?.total_cost ? ` - التكلفة: $${response.cost_tracking.total_cost.toFixed(4)}` : ''}`,
           duration: 3000,
         });
       }
@@ -404,19 +336,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     }
   };
 
-  const handleFreeAccountCreated = async (clientId: string) => {
-    setShowUpgradeDialog(false);
-    setClientId(clientId);
-    setIsPublicMode(false);
-    await updateTokenUsage(clientId);
-    
-    toast({
-      title: "تم إنشاء الحساب بنجاح!",
-      description: "مرحباً بك! لديك الآن 20,000 توكن. يمكنك المتابعة في المحادثة.",
-      duration: 5000,
-    });
-  };
-
   return (
     <div className={`h-screen flex flex-col bg-transparent transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
       <ChatHeader 
@@ -425,7 +344,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         content={t}
         isConnecting={isConnecting}
         onToggleTheme={toggleTheme}
-        tokenUsage={tokenUsage}
       />
 
       <MessageList 
@@ -442,18 +360,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         isLoading={isLoading}
         theme={theme}
         isRTL={isRTL}
-        placeholder={isPublicMode ? (language === 'ar' ? "اكتب رسالتك (وضع تجريبي)..." : "Type your message (demo mode)...") : t.placeholder}
+        placeholder={t.placeholder}
         onInputChange={setInput}
         onSend={handleSend}
         onKeyPress={handleKeyPress}
-        tokenUsage={tokenUsage}
-      />
-
-      <FreeAccountDialog 
-        open={showUpgradeDialog}
-        onClose={() => setShowUpgradeDialog(false)}
-        onAccountCreated={handleFreeAccountCreated}
-        isUpgrade={tokenUsage?.accountType === 'free'}
       />
     </div>
   );

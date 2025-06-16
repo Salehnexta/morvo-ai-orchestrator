@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -29,7 +28,7 @@ export const Register = () => {
   const content = {
     ar: {
       title: "إنشاء حساب جديد",
-      subtitle: "انضم إلى مورفو وابدأ رحلتك معنا - احصل على 20,000 توكن مجاناً",
+      subtitle: "انضم إلى مورفو وابدأ رحلتك معنا",
       name: "الاسم الكامل",
       email: "البريد الإلكتروني",
       password: "كلمة المرور",
@@ -45,15 +44,14 @@ export const Register = () => {
       termsLink: "الشروط والأحكام",
       and: "و",
       privacyLink: "سياسة الخصوصية",
-      registerSuccess: "تم إنشاء الحساب بنجاح! جاري إعداد حسابك المجاني...",
+      registerSuccess: "تم إنشاء الحساب بنجاح",
       registerError: "خطأ في إنشاء الحساب",
       passwordMismatch: "كلمات المرور غير متطابقة",
-      checkEmail: "تحقق من بريدك الإلكتروني لتأكيد الحساب",
-      redirecting: "جاري التوجيه إلى لوحة التحكم..."
+      checkEmail: "تحقق من بريدك الإلكتروني لتأكيد الحساب"
     },
     en: {
       title: "Create Account",
-      subtitle: "Join Morvo and start your journey with us - Get 20,000 free tokens",
+      subtitle: "Join Morvo and start your journey with us",
       name: "Full Name",
       email: "Email",
       password: "Password",
@@ -69,11 +67,10 @@ export const Register = () => {
       termsLink: "Terms of Service",
       and: "and",
       privacyLink: "Privacy Policy",
-      registerSuccess: "Account created successfully! Setting up your free account...",
+      registerSuccess: "Account created successfully",
       registerError: "Registration error",
       passwordMismatch: "Passwords don't match",
-      checkEmail: "Check your email to confirm your account",
-      redirecting: "Redirecting to dashboard..."
+      checkEmail: "Check your email to confirm your account"
     }
   };
 
@@ -99,7 +96,7 @@ export const Register = () => {
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: formData.name,
           },
@@ -115,13 +112,9 @@ export const Register = () => {
       } else {
         toast({
           title: t.registerSuccess,
-          description: t.redirecting,
+          description: t.checkEmail,
         });
-        
-        // Wait a moment for the trigger to set up the free account
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 2000);
+        navigate("/auth/login");
       }
     } catch (error) {
       toast({
@@ -245,7 +238,7 @@ export const Register = () => {
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                 disabled={isLoading}
               >
-                {isLoading ? t.redirecting : t.register}
+                {isLoading ? "..." : t.register}
               </Button>
             </form>
 
