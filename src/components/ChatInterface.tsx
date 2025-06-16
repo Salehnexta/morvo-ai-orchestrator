@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
@@ -35,6 +34,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [tokenData, setTokenData] = useState({ remaining: 0, limit: 0 });
   const { toast } = useToast();
 
   const content = {
@@ -46,7 +46,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       connected: "متصل",
       connectionFailed: "فشل الاتصال",
       thinking: "المساعد الذكي يفكر...",
-      placeholder: "اكتب رسالتك بالعربية أو الإنجليزية..."
+      placeholder: "اكتب رسالتك بالعربية أو الإنجليزية...",
+      noTokens: "نفد رصيدك من الطلبات لهذا الشهر",
+      upgradePrompt: "يرجى ترقية باقتك للمتابعة"
     },
     en: {
       masterAgent: "Smart Assistant",
@@ -56,7 +58,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       connected: "Connected",
       connectionFailed: "Connection Failed",
       thinking: "Smart Assistant is thinking...",
-      placeholder: "Type your message in Arabic or English..."
+      placeholder: "Type your message in Arabic or English...",
+      noTokens: "You've exhausted your monthly request limit",
+      upgradePrompt: "Please upgrade your plan to continue"
     }
   };
 
@@ -106,7 +110,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        content: testResponse.message || "مرحباً بك! أنا المساعد الذكي مورفو. لديّ الآن كامل معلوماتك وتاريخ أعمالك، وأستطيع تقديم نصائح مخصصة تماماً لك. كيف يمكنني مساعدتك اليوم؟",
+        content: testResponse.message || "مرحباً بك! أنا المساعد الذكي مورفو. أستطيع مساعدتك في التسويق الرقمي والاستراتيجيات التجارية. لتقديم أفضل خدمة مخصصة لك، دعني أتعرف عليك أكثر. ما هو اسم شركتك؟",
         sender: 'agent',
         timestamp: new Date(),
         processing_time: testResponse.processing_time,
@@ -135,6 +139,38 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       setMessages([errorMessage]);
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const handleTokensUpdated = (remaining: number, limit: number) => {
+    setTokenData({ remaining, limit });
+  };
+
+  const checkTokenUsage = async (): Promise<boolean> => {
+    if (tokenData.remaining <= 0 && tokenData.limit > 0) {
+      toast({
+        title: "🚫 " + t.noTokens,
+        description: t.upgradePrompt,
+        variant: "destructive",
+        duration: 5000,
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const deductToken = async () => {
+    if (!clientId) return;
+
+    try {
+      // Record token usage
+      await supabase.rpc('check_usage_limit', {
+        p_client_id: clientId,
+        p_feature_name: 'ai_requests',
+        p_increment: 1
+      });
+    } catch (error) {
+      console.error('Error deducting token:', error);
     }
   };
 
@@ -210,6 +246,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     const messageToSend = messageText || input.trim();
     if (!messageToSend || isLoading) return;
 
+    // Check token usage before proceeding
+    const canProceed = await checkTokenUsage();
+    if (!canProceed) return;
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content: messageToSend,
@@ -249,6 +289,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       const response = await MorvoAIService.sendMessage(enrichedMessage);
       console.log('استجابة Morvo AI:', response);
+
+      // Deduct token after successful AI response
+      await deductToken();
 
       const { message: cleanMessage, commands } = AgentControlService.parseAgentResponse(response.message);
 
@@ -343,7 +386,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         isRTL={isRTL}
         content={t}
         isConnecting={isConnecting}
+        clientId={clientId}
         onToggleTheme={toggleTheme}
+        onTokensUpdated={handleTokensUpdated}
       />
 
       <MessageList 

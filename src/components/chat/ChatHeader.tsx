@@ -3,6 +3,7 @@ import React from 'react';
 import { Bot, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectionStatus } from './ConnectionStatus';
+import { TokenCounter } from './TokenCounter';
 
 interface ChatHeaderProps {
   theme: 'light' | 'dark';
@@ -14,7 +15,9 @@ interface ChatHeaderProps {
     connected: string;
   };
   isConnecting: boolean;
+  clientId?: string;
   onToggleTheme: () => void;
+  onTokensUpdated?: (remaining: number, limit: number) => void;
 }
 
 export const ChatHeader = ({ 
@@ -22,7 +25,9 @@ export const ChatHeader = ({
   isRTL, 
   content, 
   isConnecting, 
-  onToggleTheme 
+  clientId,
+  onToggleTheme,
+  onTokensUpdated
 }: ChatHeaderProps) => {
   return (
     <div className={`backdrop-blur-md border-b p-4 ${
@@ -45,7 +50,16 @@ export const ChatHeader = ({
           </div>
         </div>
 
-        <div className={`${isRTL ? 'mr-auto' : 'ml-auto'} flex items-center gap-2`}>
+        <div className={`${isRTL ? 'mr-auto' : 'ml-auto'} flex items-center gap-3`}>
+          {/* Token Counter */}
+          {clientId && (
+            <TokenCounter 
+              theme={theme}
+              clientId={clientId}
+              onTokensUpdated={onTokensUpdated}
+            />
+          )}
+
           <Button
             variant="ghost"
             size="sm"
