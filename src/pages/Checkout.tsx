@@ -122,7 +122,6 @@ export default function Checkout() {
         amount: calculateTotal(),
         currency: 'SAR',
         description: `اشتراك ${selectedPlan.plan_name} - ${billingCycle === 'yearly' ? 'سنوي' : 'شهري'}`,
-        customer_name: customerData.name,
         customer_email: customerData.email,
         plan_id: selectedPlan.id,
         billing_cycle: billingCycle

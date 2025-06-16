@@ -1,16 +1,15 @@
+
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, Sun, Moon, Settings } from "lucide-react";
+import { Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
-import { RailwayConnectionTest } from "@/components/RailwayConnectionTest";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Message {
   id: string;
@@ -31,9 +30,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const { theme, toggleTheme } = useTheme();
   const { language, isRTL } = useLanguage();
   const [clientId, setClientId] = useState<string>('');
-  const [showConnectionTest, setShowConnectionTest] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -42,13 +42,19 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       masterAgent: "المساعد الذكي",
       clientAgent: "وكيل خدمة العملاء",
       active: "نشط",
+      connecting: "جاري الاتصال بـ Railway...",
+      connected: "متصل",
+      connectionFailed: "فشل الاتصال",
       thinking: "المساعد الذكي يفكر...",
       placeholder: "اكتب رسالتك بالعربية أو الإنجليزية..."
     },
     en: {
       masterAgent: "Smart Assistant",
-      clientAgent: "Customer Service Agent",
+      clientAgent: "Customer Service Agent", 
       active: "Active",
+      connecting: "Connecting to Railway...",
+      connected: "Connected",
+      connectionFailed: "Connection Failed",
       thinking: "Smart Assistant is thinking...",
       placeholder: "Type your message in Arabic or English..."
     }
@@ -58,6 +64,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
   useEffect(() => {
     initializeClient();
+    testRailwayConnection();
   }, []);
 
   const initializeClient = async () => {
@@ -71,6 +78,65 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     }
   };
 
+  const testRailwayConnection = async () => {
+    setIsConnecting(true);
+    try {
+      console.log('اختبار الاتصال التلقائي مع Railway...');
+      
+      // اختبار Health Check
+      await MorvoAIService.healthCheck();
+      console.log('✅ Health Check نجح');
+      
+      // اختبار جلب الوكلاء
+      await MorvoAIService.getAgents();
+      console.log('✅ جلب الوكلاء نجح');
+      
+      // اختبار المحادثة
+      const testResponse = await MorvoAIService.sendMessage("مرحبا، هذا اختبار اتصال");
+      console.log('✅ اختبار المحادثة نجح:', testResponse);
+      
+      toast({
+        title: "✅ تم الاتصال بنجاح",
+        description: "Railway متصل وجاهز للاستخدام",
+        duration: 3000,
+      });
+
+      // إضافة رسالة ترحيب من الوكيل
+      const welcomeMessage: Message = {
+        id: Date.now().toString(),
+        content: testResponse.message || "مرحباً بك! أنا المساعد الذكي مورفو. كيف يمكنني مساعدتك اليوم؟",
+        sender: 'agent',
+        timestamp: new Date(),
+        processing_time: testResponse.processing_time,
+        cost: testResponse.cost_tracking?.total_cost,
+        agents_involved: testResponse.agents_involved
+      };
+      
+      setMessages([welcomeMessage]);
+      
+    } catch (error) {
+      console.error('❌ فشل اختبار الاتصال:', error);
+      toast({
+        title: "❌ فشل الاتصال",
+        description: "لا يمكن الاتصال بـ Railway. سيتم المحاولة مرة أخرى.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      
+      // إضافة رسالة خطأ
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: "عذراً، حدث خطأ في الاتصال مع الخدمة. يرجى المحاولة مرة أخرى لاحقاً.",
+        sender: 'agent',
+        timestamp: new Date()
+      };
+      
+      setMessages([errorMessage]);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
@@ -80,7 +146,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const analyzeMessageForDashboard = (message: string) => {
     const lowerMessage = message.toLowerCase();
     
-    // Simple keyword analysis to determine chart type
     if (lowerMessage.includes('sales') || lowerMessage.includes('مبيعات')) {
       return {
         chartType: 'bar',
@@ -143,7 +208,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       );
     }
 
-    // Analyze message for dashboard updates
+    // تحليل الرسالة لتحديث لوحة التحكم
     const dashboardData = analyzeMessageForDashboard(input);
     if (dashboardData && onDashboardUpdate) {
       onDashboardUpdate(dashboardData);
@@ -153,10 +218,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     setIsLoading(true);
 
     try {
-      console.log('Sending message to Morvo AI:', input);
+      console.log('إرسال رسالة إلى Morvo AI:', input);
       const response = await MorvoAIService.sendMessage(input);
       
-      console.log('Morvo AI response:', response);
+      console.log('استجابة Morvo AI:', response);
 
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -170,7 +235,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       setMessages(prev => [...prev, agentMessage]);
 
-      // حفظ استجابة الوكيل أيضاً
+      // حفظ استجابة الوكيل
       if (clientId) {
         await supabase
           .from('conversation_messages')
@@ -191,13 +256,13 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       if (response.processing_time) {
         toast({
-          title: "Response Generated",
-          description: `Processed in ${response.processing_time}s${response.cost_tracking?.total_cost ? ` - Cost: $${response.cost_tracking.total_cost.toFixed(4)}` : ''}`,
+          title: "تم إنشاء الاستجابة",
+          description: `تمت المعالجة في ${response.processing_time}s${response.cost_tracking?.total_cost ? ` - التكلفة: $${response.cost_tracking.total_cost.toFixed(4)}` : ''}`,
           duration: 3000,
         });
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('خطأ في إرسال الرسالة:', error);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -209,8 +274,8 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       setMessages(prev => [...prev, errorMessage]);
       
       toast({
-        title: "Connection Error",
-        description: "Failed to connect to Morvo AI. Please try again.",
+        title: "خطأ في الاتصال",
+        description: "فشل الاتصال مع Morvo AI. يرجى المحاولة مرة أخرى.",
         variant: "destructive",
         duration: 5000,
       });
@@ -253,19 +318,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowConnectionTest(!showConnectionTest)}
-              className={`${
-                theme === 'dark' 
-                  ? 'text-white hover:bg-gray-800' 
-                  : 'text-gray-900 hover:bg-white/50'
-              }`}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
               onClick={toggleTheme}
               className={`${
                 theme === 'dark' 
@@ -277,20 +329,15 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
             </Button>
             
             <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <div className={`w-2 h-2 rounded-full animate-pulse ${
+                isConnecting ? 'bg-yellow-500' : 'bg-green-500'
+              }`}></div>
               <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                {t.active}
+                {isConnecting ? t.connecting : t.connected}
               </span>
             </div>
           </div>
         </div>
-
-        {/* Railway Connection Test */}
-        <Collapsible open={showConnectionTest} onOpenChange={setShowConnectionTest}>
-          <CollapsibleContent className="mt-4">
-            <RailwayConnectionTest />
-          </CollapsibleContent>
-        </Collapsible>
       </div>
 
       {/* Messages */}
