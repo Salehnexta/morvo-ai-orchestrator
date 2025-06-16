@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
-import { AgentControlService, AgentCommand, AgentResponse } from "@/services/agentControlService";
+import { AgentControlService, AgentCommand, AgentResponse } from "@/services/agent";
 import AgentCommands from "./AgentCommands";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
