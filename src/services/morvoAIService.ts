@@ -1,4 +1,6 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 interface ChatResponse {
   message: string;
   agents_involved: string[];
@@ -25,11 +27,11 @@ interface ChatRequest {
   message: string;
   client_id: string;
   conversation_id?: string;
+  profile_context?: any;
 }
 
 export class MorvoAIService {
   private static readonly API_URL = 'https://morvo-production.up.railway.app';
-  private static clientId: string = '';
   private static conversationId: string = '';
 
   private static generateId(): string {
@@ -38,12 +40,12 @@ export class MorvoAIService {
     return `${timestamp}_${random}`;
   }
 
-  private static getClientId(): string {
-    if (!this.clientId) {
-      this.clientId = `client_${this.generateId()}`;
-      console.log('Generated client ID:', this.clientId);
+  private static async getClientId(): Promise<string> {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) {
+      return session.user.id;
     }
-    return this.clientId;
+    throw new Error('User not authenticated');
   }
 
   private static getConversationId(): string {
@@ -106,20 +108,37 @@ export class MorvoAIService {
     }
   }
 
-  static async sendMessage(message: string): Promise<ChatResponse> {
+  static async sendMessage(message: string, profileContext?: any): Promise<ChatResponse> {
+    const clientId = await this.getClientId();
+    
+    // Get user profile if not provided
+    if (!profileContext) {
+      try {
+        const { data: profile } = await supabase
+          .from('customer_profiles')
+          .select('*')
+          .eq('customer_id', clientId)
+          .single();
+        profileContext = profile;
+      } catch (error) {
+        console.log('No profile found, continuing without profile context');
+      }
+    }
+
     const requestBody: ChatRequest = {
       message: message.trim(),
-      client_id: this.getClientId(),
-      conversation_id: this.getConversationId()
+      client_id: clientId,
+      conversation_id: this.getConversationId(),
+      profile_context: profileContext
     };
 
     console.log('Sending message to Railway:', {
-      url: `${this.API_URL}/v1/chat/test`,
+      url: `${this.API_URL}/v1/chat`,
       body: requestBody
     });
 
     try {
-      const response = await fetch(`${this.API_URL}/v1/chat/test`, {
+      const response = await fetch(`${this.API_URL}/v1/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,9 +177,11 @@ export class MorvoAIService {
   }
 
   static async chatWithAgent(agentId: string, message: string): Promise<ChatResponse> {
+    const clientId = await this.getClientId();
+
     const requestBody: ChatRequest = {
       message: message.trim(),
-      client_id: this.getClientId(),
+      client_id: clientId,
       conversation_id: this.getConversationId()
     };
 
@@ -204,25 +225,21 @@ export class MorvoAIService {
 
   static getConversationInfo() {
     return {
-      clientId: this.clientId,
+      clientId: this.getClientId(),
       conversationId: this.conversationId
     };
   }
 
-  // اختبار الاتصال بـ Railway
   static async testRailwayConnection(): Promise<boolean> {
     try {
       console.log('Testing Railway connection...');
       
-      // اختبار Health Check
       const healthResponse = await this.healthCheck();
       console.log('✅ Railway Health Check passed:', healthResponse);
       
-      // اختبار جلب الوكلاء
       const agents = await this.getAgents();
       console.log('✅ Railway Agents fetched:', agents.length, 'agents');
       
-      // اختبار رسالة تجريبية
       const testMessage = "مرحبا، هذا اختبار اتصال";
       const chatResponse = await this.sendMessage(testMessage);
       console.log('✅ Railway Chat test passed:', chatResponse);

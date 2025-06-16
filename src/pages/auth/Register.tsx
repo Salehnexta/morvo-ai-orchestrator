@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -44,10 +45,10 @@ export const Register = () => {
       termsLink: "الشروط والأحكام",
       and: "و",
       privacyLink: "سياسة الخصوصية",
-      registerSuccess: "تم إنشاء الحساب بنجاح",
+      registerSuccess: "تم إنشاء الحساب بنجاح!",
       registerError: "خطأ في إنشاء الحساب",
       passwordMismatch: "كلمات المرور غير متطابقة",
-      checkEmail: "تحقق من بريدك الإلكتروني لتأكيد الحساب"
+      welcomeMessage: "مرحباً بك في مورفو! يمكنك البدء بالمحادثة الآن مع 20,000 طلب مجاني."
     },
     en: {
       title: "Create Account",
@@ -67,10 +68,10 @@ export const Register = () => {
       termsLink: "Terms of Service",
       and: "and",
       privacyLink: "Privacy Policy",
-      registerSuccess: "Account created successfully",
+      registerSuccess: "Account created successfully!",
       registerError: "Registration error",
       passwordMismatch: "Passwords don't match",
-      checkEmail: "Check your email to confirm your account"
+      welcomeMessage: "Welcome to Morvo! You can start chatting now with 20,000 free requests."
     }
   };
 
@@ -112,9 +113,12 @@ export const Register = () => {
       } else {
         toast({
           title: t.registerSuccess,
-          description: t.checkEmail,
+          description: t.welcomeMessage,
+          duration: 5000,
         });
-        navigate("/auth/login");
+        
+        // Redirect directly to chat instead of profile setup
+        navigate("/dashboard");
       }
     } catch (error) {
       toast({

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
@@ -34,7 +35,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
-  const [tokenData, setTokenData] = useState({ remaining: 0, limit: 0 });
+  const [tokenBalance, setTokenBalance] = useState<number>(0);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
 
   const content = {
@@ -47,8 +50,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       connectionFailed: "فشل الاتصال",
       thinking: "المساعد الذكي يفكر...",
       placeholder: "اكتب رسالتك بالعربية أو الإنجليزية...",
-      noTokens: "نفد رصيدك من الطلبات لهذا الشهر",
-      upgradePrompt: "يرجى ترقية باقتك للمتابعة"
+      noTokens: "نفد رصيدك من الطلبات",
+      upgradePrompt: "يرجى ترقية باقتك للمتابعة",
+      lowTokens: "رصيدك من الطلبات يقترب من النهاية"
     },
     en: {
       masterAgent: "Smart Assistant",
@@ -59,8 +63,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       connectionFailed: "Connection Failed",
       thinking: "Smart Assistant is thinking...",
       placeholder: "Type your message in Arabic or English...",
-      noTokens: "You've exhausted your monthly request limit",
-      upgradePrompt: "Please upgrade your plan to continue"
+      noTokens: "You've exhausted your request limit",
+      upgradePrompt: "Please upgrade your plan to continue",
+      lowTokens: "Your request balance is running low"
     }
   };
 
@@ -70,6 +75,13 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     initializeClient();
     testRailwayConnection();
   }, []);
+
+  useEffect(() => {
+    if (clientId) {
+      loadTokenBalance();
+      loadUserProfile();
+    }
+  }, [clientId]);
 
   const initializeClient = async () => {
     try {
@@ -83,13 +95,15 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
           .single();
 
         if (clientError || !clientData) {
-          // Create client if doesn't exist
+          // Create client if doesn't exist with 20,000 free tokens
           const { data: newClient, error: createError } = await supabase
             .from('clients')
             .insert({
               name: session.user.email || 'User',
               user_id: session.user.id,
-              active: true
+              active: true,
+              quota_limit: 20000,
+              quota_used: 0
             })
             .select('id')
             .single();
@@ -101,10 +115,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
           clientData = newClient;
         }
 
-        setClientId(clientData.id);
-        
-        // Ensure user has a subscription
-        await ensureUserSubscription(clientData.id);
+        setClientId(session.user.id);
         
         // تحديث حالة العميل كمدفوع إذا كان saleh@nexta.sa
         if (session.user.email === 'saleh@nexta.sa') {
@@ -117,42 +128,79 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     }
   };
 
-  const ensureUserSubscription = async (clientId: string) => {
+  const loadTokenBalance = async () => {
+    if (!clientId) return;
+    
     try {
-      // Check if user has an active subscription
-      const { data: existingSubscription } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('client_id', clientId)
-        .in('status', ['active', 'trial'])
+      const { data: client } = await supabase
+        .from('clients')
+        .select('quota_limit, quota_used')
+        .eq('user_id', clientId)
         .single();
-
-      if (!existingSubscription) {
-        // Get free plan
-        const { data: freePlan } = await supabase
-          .from('subscription_plans')
-          .select('id')
-          .eq('plan_code', 'free-plan')
-          .single();
-
-        if (freePlan) {
-          // Create free subscription
-          await supabase
-            .from('user_subscriptions')
-            .insert({
-              client_id: clientId,
-              plan_id: freePlan.id,
-              status: 'active',
-              start_date: new Date().toISOString(),
-              trial_end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year
-              auto_renew: false
-            });
-
-          console.log('✅ Created free subscription for user');
+      
+      if (client) {
+        const remaining = client.quota_limit - client.quota_used;
+        setTokenBalance(remaining);
+        
+        // Show upgrade prompt if tokens are low
+        if (remaining < 1000 && remaining > 0) {
+          setShowUpgradePrompt(true);
+          toast({
+            title: "⚠️ " + t.lowTokens,
+            description: `باقي لديك ${remaining} طلب فقط`,
+            duration: 5000,
+          });
+        } else if (remaining <= 0) {
+          toast({
+            title: "🚫 " + t.noTokens,
+            description: t.upgradePrompt,
+            variant: "destructive",
+            duration: 5000,
+          });
         }
       }
     } catch (error) {
-      console.error('Error ensuring subscription:', error);
+      console.error('Error loading token balance:', error);
+    }
+  };
+
+  const loadUserProfile = async () => {
+    if (!clientId) return;
+    
+    try {
+      const { data: profile } = await supabase
+        .from('customer_profiles')
+        .select('*')
+        .eq('customer_id', clientId)
+        .single();
+      
+      setUserProfile(profile);
+    } catch (error) {
+      console.log('No profile found, will collect during chat');
+    }
+  };
+
+  const deductTokens = async (tokensUsed: number) => {
+    if (!clientId) return;
+    
+    try {
+      const { data: client } = await supabase
+        .from('clients')
+        .select('quota_used')
+        .eq('user_id', clientId)
+        .single();
+      
+      if (client) {
+        await supabase
+          .from('clients')
+          .update({ quota_used: client.quota_used + tokensUsed })
+          .eq('user_id', clientId);
+        
+        // Update local state
+        setTokenBalance(prev => Math.max(0, prev - tokensUsed));
+      }
+    } catch (error) {
+      console.error('Error deducting tokens:', error);
     }
   };
 
@@ -210,38 +258,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     }
   };
 
-  const handleTokensUpdated = (remaining: number, limit: number) => {
-    setTokenData({ remaining, limit });
-  };
-
-  const checkTokenUsage = async (): Promise<boolean> => {
-    if (tokenData.remaining <= 0 && tokenData.limit > 0) {
-      toast({
-        title: "🚫 " + t.noTokens,
-        description: t.upgradePrompt,
-        variant: "destructive",
-        duration: 5000,
-      });
-      return false;
-    }
-    return true;
-  };
-
-  const deductToken = async () => {
-    if (!clientId) return;
-
-    try {
-      // Record token usage
-      await supabase.rpc('check_usage_limit', {
-        p_client_id: clientId,
-        p_feature_name: 'ai_requests',
-        p_increment: 1
-      });
-    } catch (error) {
-      console.error('Error deducting token:', error);
-    }
-  };
-
   const analyzeMessageForDashboard = (message: string) => {
     const lowerMessage = message.toLowerCase();
     
@@ -269,17 +285,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
           { month: "Apr", sales: 3200 },
           { month: "May", sales: 3800 },
           { month: "Jun", sales: 4200 },
-        ]
-      };
-    } else if (lowerMessage.includes('distribution') || lowerMessage.includes('توزيع')) {
-      return {
-        chartType: 'pie',
-        title: 'Distribution Analysis',
-        data: [
-          { name: 'Desktop', value: 400, fill: '#3B82F6' },
-          { name: 'Mobile', value: 300, fill: '#10B981' },
-          { name: 'Tablet', value: 200, fill: '#F59E0B' },
-          { name: 'Other', value: 100, fill: '#EF4444' },
         ]
       };
     }
@@ -314,9 +319,16 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     const messageToSend = messageText || input.trim();
     if (!messageToSend || isLoading) return;
 
-    // Check token usage before proceeding
-    const canProceed = await checkTokenUsage();
-    if (!canProceed) return;
+    // Check if user has tokens
+    if (tokenBalance <= 0) {
+      toast({
+        title: "🚫 " + t.noTokens,
+        description: t.upgradePrompt,
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -355,11 +367,18 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       console.log('الرسالة المُحسّنة بالسياق:', enrichedMessage.substring(0, 500) + '...');
 
-      const response = await MorvoAIService.sendMessage(enrichedMessage);
+      // Send profile context with message
+      const response = await MorvoAIService.sendMessage(enrichedMessage, userProfile);
       console.log('استجابة Morvo AI:', response);
 
-      // Deduct token after successful AI response
-      await deductToken();
+      // Deduct tokens after successful response
+      if (response.cost_tracking?.total_cost) {
+        const tokensUsed = Math.ceil(response.cost_tracking.total_cost * 1000); // Convert cost to tokens
+        await deductTokens(tokensUsed);
+      } else {
+        // Default token deduction if no cost provided
+        await deductTokens(10);
+      }
 
       const { message: cleanMessage, commands } = AgentControlService.parseAgentResponse(response.message);
 
@@ -380,11 +399,12 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         if (command.type === 'save_data' && clientId) {
           await AgentControlService.saveCustomerData(clientId, command.data);
           console.log('تم حفظ البيانات تلقائياً:', command.data);
+          // Reload profile after saving data
+          await loadUserProfile();
         }
       }
 
       if (clientId) {
-        // Convert commands to serializable format for database storage
         const serializableCommands = commands.map(cmd => ({
           type: cmd.type,
           data: cmd.data,
@@ -447,6 +467,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     }
   };
 
+  const handleUpgrade = () => {
+    window.location.href = '/pricing';
+  };
+
   return (
     <div className={`h-screen flex flex-col bg-transparent transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
       <ChatHeader 
@@ -455,8 +479,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         content={t}
         isConnecting={isConnecting}
         clientId={clientId}
+        tokenBalance={tokenBalance}
         onToggleTheme={toggleTheme}
-        onTokensUpdated={handleTokensUpdated}
+        onUpgrade={handleUpgrade}
       />
 
       <MessageList 
@@ -470,10 +495,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       <ChatInput 
         input={input}
-        isLoading={isLoading}
+        isLoading={isLoading || tokenBalance <= 0}
         theme={theme}
         isRTL={isRTL}
-        placeholder={t.placeholder}
+        placeholder={tokenBalance <= 0 ? t.noTokens : t.placeholder}
         onInputChange={setInput}
         onSend={handleSend}
         onKeyPress={handleKeyPress}
