@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +11,6 @@ interface AgentCommandProps {
   command: AgentCommand;
   onResponse: (response: any) => void;
   theme: 'light' | 'dark';
-}
-
-interface AgentCommand {
-  type: 'button' | 'form' | 'info_request' | 'save_data';
-  data: any;
-  id: string;
 }
 
 interface AgentButtonProps {
