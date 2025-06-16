@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
@@ -6,10 +5,12 @@ import { AgentControlService, AgentCommand, AgentResponse } from "@/services/age
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTokens } from "@/hooks/useTokens";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatHeader } from "./chat/ChatHeader";
 import { MessageList } from "./chat/MessageList";
 import { ChatInput } from "./chat/ChatInput";
+import { AlertTriangle } from "lucide-react";
 
 interface Message {
   id: string;
@@ -30,13 +31,12 @@ interface ChatInterfaceProps {
 export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, isRTL } = useLanguage();
+  const { tokenData, deductTokens, getRemainingTokens, isLowTokens } = useTokens();
   const [clientId, setClientId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
-  const [tokenBalance, setTokenBalance] = useState<number>(0);
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
 
@@ -78,7 +78,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
   useEffect(() => {
     if (clientId) {
-      loadTokenBalance();
       loadUserProfile();
     }
   }, [clientId]);
@@ -87,34 +86,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.id) {
-        // Get or create client record
-        let { data: clientData, error: clientError } = await supabase
-          .from('clients')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (clientError || !clientData) {
-          // Create client if doesn't exist with 20,000 free tokens
-          const { data: newClient, error: createError } = await supabase
-            .from('clients')
-            .insert({
-              name: session.user.email || 'User',
-              user_id: session.user.id,
-              active: true,
-              quota_limit: 20000,
-              quota_used: 0
-            })
-            .select('id')
-            .single();
-
-          if (createError) {
-            console.error('Error creating client:', createError);
-            return;
-          }
-          clientData = newClient;
-        }
-
         setClientId(session.user.id);
         
         // تحديث حالة العميل كمدفوع إذا كان saleh@nexta.sa
@@ -125,42 +96,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       }
     } catch (error) {
       console.error('Error getting session:', error);
-    }
-  };
-
-  const loadTokenBalance = async () => {
-    if (!clientId) return;
-    
-    try {
-      const { data: client } = await supabase
-        .from('clients')
-        .select('quota_limit, quota_used')
-        .eq('user_id', clientId)
-        .single();
-      
-      if (client) {
-        const remaining = client.quota_limit - client.quota_used;
-        setTokenBalance(remaining);
-        
-        // Show upgrade prompt if tokens are low
-        if (remaining < 1000 && remaining > 0) {
-          setShowUpgradePrompt(true);
-          toast({
-            title: "⚠️ " + t.lowTokens,
-            description: `باقي لديك ${remaining} طلب فقط`,
-            duration: 5000,
-          });
-        } else if (remaining <= 0) {
-          toast({
-            title: "🚫 " + t.noTokens,
-            description: t.upgradePrompt,
-            variant: "destructive",
-            duration: 5000,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error loading token balance:', error);
     }
   };
 
@@ -177,30 +112,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       setUserProfile(profile);
     } catch (error) {
       console.log('No profile found, will collect during chat');
-    }
-  };
-
-  const deductTokens = async (tokensUsed: number) => {
-    if (!clientId) return;
-    
-    try {
-      const { data: client } = await supabase
-        .from('clients')
-        .select('quota_used')
-        .eq('user_id', clientId)
-        .single();
-      
-      if (client) {
-        await supabase
-          .from('clients')
-          .update({ quota_used: client.quota_used + tokensUsed })
-          .eq('user_id', clientId);
-        
-        // Update local state
-        setTokenBalance(prev => Math.max(0, prev - tokensUsed));
-      }
-    } catch (error) {
-      console.error('Error deducting tokens:', error);
     }
   };
 
@@ -320,7 +231,8 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     if (!messageToSend || isLoading) return;
 
     // Check if user has tokens
-    if (tokenBalance <= 0) {
+    const remainingTokens = getRemainingTokens();
+    if (remainingTokens <= 0) {
       toast({
         title: "🚫 " + t.noTokens,
         description: t.upgradePrompt,
@@ -328,6 +240,15 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         duration: 5000,
       });
       return;
+    }
+
+    // Show warning if very low on tokens
+    if (remainingTokens <= 5 && remainingTokens > 0) {
+      toast({
+        title: "⚠️ " + t.lowTokens,
+        description: `باقي لديك ${remainingTokens} طلب فقط`,
+        duration: 4000,
+      });
     }
 
     const userMessage: Message = {
@@ -360,6 +281,12 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     try {
       console.log('إرسال رسالة إلى Morvo AI مع السياق الكامل:', messageToSend);
       
+      // Deduct token before API call
+      const tokenDeducted = await deductTokens(1);
+      if (!tokenDeducted) {
+        throw new Error('فشل في خصم الرمز المميز');
+      }
+
       // استخدام البيانات الشاملة للعميل
       const enrichedMessage = clientId 
         ? await AgentControlService.enrichAgentContext(clientId, messageToSend)
@@ -370,15 +297,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       // Send profile context with message
       const response = await MorvoAIService.sendMessage(enrichedMessage, userProfile);
       console.log('استجابة Morvo AI:', response);
-
-      // Deduct tokens after successful response
-      if (response.cost_tracking?.total_cost) {
-        const tokensUsed = Math.ceil(response.cost_tracking.total_cost * 1000); // Convert cost to tokens
-        await deductTokens(tokensUsed);
-      } else {
-        // Default token deduction if no cost provided
-        await deductTokens(10);
-      }
 
       const { message: cleanMessage, commands } = AgentControlService.parseAgentResponse(response.message);
 
@@ -440,6 +358,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     } catch (error) {
       console.error('خطأ في إرسال الرسالة:', error);
       
+      // Refund token on error
+      await deductTokens(-1);
+      
+      // Add error message
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.\n\nSorry, there was a connection error. Please try again.',
@@ -471,15 +393,41 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     window.location.href = '/pricing';
   };
 
+  const remainingTokens = getRemainingTokens();
+
   return (
     <div className={`h-screen flex flex-col bg-transparent transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Token Warning Banner */}
+      {isLowTokens() && (
+        <div className={`border-b p-3 ${
+          theme === 'dark' 
+            ? 'bg-yellow-900/20 border-yellow-800' 
+            : 'bg-yellow-50 border-yellow-200'
+        }`}>
+          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <AlertTriangle className="w-4 h-4 text-yellow-600" />
+            <span className={`text-sm ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-800'}`}>
+              رصيد منخفض: {remainingTokens} طلب متبقي
+            </span>
+            <button
+              onClick={handleUpgrade}
+              className={`px-3 py-1 text-xs rounded transition-colors ${
+                isRTL ? 'mr-auto' : 'ml-auto'
+              } bg-yellow-600 hover:bg-yellow-700 text-white`}
+            >
+              ترقية
+            </button>
+          </div>
+        </div>
+      )}
+
       <ChatHeader 
         theme={theme}
         isRTL={isRTL}
         content={t}
         isConnecting={isConnecting}
         clientId={clientId}
-        tokenBalance={tokenBalance}
+        tokenBalance={remainingTokens}
         onToggleTheme={toggleTheme}
         onUpgrade={handleUpgrade}
       />
@@ -495,10 +443,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       <ChatInput 
         input={input}
-        isLoading={isLoading || tokenBalance <= 0}
+        isLoading={isLoading || remainingTokens <= 0}
         theme={theme}
         isRTL={isRTL}
-        placeholder={tokenBalance <= 0 ? t.noTokens : t.placeholder}
+        placeholder={remainingTokens <= 0 ? t.noTokens : t.placeholder}
         onInputChange={setInput}
         onSend={handleSend}
         onKeyPress={handleKeyPress}
