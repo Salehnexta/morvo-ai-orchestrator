@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,12 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.id) {
         setClientId(session.user.id);
+        
+        // تحديث حالة العميل كمدفوع إذا كان saleh@nexta.sa
+        if (session.user.email === 'saleh@nexta.sa') {
+          await AgentControlService.markCustomerAsPaid(session.user.id);
+          console.log('✅ تم تحديث حالة العميل saleh@nexta.sa كمدفوع');
+        }
       }
     } catch (error) {
       console.error('Error getting session:', error);
@@ -102,7 +109,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        content: testResponse.message || "مرحباً بك! أنا المساعد الذكي مورفو. كيف يمكنني مساعدتك اليوم؟",
+        content: testResponse.message || "مرحباً بك! أنا المساعد الذكي مورفو. لديّ الآن كامل معلوماتك وتاريخ أعمالك، وأستطيع تقديم نصائح مخصصة تماماً لك. كيف يمكنني مساعدتك اليوم؟",
         sender: 'agent',
         timestamp: new Date(),
         processing_time: testResponse.processing_time,
@@ -240,11 +247,14 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     setIsLoading(true);
 
     try {
-      console.log('إرسال رسالة إلى Morvo AI:', messageToSend);
+      console.log('إرسال رسالة إلى Morvo AI مع السياق الكامل:', messageToSend);
       
+      // استخدام البيانات الشاملة للعميل
       const enrichedMessage = clientId 
         ? await AgentControlService.enrichAgentContext(clientId, messageToSend)
         : messageToSend;
+
+      console.log('الرسالة المُحسّنة بالسياق:', enrichedMessage.substring(0, 500) + '...');
 
       const response = await MorvoAIService.sendMessage(enrichedMessage);
       console.log('استجابة Morvo AI:', response);
@@ -291,7 +301,8 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
               processing_time: response.processing_time,
               cost: response.cost_tracking?.total_cost,
               agents_involved: response.agents_involved,
-              commands: serializableCommands
+              commands: serializableCommands,
+              context_enriched: true
             } as any,
             timestamp: new Date().toISOString()
           });

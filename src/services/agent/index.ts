@@ -13,6 +13,8 @@ export class AgentControlService {
   static parseAgentResponse = AgentResponseParser.parseAgentResponse;
   static saveCustomerData = AgentCustomerDataService.saveCustomerData;
   static getCustomerData = AgentCustomerDataService.getCustomerData;
+  static getCompleteCustomerProfile = AgentCustomerDataService.getCompleteCustomerProfile;
   static enrichAgentContext = AgentCustomerDataService.enrichAgentContext;
+  static markCustomerAsPaid = AgentCustomerDataService.markCustomerAsPaid;
   static processUserResponse = AgentResponseHandler.processUserResponse;
 }
