@@ -399,21 +399,17 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     <div className={`h-screen flex flex-col bg-transparent transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Token Warning Banner */}
       {isLowTokens() && (
-        <div className={`border-b p-3 ${
-          theme === 'dark' 
-            ? 'bg-yellow-900/20 border-yellow-800' 
-            : 'bg-yellow-50 border-yellow-200'
-        }`}>
+        <div className="glass-morphism border-b border-yellow-400/20 p-3">
           <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <AlertTriangle className="w-4 h-4 text-yellow-600" />
-            <span className={`text-sm ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-800'}`}>
+            <AlertTriangle className="w-4 h-4 text-yellow-300" />
+            <span className="text-sm text-yellow-200">
               رصيد منخفض: {remainingTokens} طلب متبقي
             </span>
             <button
               onClick={handleUpgrade}
               className={`px-3 py-1 text-xs rounded transition-colors ${
                 isRTL ? 'mr-auto' : 'ml-auto'
-              } bg-yellow-600 hover:bg-yellow-700 text-white`}
+              } bg-yellow-500 hover:bg-yellow-600 text-white`}
             >
               ترقية
             </button>

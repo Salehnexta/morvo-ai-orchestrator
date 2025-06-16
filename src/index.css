@@ -47,6 +47,13 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Glass morphism and natural design variables */
+    --glass-background: 255 255 255 / 0.1;
+    --glass-border: 255 255 255 / 0.18;
+    --natural-overlay: 0 0 0 / 0.1;
+    --text-on-glass: 255 255 255;
+    --text-on-glass-muted: 255 255 255 / 0.8;
   }
 
   .dark {
@@ -77,6 +84,13 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 32.6% 17.5%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Dark mode glass morphism */
+    --glass-background: 0 0 0 / 0.2;
+    --glass-border: 255 255 255 / 0.1;
+    --natural-overlay: 0 0 0 / 0.3;
+    --text-on-glass: 255 255 255;
+    --text-on-glass-muted: 255 255 255 / 0.7;
   }
 }
 
@@ -93,5 +107,28 @@
 @layer utilities {
   .font-cairo {
     font-family: 'Cairo', sans-serif;
+  }
+  
+  .glass-morphism {
+    background: rgba(var(--glass-background));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(var(--glass-border));
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  }
+  
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .text-glass {
+    color: rgb(var(--text-on-glass));
+  }
+  
+  .text-glass-muted {
+    color: rgba(var(--text-on-glass-muted));
   }
 }

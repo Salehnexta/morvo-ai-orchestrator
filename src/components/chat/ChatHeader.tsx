@@ -31,29 +31,25 @@ export const ChatHeader = ({
   onUpgrade
 }: ChatHeaderProps) => {
   const getTokenColor = () => {
-    if (!tokenBalance) return 'text-gray-500';
-    if (tokenBalance < 1000) return 'text-red-500';
-    if (tokenBalance < 5000) return 'text-orange-500';
-    return 'text-green-500';
+    if (!tokenBalance) return 'text-white/60';
+    if (tokenBalance < 1000) return 'text-red-300';
+    if (tokenBalance < 5000) return 'text-orange-300';
+    return 'text-green-300';
   };
 
   return (
-    <div className={`backdrop-blur-md border-b p-3 ${
-      theme === 'dark' 
-        ? 'bg-black/20 border-white/10' 
-        : 'bg-white/20 border-white/30'
-    }`}>
+    <div className="glass-morphism border-b border-white/10 p-4">
       <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
         {/* Bot Avatar and Info */}
-        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-            <Bot className="w-4 h-4 text-white" />
+        <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+            <Bot className="w-5 h-5 text-white" />
           </div>
           <div className={isRTL ? 'text-right' : 'text-left'}>
-            <h1 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            <h1 className="text-sm font-semibold text-white">
               {content.masterAgent}
             </h1>
-            <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className="text-xs text-white/70">
               {content.clientAgent}
             </p>
           </div>
@@ -61,11 +57,9 @@ export const ChatHeader = ({
 
         {/* Right side controls */}
         <div className={`${isRTL ? 'mr-auto' : 'ml-auto'} flex items-center gap-2`}>
-          {/* Token Balance Display - Compact */}
+          {/* Token Balance Display */}
           {clientId && tokenBalance !== undefined && (
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-              theme === 'dark' ? 'bg-gray-800/50' : 'bg-white/50'
-            }`}>
+            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full glass-morphism text-xs">
               <Coins className={`w-3 h-3 ${getTokenColor()}`} />
               <span className={`font-medium ${getTokenColor()}`}>
                 {tokenBalance.toLocaleString()}
@@ -73,32 +67,28 @@ export const ChatHeader = ({
             </div>
           )}
 
-          {/* Upgrade Button for Low Tokens - Compact */}
+          {/* Upgrade Button for Low Tokens */}
           {tokenBalance !== undefined && tokenBalance < 1000 && onUpgrade && (
             <Button
               size="sm"
               onClick={onUpgrade}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs px-2 py-1 h-7"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-xs px-3 py-1 h-8 shadow-lg"
             >
               ترقية
             </Button>
           )}
 
-          {/* Theme Toggle - Compact */}
+          {/* Theme Toggle */}
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggleTheme}
-            className={`h-7 w-7 p-0 ${
-              theme === 'dark' 
-                ? 'text-white hover:bg-gray-800' 
-                : 'text-gray-900 hover:bg-white/50'
-            }`}
+            className="h-8 w-8 p-0 text-white/80 hover:text-white hover:bg-white/10"
           >
-            {theme === 'dark' ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
           
-          {/* Connection Status - Compact */}
+          {/* Connection Status */}
           <ConnectionStatus 
             isConnecting={isConnecting}
             theme={theme}
