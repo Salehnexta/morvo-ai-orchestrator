@@ -24,19 +24,19 @@ const PublicChat = () => {
       style={{ backgroundImage: `url('/lovable-uploads/ac9c9c9b-a4db-48f3-ae39-d0ae9a8c5ed4.png')` }}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      {/* Notice */}
-      <div className={`p-3 text-center border-b backdrop-blur-lg bg-yellow-500/10 ${
+      {/* Notice - Simplified to avoid header conflicts */}
+      <div className={`p-2 text-center border-b backdrop-blur-lg bg-yellow-500/10 ${
         theme === 'dark' ? 'border-white/10' : 'border-gray-200/50'
       }`}>
-        <p className={`text-sm ${
+        <p className={`text-xs ${
           theme === 'dark' ? 'text-yellow-300' : 'text-yellow-800'
         }`}>
           ⚠️ {t.note}
         </p>
       </div>
 
-      {/* Chat Interface */}
-      <div className="h-[calc(100vh-64px)]">
+      {/* Chat Interface - Remove extra header styling to prevent conflicts */}
+      <div className="h-[calc(100vh-48px)]">
         <ChatInterface onBack={() => {}} />
       </div>
     </div>

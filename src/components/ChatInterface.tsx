@@ -245,7 +245,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       if (tokenUsage.accountType === 'guest') {
         toast({
           title: "حد التوكنز المجانية",
-          description: "تم استنفاد التوكنز المجانية. أنشئ حساباً مجانياً للحصول على 5000 توكن شهرياً!",
+          description: "تم استنفاد التوكنز المجانية. أنشئ حساباً مجانياً للحصول على 20,000 توكن!",
           variant: "destructive",
           action: (
             <button 
@@ -412,7 +412,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     
     toast({
       title: "تم إنشاء الحساب بنجاح!",
-      description: "مرحباً بك! لديك الآن 5000 توكن شهرياً. يمكنك المتابعة في المحادثة.",
+      description: "مرحباً بك! لديك الآن 20,000 توكن. يمكنك المتابعة في المحادثة.",
       duration: 5000,
     });
   };
