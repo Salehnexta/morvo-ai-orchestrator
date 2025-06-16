@@ -21,6 +21,7 @@ interface Message {
   cost?: number;
   agents_involved?: string[];
   commands?: AgentCommand[];
+  isError?: boolean;
 }
 
 interface ChatInterfaceProps {
@@ -36,7 +37,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
   const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
 
@@ -45,7 +46,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       masterAgent: "المساعد الذكي",
       clientAgent: "وكيل خدمة العملاء",
       active: "نشط",
-      connecting: "جاري الاتصال بـ Railway...",
+      connecting: "جاري الاتصال...",
       connected: "متصل",
       connectionFailed: "فشل الاتصال",
       thinking: "المساعد الذكي يفكر...",
@@ -58,7 +59,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       masterAgent: "Smart Assistant",
       clientAgent: "Customer Service Agent", 
       active: "Active",
-      connecting: "Connecting to Railway...",
+      connecting: "Connecting...",
       connected: "Connected",
       connectionFailed: "Connection Failed",
       thinking: "Smart Assistant is thinking...",
@@ -81,6 +82,21 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       loadUserProfile();
     }
   }, [clientId]);
+
+  // Check connection status periodically
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        await MorvoAIService.healthCheck();
+        setConnectionStatus('connected');
+      } catch (error) {
+        setConnectionStatus('disconnected');
+      }
+    };
+    
+    const interval = setInterval(checkConnection, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const initializeClient = async () => {
     try {
@@ -116,42 +132,38 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   };
 
   const testRailwayConnection = async () => {
-    setIsConnecting(true);
+    setConnectionStatus('checking');
     try {
       console.log('اختبار الاتصال التلقائي مع Railway...');
       
-      await MorvoAIService.healthCheck();
-      console.log('✅ Health Check نجح');
+      const isConnected = await MorvoAIService.testRailwayConnection();
       
-      await MorvoAIService.getAgents();
-      console.log('✅ جلب الوكلاء نجح');
-      
-      const testResponse = await MorvoAIService.sendMessage("مرحبا، هذا اختبار اتصال");
-      console.log('✅ اختبار المحادثة نجح:', testResponse);
-      
-      toast({
-        title: "✅ تم الاتصال بنجاح",
-        description: "Railway متصل وجاهز للاستخدام",
-        duration: 3000,
-      });
+      if (isConnected) {
+        setConnectionStatus('connected');
+        toast({
+          title: "✅ تم الاتصال بنجاح",
+          description: "Morvo AI متصل وجاهز للاستخدام",
+          duration: 3000,
+        });
 
-      const welcomeMessage: Message = {
-        id: Date.now().toString(),
-        content: testResponse.message || "مرحباً بك! أنا المساعد الذكي مورفو. أستطيع مساعدتك في التسويق الرقمي والاستراتيجيات التجارية. لتقديم أفضل خدمة مخصصة لك، دعني أتعرف عليك أكثر. ما هو اسم شركتك؟",
-        sender: 'agent',
-        timestamp: new Date(),
-        processing_time: testResponse.processing_time,
-        cost: testResponse.cost_tracking?.total_cost,
-        agents_involved: testResponse.agents_involved
-      };
-      
-      setMessages([welcomeMessage]);
+        const welcomeMessage: Message = {
+          id: Date.now().toString(),
+          content: "مرحباً بك! أنا المساعد الذكي مورفو. أستطيع مساعدتك في التسويق الرقمي والاستراتيجيات التجارية. كيف يمكنني مساعدتك اليوم؟",
+          sender: 'agent',
+          timestamp: new Date()
+        };
+        
+        setMessages([welcomeMessage]);
+      } else {
+        throw new Error('Connection test failed');
+      }
       
     } catch (error) {
       console.error('❌ فشل اختبار الاتصال:', error);
+      setConnectionStatus('disconnected');
       toast({
         title: "❌ فشل الاتصال",
-        description: "لا يمكن الاتصال بـ Railway. سيتم المحاولة مرة أخرى.",
+        description: "لا يمكن الاتصال بـ Morvo AI. سيتم المحاولة مرة أخرى.",
         variant: "destructive",
         duration: 5000,
       });
@@ -160,12 +172,11 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         id: Date.now().toString(),
         content: "عذراً، حدث خطأ في الاتصال مع الخدمة. يرجى المحاولة مرة أخرى لاحقاً.",
         sender: 'agent',
-        timestamp: new Date()
+        timestamp: new Date(),
+        isError: true
       };
       
       setMessages([errorMessage]);
-    } finally {
-      setIsConnecting(false);
     }
   };
 
@@ -230,6 +241,17 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     const messageToSend = messageText || input.trim();
     if (!messageToSend || isLoading) return;
 
+    // Check connection status
+    if (connectionStatus === 'disconnected') {
+      toast({
+        title: "❌ لا يوجد اتصال",
+        description: "يرجى انتظار إعادة الاتصال",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
     // Check if user has tokens
     const remainingTokens = getRemainingTokens();
     if (remainingTokens <= 0) {
@@ -287,15 +309,8 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         throw new Error('فشل في خصم الرمز المميز');
       }
 
-      // استخدام البيانات الشاملة للعميل
-      const enrichedMessage = clientId 
-        ? await AgentControlService.enrichAgentContext(clientId, messageToSend)
-        : messageToSend;
-
-      console.log('الرسالة المُحسّنة بالسياق:', enrichedMessage.substring(0, 500) + '...');
-
-      // Send profile context with message
-      const response = await MorvoAIService.sendMessage(enrichedMessage, userProfile);
+      // Use retry mechanism for better reliability
+      const response = await MorvoAIService.sendMessageWithRetry(enrichedMessage, userProfile);
       console.log('استجابة Morvo AI:', response);
 
       const { message: cleanMessage, commands } = AgentControlService.parseAgentResponse(response.message);
@@ -312,6 +327,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       };
 
       setMessages(prev => [...prev, agentMessage]);
+
+      // Update connection status on successful response
+      setConnectionStatus('connected');
 
       for (const command of commands) {
         if (command.type === 'save_data' && clientId) {
@@ -358,6 +376,9 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     } catch (error) {
       console.error('خطأ في إرسال الرسالة:', error);
       
+      // Update connection status on error
+      setConnectionStatus('disconnected');
+      
       // Refund token on error
       await deductTokens(-1);
       
@@ -366,7 +387,8 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         id: (Date.now() + 1).toString(),
         content: 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.\n\nSorry, there was a connection error. Please try again.',
         sender: 'agent',
-        timestamp: new Date()
+        timestamp: new Date(),
+        isError: true
       };
 
       setMessages(prev => [...prev, errorMessage]);
@@ -394,6 +416,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   };
 
   const remainingTokens = getRemainingTokens();
+  const isConnecting = connectionStatus === 'checking';
 
   return (
     <div className="h-full flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -406,7 +429,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
               رصيد منخفض: {remainingTokens} طلب متبقي
             </span>
             <button
-              onClick={handleUpgrade}
+              onClick={() => window.location.href = '/pricing'}
               className={`px-3 py-1 text-xs rounded transition-colors ${
                 isRTL ? 'mr-auto' : 'ml-auto'
               } bg-yellow-500 hover:bg-yellow-600 text-white`}
@@ -420,12 +443,15 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       <ChatHeader 
         theme={theme}
         isRTL={isRTL}
-        content={t}
+        content={{
+          ...t,
+          connecting: connectionStatus === 'checking' ? t.connecting : connectionStatus === 'connected' ? t.connected : t.connectionFailed
+        }}
         isConnecting={isConnecting}
         clientId={clientId}
         tokenBalance={remainingTokens}
         onToggleTheme={toggleTheme}
-        onUpgrade={handleUpgrade}
+        onUpgrade={() => window.location.href = '/pricing'}
       />
 
       <MessageList 
@@ -439,13 +465,18 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       <ChatInput 
         input={input}
-        isLoading={isLoading || remainingTokens <= 0}
+        isLoading={isLoading || remainingTokens <= 0 || connectionStatus === 'disconnected'}
         theme={theme}
         isRTL={isRTL}
-        placeholder={remainingTokens <= 0 ? t.noTokens : t.placeholder}
+        placeholder={remainingTokens <= 0 ? t.noTokens : connectionStatus === 'disconnected' ? 'غير متصل...' : t.placeholder}
         onInputChange={setInput}
         onSend={handleSend}
-        onKeyPress={handleKeyPress}
+        onKeyPress={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        }}
       />
     </div>
   );
