@@ -8,7 +8,7 @@ export class DatabaseTokenService {
     try {
       const { data: client, error: clientError } = await supabase
         .from('clients')
-        .select('quota_limit, quota_used')
+        .select('id, quota_limit, quota_used')
         .eq('user_id', clientId)
         .single();
 
