@@ -5,7 +5,7 @@ import { ConnectionStatus } from "./ConnectionStatus";
 import { TokenUsage } from "@/services/tokenService";
 
 interface ChatHeaderProps {
-  theme: string;
+  theme: "dark" | "light";
   isRTL: boolean;
   content: any;
   isConnecting: boolean;

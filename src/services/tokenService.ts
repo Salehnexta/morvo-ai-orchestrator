@@ -15,13 +15,52 @@ export class TokenService {
   // تتبع استخدام التوكنز
   static async trackTokenUsage(clientId: string, tokensUsed: number): Promise<void> {
     try {
+      // For guest accounts, we only track locally
+      if (clientId.startsWith('public-')) {
+        this.updateGuestTokenUsage(clientId, tokensUsed);
+        return;
+      }
+
       const today = new Date().toISOString().split('T')[0];
+      
+      // Get or create a subscription for this client
+      let { data: subscription, error: subError } = await supabase
+        .from('user_subscriptions')
+        .select('id')
+        .eq('client_id', clientId)
+        .eq('status', 'active')
+        .single();
+
+      if (subError && subError.code !== 'PGRST116') {
+        console.error('خطأ في جلب الاشتراك:', subError);
+        return;
+      }
+
+      // If no subscription exists, create a default one
+      if (!subscription) {
+        const { data: newSub, error: createError } = await supabase
+          .from('user_subscriptions')
+          .insert({
+            client_id: clientId,
+            plan_id: 'free-plan', // Default free plan
+            status: 'active'
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('خطأ في إنشاء اشتراك:', createError);
+          return;
+        }
+        subscription = newSub;
+      }
       
       // إدراج أو تحديث استخدام التوكنز لليوم
       const { error } = await supabase
         .from('feature_usage')
         .upsert({
           client_id: clientId,
+          subscription_id: subscription.id,
           feature_name: 'chat_tokens',
           usage_count: tokensUsed,
           usage_date: today,
