@@ -69,39 +69,47 @@ export const ProtectedChat = ({ children }: ProtectedChatProps) => {
       setIsAuthenticated(true);
       console.log('User authenticated:', session.user.email);
 
-      // Get or create client record for the user
+      // Get client record for the user
       let { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('id')
         .eq('user_id', session.user.id)
         .single();
 
-      if (clientError || !clientData) {
-        console.log('Creating client record for user');
-        const { data: newClient, error: createError } = await supabase
+      if (clientError) {
+        console.error('Error fetching client:', clientError);
+        // If no client found, it might be still being created by the trigger
+        // Wait a moment and try again
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const { data: retryClient } = await supabase
           .from('clients')
-          .insert({
-            name: session.user.email || 'User',
-            user_id: session.user.id,
-            active: true
-          })
           .select('id')
+          .eq('user_id', session.user.id)
           .single();
-
-        if (createError) {
-          console.error('Error creating client:', createError);
+          
+        if (!retryClient) {
+          console.log('No client found, user may need to complete registration');
           setIsLoading(false);
           return;
         }
-        clientData = newClient;
+        clientData = retryClient;
       }
 
       console.log('Client ID:', clientData.id);
 
-      // Check subscription status using client_id
+      // Check subscription status using client_id - now including free plans
       const { data: subscriptionData, error: subError } = await supabase
         .from('user_subscriptions')
-        .select('*, subscription_plans(*)')
+        .select(`
+          *,
+          subscription_plans!inner(
+            plan_code,
+            plan_name,
+            limits,
+            features
+          )
+        `)
         .eq('client_id', clientData.id)
         .in('status', ['active', 'trial'])
         .order('created_at', { ascending: false })
@@ -116,7 +124,7 @@ export const ProtectedChat = ({ children }: ProtectedChatProps) => {
         return;
       }
 
-      // Check if user has any active subscription
+      // Check if user has any active subscription (including free accounts)
       let hasValidSubscription = false;
       if (subscriptionData && subscriptionData.length > 0) {
         const subscription = subscriptionData[0];
@@ -126,7 +134,7 @@ export const ProtectedChat = ({ children }: ProtectedChatProps) => {
         if (subscription.status === 'active' || subscription.status === 'trial') {
           if (!subscription.end_date || new Date(subscription.end_date) > new Date()) {
             hasValidSubscription = true;
-            console.log('Subscription is valid');
+            console.log('Subscription is valid:', subscription.subscription_plans.plan_name);
           } else {
             console.log('Subscription expired:', subscription.end_date);
           }
@@ -141,33 +149,25 @@ export const ProtectedChat = ({ children }: ProtectedChatProps) => {
         return;
       }
 
-      // Check profile completion
+      // For free accounts, we'll allow minimal profile requirements
+      // Check if basic profile exists
       const { data: profileData, error: profileError } = await supabase
         .from('customer_profiles')
         .select('*')
         .eq('customer_id', session.user.id)
         .single();
 
-      if (profileError || !profileData) {
-        console.log('Profile not found or incomplete');
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.log('Profile error:', profileError);
         setIsProfileComplete(false);
         setIsLoading(false);
         return;
       }
 
-      // Check if all required fields are completed
-      const requiredFields = [
-        'company_name', 'industry', 'company_size', 'marketing_experience_level',
-        'current_marketing_activities', 'marketing_goals', 'target_audience',
-        'monthly_marketing_budget', 'preferred_language'
-      ];
-
-      const isComplete = requiredFields.every(field => 
-        profileData[field] && profileData[field] !== ''
-      );
-
-      setIsProfileComplete(isComplete);
-      console.log('Profile complete:', isComplete);
+      // For free accounts, just having a basic profile is enough
+      // The chat will collect additional information as needed
+      setIsProfileComplete(!!profileData);
+      console.log('Profile exists:', !!profileData);
 
     } catch (error) {
       console.error('Error checking access:', error);
@@ -276,42 +276,6 @@ export const ProtectedChat = ({ children }: ProtectedChatProps) => {
     );
   }
 
-  if (!isProfileComplete) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${
-        theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
-      }`} dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className={`max-w-md w-full mx-4 p-8 rounded-2xl border text-center ${
-          theme === 'dark' 
-            ? 'bg-gray-800 border-gray-700' 
-            : 'bg-white border-gray-200'
-        }`}>
-          <div className="w-16 h-16 mx-auto mb-6 bg-yellow-100 rounded-full flex items-center justify-center">
-            <span className="text-2xl">👤</span>
-          </div>
-          
-          <h2 className={`text-2xl font-bold mb-4 ${
-            theme === 'dark' ? 'text-white' : 'text-gray-900'
-          }`}>
-            {t.requiresProfile}
-          </h2>
-          
-          <p className={`mb-8 ${
-            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-          }`}>
-            يحتاج وكلاؤنا الأذكياء لبعض المعلومات عنك لتقديم أفضل خدمة مخصصة لك
-          </p>
-
-          <Button
-            onClick={() => navigate('/profile-setup')}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-          >
-            {t.completeProfileButton}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
+  // If profile is not complete, still allow access but let the chat handle onboarding
   return <>{children}</>;
 };

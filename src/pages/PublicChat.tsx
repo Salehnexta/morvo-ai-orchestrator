@@ -36,7 +36,7 @@ const PublicChat = () => {
       </div>
 
       {/* Chat Interface */}
-      <div className="h-[calc(100vh-100px)]">
+      <div className="h-[calc(100vh-64px)]">
         <ChatInterface onBack={() => {}} />
       </div>
     </div>

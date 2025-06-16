@@ -9,10 +9,10 @@ export interface TokenUsage {
 }
 
 export class TokenService {
-  private static readonly FREE_ACCOUNT_LIMIT = 20000; // Updated to 20,000 tokens
+  private static readonly FREE_ACCOUNT_LIMIT = 20000; // 20,000 tokens for free accounts
   private static readonly GUEST_LIMIT = 100;
 
-  // تتبع استخدام التوكنز
+  // Track token usage
   static async trackTokenUsage(clientId: string, tokensUsed: number): Promise<void> {
     try {
       // For guest accounts, we only track locally
@@ -23,39 +23,30 @@ export class TokenService {
 
       const today = new Date().toISOString().split('T')[0];
       
-      // Get or create a subscription for this client
-      let { data: subscription, error: subError } = await supabase
-        .from('user_subscriptions')
-        .select('id')
-        .eq('client_id', clientId)
-        .eq('status', 'active')
+      // Get client's subscription
+      const { data: client, error: clientError } = await supabase
+        .from('clients')
+        .select(`
+          id,
+          user_subscriptions!inner(
+            id,
+            subscription_plans!inner(
+              plan_code,
+              limits
+            )
+          )
+        `)
+        .eq('id', clientId)
         .single();
 
-      if (subError && subError.code !== 'PGRST116') {
-        console.error('خطأ في جلب الاشتراك:', subError);
+      if (clientError) {
+        console.error('Error fetching client subscription:', clientError);
         return;
       }
 
-      // If no subscription exists, create a default one
-      if (!subscription) {
-        const { data: newSub, error: createError } = await supabase
-          .from('user_subscriptions')
-          .insert({
-            client_id: clientId,
-            plan_id: 'free-plan', // Default free plan
-            status: 'active'
-          })
-          .select('id')
-          .single();
-
-        if (createError) {
-          console.error('خطأ في إنشاء اشتراك:', createError);
-          return;
-        }
-        subscription = newSub;
-      }
+      const subscription = client.user_subscriptions[0];
       
-      // إدراج أو تحديث استخدام التوكنز لليوم
+      // Track usage in feature_usage table
       const { error } = await supabase
         .from('feature_usage')
         .upsert({
@@ -73,22 +64,22 @@ export class TokenService {
         });
 
       if (error) {
-        console.error('خطأ في تتبع التوكنز:', error);
+        console.error('Error tracking tokens:', error);
       }
     } catch (error) {
-      console.error('خطأ في خدمة التوكنز:', error);
+      console.error('Error in token service:', error);
     }
   }
 
-  // فحص حد التوكنز المتاح
+  // Check token limit
   static async checkTokenLimit(clientId: string): Promise<TokenUsage> {
     try {
-      // تحديد نوع الحساب
+      // Determine account type
       const accountType = clientId.startsWith('public-') ? 'guest' : 'free';
       const limit = accountType === 'guest' ? this.GUEST_LIMIT : this.FREE_ACCOUNT_LIMIT;
 
       if (accountType === 'guest') {
-        // للضيوف، نحسب استخدام الجلسة الحالية فقط
+        // For guests, calculate current session usage only
         const sessionUsage = parseInt(localStorage.getItem(`guest_tokens_${clientId}`) || '0');
         
         return {
@@ -99,10 +90,42 @@ export class TokenService {
         };
       }
 
-      // للحسابات المسجلة، نجلب البيانات من قاعدة البيانات
+      // For registered accounts, get data from database
       const today = new Date().toISOString().split('T')[0];
       
-      const { data, error } = await supabase
+      // Get client with subscription info
+      const { data: client, error: clientError } = await supabase
+        .from('clients')
+        .select(`
+          id,
+          user_subscriptions!inner(
+            id,
+            status,
+            subscription_plans!inner(
+              plan_code,
+              limits
+            )
+          )
+        `)
+        .eq('id', clientId)
+        .single();
+
+      if (clientError) {
+        console.error('Error fetching client:', clientError);
+        return {
+          tokensUsed: 0,
+          remainingTokens: 0,
+          isLimitReached: true,
+          accountType: 'guest'
+        };
+      }
+
+      const subscription = client.user_subscriptions[0];
+      const planLimits = subscription.subscription_plans.limits as any;
+      const tokenLimit = planLimits?.chat_tokens || this.FREE_ACCOUNT_LIMIT;
+
+      // Get current usage for today
+      const { data: usageData, error: usageError } = await supabase
         .from('feature_usage')
         .select('usage_count')
         .eq('client_id', clientId)
@@ -110,20 +133,20 @@ export class TokenService {
         .eq('usage_date', today)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('خطأ في جلب استخدام التوكنز:', error);
+      if (usageError && usageError.code !== 'PGRST116') {
+        console.error('Error fetching token usage:', usageError);
       }
 
-      const tokensUsed = data?.usage_count || 0;
+      const tokensUsed = usageData?.usage_count || 0;
 
       return {
         tokensUsed,
-        remainingTokens: Math.max(0, limit - tokensUsed),
-        isLimitReached: tokensUsed >= limit,
-        accountType
+        remainingTokens: Math.max(0, tokenLimit - tokensUsed),
+        isLimitReached: tokensUsed >= tokenLimit,
+        accountType: subscription.subscription_plans.plan_code === 'free-plan' ? 'free' : 'paid'
       };
     } catch (error) {
-      console.error('خطأ في فحص حد التوكنز:', error);
+      console.error('Error checking token limit:', error);
       return {
         tokensUsed: 0,
         remainingTokens: 0,
@@ -133,67 +156,11 @@ export class TokenService {
     }
   }
 
-  // تحديث استخدام الضيوف محلياً
+  // Update guest token usage locally
   static updateGuestTokenUsage(clientId: string, tokensUsed: number): void {
     if (clientId.startsWith('public-')) {
       const currentUsage = parseInt(localStorage.getItem(`guest_tokens_${clientId}`) || '0');
       localStorage.setItem(`guest_tokens_${clientId}`, (currentUsage + tokensUsed).toString());
-    }
-  }
-
-  // إنشاء حساب مجاني جديد
-  static async createFreeAccount(email: string, userData: any): Promise<{ success: boolean; clientId?: string; error?: string }> {
-    try {
-      // تسجيل المستخدم
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: Math.random().toString(36).slice(-8), // كلمة مرور مؤقتة
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: userData
-        }
-      });
-
-      if (authError || !authData.user) {
-        return { success: false, error: authError?.message || 'فشل في إنشاء الحساب' };
-      }
-
-      // إنشاء سجل العميل
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .insert({
-          user_id: authData.user.id,
-          name: userData.name || email.split('@')[0],
-          email: email,
-          quota_limit: this.FREE_ACCOUNT_LIMIT,
-          quota_used: 0,
-          active: true
-        })
-        .select()
-        .single();
-
-      if (clientError || !clientData) {
-        return { success: false, error: 'فشل في إنشاء بيانات العميل' };
-      }
-
-      // حفظ بيانات العميل في customer_profiles
-      await supabase
-        .from('customer_profiles')
-        .insert({
-          customer_id: authData.user.id,
-          company_name: userData.company_name,
-          industry: userData.industry,
-          target_audience: userData.target_audience,
-          marketing_goals: userData.marketing_goals || [],
-          marketing_experience_level: userData.experience_level,
-          monthly_marketing_budget: userData.budget_range,
-          preferred_language: 'ar'
-        });
-
-      return { success: true, clientId: clientData.id };
-    } catch (error) {
-      console.error('خطأ في إنشاء الحساب المجاني:', error);
-      return { success: false, error: 'حدث خطأ غير متوقع' };
     }
   }
 }
