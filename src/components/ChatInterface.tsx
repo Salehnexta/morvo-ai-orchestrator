@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
 import { AgentControlService, AgentCommand, AgentResponse } from "@/services/agent";
+import { TokenService, TokenUsage } from "@/services/tokenService";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatHeader } from "./chat/ChatHeader";
 import { MessageList } from "./chat/MessageList";
 import { ChatInput } from "./chat/ChatInput";
+import { FreeAccountDialog } from "./chat/FreeAccountDialog";
 
 interface Message {
   id: string;
@@ -36,6 +37,8 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
   const [isPublicMode, setIsPublicMode] = useState(false);
+  const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { toast } = useToast();
 
   const content = {
@@ -217,9 +220,47 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     await handleSend(updateMessage, false);
   };
 
+  const updateTokenUsage = async (clientId: string) => {
+    const usage = await TokenService.checkTokenLimit(clientId);
+    setTokenUsage(usage);
+    
+    if (usage.isLimitReached) {
+      toast({
+        title: "تم الوصول للحد الأقصى",
+        description: usage.accountType === 'guest' 
+          ? "تم استنفاد التوكنز المجانية. يرجى إنشاء حساب مجاني للحصول على المزيد."
+          : "تم استنفاد التوكنز الشهرية. يرجى الترقية للحساب المدفوع.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  };
+
   const handleSend = async (messageText?: string, shouldClearInput: boolean = true) => {
     const messageToSend = messageText || input.trim();
     if (!messageToSend || isLoading) return;
+
+    // فحص حد التوكنز قبل الإرسال
+    if (tokenUsage?.isLimitReached) {
+      if (tokenUsage.accountType === 'guest') {
+        toast({
+          title: "حد التوكنز المجانية",
+          description: "تم استنفاد التوكنز المجانية. أنشئ حساباً مجانياً للحصول على 5000 توكن شهرياً!",
+          variant: "destructive",
+          action: (
+            <button 
+              onClick={() => setShowUpgradeDialog(true)}
+              className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+            >
+              إنشاء حساب مجاني
+            </button>
+          ),
+        });
+      } else {
+        setShowUpgradeDialog(true);
+      }
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -263,6 +304,17 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
       const response = await MorvoAIService.sendMessage(finalMessage);
       console.log('استجابة Morvo AI:', response);
+
+      // تتبع استخدام التوكنز
+      const estimatedTokens = Math.ceil(messageToSend.length / 4) + Math.ceil((response.message || '').length / 4);
+      await TokenService.trackTokenUsage(clientId, estimatedTokens);
+      
+      if (clientId.startsWith('public-')) {
+        TokenService.updateGuestTokenUsage(clientId, estimatedTokens);
+      }
+      
+      // تحديث عداد التوكنز
+      await updateTokenUsage(clientId);
 
       const { message: cleanMessage, commands } = AgentControlService.parseAgentResponse(response.message);
 
@@ -318,7 +370,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       if (response.processing_time) {
         toast({
           title: "تم إنشاء الاستجابة",
-          description: `تمت المعالجة في ${response.processing_time}s${response.cost_tracking?.total_cost ? ` - التكلفة: $${response.cost_tracking.total_cost.toFixed(4)}` : ''}${isPublicMode ? ' (وضع تجريبي)' : ''}`,
+          description: `تمت المعالجة في ${response.processing_time}s${response.cost_tracking?.total_cost ? ` - التكلفة: $${response.cost_tracking.total_cost.toFixed(4)}` : ''}${isPublicMode ? ' (وضع تجريبي)' : ''}${tokenUsage ? ` - التوكنز المتبقية: ${tokenUsage.remainingTokens}` : ''}`,
           duration: 3000,
         });
       }
@@ -352,6 +404,19 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     }
   };
 
+  const handleFreeAccountCreated = async (clientId: string) => {
+    setShowUpgradeDialog(false);
+    setClientId(clientId);
+    setIsPublicMode(false);
+    await updateTokenUsage(clientId);
+    
+    toast({
+      title: "تم إنشاء الحساب بنجاح!",
+      description: "مرحباً بك! لديك الآن 5000 توكن شهرياً. يمكنك المتابعة في المحادثة.",
+      duration: 5000,
+    });
+  };
+
   return (
     <div className={`h-screen flex flex-col bg-transparent transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
       <ChatHeader 
@@ -360,6 +425,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         content={t}
         isConnecting={isConnecting}
         onToggleTheme={toggleTheme}
+        tokenUsage={tokenUsage}
       />
 
       <MessageList 
@@ -380,6 +446,14 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         onInputChange={setInput}
         onSend={handleSend}
         onKeyPress={handleKeyPress}
+        tokenUsage={tokenUsage}
+      />
+
+      <FreeAccountDialog 
+        open={showUpgradeDialog}
+        onClose={() => setShowUpgradeDialog(false)}
+        onAccountCreated={handleFreeAccountCreated}
+        isUpgrade={tokenUsage?.accountType === 'free'}
       />
     </div>
   );

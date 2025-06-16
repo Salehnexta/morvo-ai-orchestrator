@@ -57,11 +57,9 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               
-              {/* Public chat route without layout */}
-              <Route path="/public-chat" element={<PublicChat />} />
-              
-              {/* Routes with main layout */}
+              {/* All routes with main layout including public chat */}
               <Route path="/" element={<MainLayout><Index /></MainLayout>} />
+              <Route path="/public-chat" element={<MainLayout><PublicChat /></MainLayout>} />
               <Route path="/features" element={<MainLayout><Features /></MainLayout>} />
               <Route path="/pricing" element={<MainLayout><Pricing /></MainLayout>} />
               <Route path="/support" element={<MainLayout><Support /></MainLayout>} />
