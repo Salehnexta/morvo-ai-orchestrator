@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
+import { AgentControlService, AgentCommand, AgentResponse } from "@/services/agentControlService";
+import AgentCommands from "./AgentCommands";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,6 +20,7 @@ interface Message {
   processing_time?: number;
   cost?: number;
   agents_involved?: string[];
+  commands?: AgentCommand[];
 }
 
 interface ChatInterfaceProps {
@@ -83,15 +85,12 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     try {
       console.log('اختبار الاتصال التلقائي مع Railway...');
       
-      // اختبار Health Check
       await MorvoAIService.healthCheck();
       console.log('✅ Health Check نجح');
       
-      // اختبار جلب الوكلاء
       await MorvoAIService.getAgents();
       console.log('✅ جلب الوكلاء نجح');
       
-      // اختبار المحادثة
       const testResponse = await MorvoAIService.sendMessage("مرحبا، هذا اختبار اتصال");
       console.log('✅ اختبار المحادثة نجح:', testResponse);
       
@@ -101,7 +100,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         duration: 3000,
       });
 
-      // إضافة رسالة ترحيب من الوكيل
       const welcomeMessage: Message = {
         id: Date.now().toString(),
         content: testResponse.message || "مرحباً بك! أنا المساعد الذكي مورفو. كيف يمكنني مساعدتك اليوم؟",
@@ -123,7 +121,6 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         duration: 5000,
       });
       
-      // إضافة رسالة خطأ
       const errorMessage: Message = {
         id: Date.now().toString(),
         content: "عذراً، حدث خطأ في الاتصال مع الخدمة. يرجى المحاولة مرة أخرى لاحقاً.",
@@ -187,68 +184,107 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     return null;
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleAgentCommandResponse = async (response: AgentResponse) => {
+    console.log('استجابة العميل على أمر الوكيل:', response);
+
+    if (clientId) {
+      await AgentControlService.processUserResponse(clientId, response);
+    }
+
+    const userResponseMessage: Message = {
+      id: Date.now().toString(),
+      content: response.type === 'form_submitted' 
+        ? `تم إرسال النموذج: ${response.data ? Object.entries(response.data).map(([key, value]) => `${key}: ${value}`).join(', ') : ''}`
+        : response.type === 'button_clicked'
+        ? `تم الضغط على: ${response.data?.text || 'زر'}`
+        : JSON.stringify(response.data),
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userResponseMessage]);
+
+    const updateMessage = `تفاعل العميل: ${JSON.stringify(response)}`;
+    await handleSend(updateMessage, false);
+  };
+
+  const handleSend = async (messageText?: string, shouldClearInput: boolean = true) => {
+    const messageToSend = messageText || input.trim();
+    if (!messageToSend || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input,
+      content: messageToSend,
       sender: 'user',
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
     
-    // جمع بيانات العميل تلقائياً
     if (clientId) {
       await CustomerDataService.extractAndSaveCustomerData(
-        input, 
+        messageToSend, 
         clientId, 
         MorvoAIService.getConversationInfo().conversationId || 'default'
       );
     }
 
-    // تحليل الرسالة لتحديث لوحة التحكم
-    const dashboardData = analyzeMessageForDashboard(input);
+    const dashboardData = analyzeMessageForDashboard(messageToSend);
     if (dashboardData && onDashboardUpdate) {
       onDashboardUpdate(dashboardData);
     }
 
-    setInput('');
+    if (shouldClearInput) {
+      setInput('');
+    }
     setIsLoading(true);
 
     try {
-      console.log('إرسال رسالة إلى Morvo AI:', input);
-      const response = await MorvoAIService.sendMessage(input);
+      console.log('إرسال رسالة إلى Morvo AI:', messageToSend);
       
+      const enrichedMessage = clientId 
+        ? await AgentControlService.enrichAgentContext(clientId, messageToSend)
+        : messageToSend;
+
+      const response = await MorvoAIService.sendMessage(enrichedMessage);
       console.log('استجابة Morvo AI:', response);
+
+      const { message: cleanMessage, commands } = AgentControlService.parseAgentResponse(response.message);
 
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: response.message,
+        content: cleanMessage,
         sender: 'agent',
         timestamp: new Date(),
         processing_time: response.processing_time,
         cost: response.cost_tracking?.total_cost,
-        agents_involved: response.agents_involved
+        agents_involved: response.agents_involved,
+        commands: commands.length > 0 ? commands : undefined
       };
 
       setMessages(prev => [...prev, agentMessage]);
 
-      // حفظ استجابة الوكيل
+      for (const command of commands) {
+        if (command.type === 'save_data' && clientId) {
+          await AgentControlService.saveCustomerData(clientId, command.data);
+          console.log('تم حفظ البيانات تلقائياً:', command.data);
+        }
+      }
+
       if (clientId) {
         await supabase
           .from('conversation_messages')
           .insert({
             client_id: clientId,
             conversation_id: MorvoAIService.getConversationInfo().conversationId || 'default',
-            content: response.message,
+            content: cleanMessage,
             sender_type: 'agent',
             sender_id: response.agents_involved?.[0] || 'morvo_ai',
             metadata: {
               processing_time: response.processing_time,
               cost: response.cost_tracking?.total_cost,
-              agents_involved: response.agents_involved
+              agents_involved: response.agents_involved,
+              commands: commands
             },
             timestamp: new Date().toISOString()
           });
@@ -345,70 +381,86 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         <ScrollArea className="h-[calc(100vh-200px)]" ref={scrollAreaRef}>
           <div className="space-y-4 pb-4">
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${
-                  message.sender === 'user' 
-                    ? isRTL ? 'justify-start' : 'justify-end'
-                    : isRTL ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                {message.sender === 'agent' && !isRTL && (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                
+              <div key={message.id} className="space-y-2">
                 <div
-                  className={`max-w-[80%] p-4 rounded-2xl shadow-md ${
-                    message.sender === 'user'
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                      : theme === 'dark'
-                      ? 'bg-black/40 border border-white/20 text-white'
-                      : 'bg-white/50 border border-gray-200 text-gray-900'
+                  className={`flex gap-3 ${
+                    message.sender === 'user' 
+                      ? isRTL ? 'justify-start' : 'justify-end'
+                      : isRTL ? 'justify-end' : 'justify-start'
                   }`}
-                  style={{ direction: isRTL ? 'rtl' : 'ltr' }}
                 >
-                  <div className="whitespace-pre-wrap leading-relaxed">
-                    {message.content}
-                  </div>
+                  {message.sender === 'agent' && !isRTL && (
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <Bot className="w-4 h-4 text-white" />
+                    </div>
+                  )}
                   
-                  <div className={`flex items-center justify-between mt-2 pt-2 border-t text-xs ${
-                    message.sender === 'user'
-                      ? 'border-white/20 text-white/70'
-                      : theme === 'dark'
-                      ? 'border-gray-600 text-gray-400'
-                      : 'border-gray-200 text-gray-500'
-                  } ${isRTL ? 'flex-row-reverse' : ''}`}>
-                    <span>{message.timestamp.toLocaleTimeString()}</span>
-                    {message.processing_time && (
-                      <span>{message.processing_time}s</span>
-                    )}
-                    {message.cost && (
-                      <span>${message.cost.toFixed(4)}</span>
-                    )}
+                  <div
+                    className={`max-w-[80%] p-4 rounded-2xl shadow-md ${
+                      message.sender === 'user'
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                        : theme === 'dark'
+                        ? 'bg-black/40 border border-white/20 text-white'
+                        : 'bg-white/50 border border-gray-200 text-gray-900'
+                    }`}
+                    style={{ direction: isRTL ? 'rtl' : 'ltr' }}
+                  >
+                    <div className="whitespace-pre-wrap leading-relaxed">
+                      {message.content}
+                    </div>
+                    
+                    <div className={`flex items-center justify-between mt-2 pt-2 border-t text-xs ${
+                      message.sender === 'user'
+                        ? 'border-white/20 text-white/70'
+                        : theme === 'dark'
+                        ? 'border-gray-600 text-gray-400'
+                        : 'border-gray-200 text-gray-500'
+                    } ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <span>{message.timestamp.toLocaleTimeString()}</span>
+                      {message.processing_time && (
+                        <span>{message.processing_time}s</span>
+                      )}
+                      {message.cost && (
+                        <span>${message.cost.toFixed(4)}</span>
+                      )}
+                    </div>
                   </div>
+
+                  {message.sender === 'user' && isRTL && (
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
+                      theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+                    }`}>
+                      <User className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
+                    </div>
+                  )}
+
+                  {message.sender === 'agent' && isRTL && (
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <Bot className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+
+                  {message.sender === 'user' && !isRTL && (
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
+                      theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+                    }`}>
+                      <User className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
+                    </div>
+                  )}
                 </div>
 
-                {message.sender === 'user' && isRTL && (
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
-                    theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+                {message.commands && message.commands.length > 0 && (
+                  <div className={`${
+                    isRTL ? 'mr-11' : 'ml-11'
                   }`}>
-                    <User className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
-                  </div>
-                )}
-
-                {message.sender === 'agent' && isRTL && (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                )}
-
-                {message.sender === 'user' && !isRTL && (
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
-                    theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
-                  }`}>
-                    <User className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
+                    {message.commands.map((command) => (
+                      <AgentCommands
+                        key={command.id}
+                        command={command}
+                        onResponse={handleAgentCommandResponse}
+                        theme={theme}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
@@ -465,7 +517,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
             dir={isRTL ? 'rtl' : 'ltr'}
           />
           <Button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!input.trim() || isLoading}
             className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
           >
