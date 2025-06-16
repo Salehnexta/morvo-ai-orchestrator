@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ProtectedAdmin } from "@/components/ProtectedAdmin";
+import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
 import { AgentMonitoring } from "@/components/admin/AgentMonitoring";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -29,6 +29,8 @@ interface UserData {
 }
 
 export default function Admin() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     totalConversations: 0,
@@ -94,8 +96,39 @@ export default function Admin() {
   const t = content[language];
 
   useEffect(() => {
-    loadAdminData();
+    checkAdminAccess();
   }, []);
+
+  const checkAdminAccess = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user?.id) {
+        setIsAdmin(false);
+        setIsCheckingAdmin(false);
+        return;
+      }
+
+      // Check if user has admin role
+      const { data: userRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .eq('role', 'admin')
+        .single();
+
+      setIsAdmin(!!userRole);
+      
+      if (userRole) {
+        loadAdminData();
+      }
+    } catch (error) {
+      console.error('Error checking admin access:', error);
+      setIsAdmin(false);
+    } finally {
+      setIsCheckingAdmin(false);
+    }
+  };
 
   const loadAdminData = async () => {
     try {
@@ -202,8 +235,62 @@ export default function Admin() {
     return new Date(dateString).toLocaleDateString('ar-SA');
   };
 
+  if (isCheckingAdmin) {
+    return (
+      <SimpleAuthWrapper>
+        <div className={`min-h-screen flex items-center justify-center ${
+          theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+        }`}>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              جاري التحقق من صلاحيات الأدمن...
+            </p>
+          </div>
+        </div>
+      </SimpleAuthWrapper>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <SimpleAuthWrapper>
+        <div className={`min-h-screen flex items-center justify-center ${
+          theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+        }`}>
+          <div className={`max-w-md w-full mx-4 p-8 rounded-2xl border text-center ${
+            theme === 'dark' 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-200'
+          }`}>
+            <Shield className="w-16 h-16 mx-auto mb-6 text-red-500" />
+            
+            <h2 className={`text-2xl font-bold mb-4 ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}>
+              الوصول مرفوض
+            </h2>
+            
+            <p className={`mb-8 ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              يتطلب الوصول إلى لوحة الأدمن صلاحيات إدارية
+            </p>
+
+            <Button
+              onClick={() => navigate('/dashboard')}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              العودة للوحة التحكم
+            </Button>
+          </div>
+        </div>
+      </SimpleAuthWrapper>
+    );
+  }
+
   return (
-    <ProtectedAdmin>
+    <SimpleAuthWrapper>
       <div className={`min-h-screen ${
         theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
       }`} dir={isRTL ? 'rtl' : 'ltr'}>
@@ -363,6 +450,6 @@ export default function Admin() {
           </Tabs>
         </div>
       </div>
-    </ProtectedAdmin>
+    </SimpleAuthWrapper>
   );
 }
