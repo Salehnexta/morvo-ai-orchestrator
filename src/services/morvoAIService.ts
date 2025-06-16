@@ -56,24 +56,49 @@ export class MorvoAIService {
 
   static async healthCheck(): Promise<any> {
     try {
-      const response = await fetch(`${this.API_URL}/health`);
+      console.log('Checking Railway health at:', `${this.API_URL}/health`);
+      const response = await fetch(`${this.API_URL}/health`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Railway health check response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`Health check failed: ${response.status}`);
+        throw new Error(`Health check failed: ${response.status} ${response.statusText}`);
       }
-      return await response.json();
+      
+      const data = await response.json();
+      console.log('Railway health check successful:', data);
+      return data;
     } catch (error) {
-      console.error('Health check error:', error);
+      console.error('Railway health check error:', error);
       throw error;
     }
   }
 
   static async getAgents(): Promise<Agent[]> {
     try {
-      const response = await fetch(`${this.API_URL}/v1/agents`);
+      console.log('Fetching agents from Railway:', `${this.API_URL}/v1/agents`);
+      const response = await fetch(`${this.API_URL}/v1/agents`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Railway agents response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`Failed to fetch agents: ${response.status}`);
+        throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
       }
+      
       const data = await response.json();
+      console.log('Railway agents data:', data);
       return data.agents || [];
     } catch (error) {
       console.error('Get agents error:', error);
@@ -88,7 +113,7 @@ export class MorvoAIService {
       conversation_id: this.getConversationId()
     };
 
-    console.log('Morvo AI request:', {
+    console.log('Sending message to Railway:', {
       url: `${this.API_URL}/v1/chat/test`,
       body: requestBody
     });
@@ -103,29 +128,29 @@ export class MorvoAIService {
         body: JSON.stringify(requestBody)
       });
 
-      console.log('Morvo AI response status:', response.status);
+      console.log('Railway chat response status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Morvo AI error response:', errorText);
+        console.error('Railway chat error response:', errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const data: ChatResponse = await response.json();
-      console.log('Morvo AI success response:', data);
+      console.log('Railway chat success response:', data);
 
       // Update conversation ID if provided in response
       if (data.conversation_id && data.conversation_id !== this.conversationId) {
         this.conversationId = data.conversation_id;
-        console.log('Updated conversation ID:', this.conversationId);
+        console.log('Updated conversation ID from Railway:', this.conversationId);
       }
 
       return data;
     } catch (error) {
-      console.error('Morvo AI service error:', error);
+      console.error('Railway service error:', error);
       
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error('Network connection failed. Please check your internet connection.');
+        throw new Error('فشل الاتصال بالشبكة. يرجى التحقق من اتصال الإنترنت.');
       }
       
       throw error;
@@ -139,7 +164,7 @@ export class MorvoAIService {
       conversation_id: this.getConversationId()
     };
 
-    console.log('Direct agent chat request:', {
+    console.log('Direct agent chat request to Railway:', {
       url: `${this.API_URL}/v1/agents/${agentId}/chat`,
       body: requestBody
     });
@@ -154,18 +179,20 @@ export class MorvoAIService {
         body: JSON.stringify(requestBody)
       });
 
+      console.log('Railway agent chat response status:', response.status);
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Agent chat error response:', errorText);
+        console.error('Railway agent chat error response:', errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const data: ChatResponse = await response.json();
-      console.log('Agent chat success response:', data);
+      console.log('Railway agent chat success response:', data);
 
       return data;
     } catch (error) {
-      console.error('Agent chat service error:', error);
+      console.error('Railway agent chat service error:', error);
       throw error;
     }
   }
@@ -180,5 +207,30 @@ export class MorvoAIService {
       clientId: this.clientId,
       conversationId: this.conversationId
     };
+  }
+
+  // اختبار الاتصال بـ Railway
+  static async testRailwayConnection(): Promise<boolean> {
+    try {
+      console.log('Testing Railway connection...');
+      
+      // اختبار Health Check
+      const healthResponse = await this.healthCheck();
+      console.log('✅ Railway Health Check passed:', healthResponse);
+      
+      // اختبار جلب الوكلاء
+      const agents = await this.getAgents();
+      console.log('✅ Railway Agents fetched:', agents.length, 'agents');
+      
+      // اختبار رسالة تجريبية
+      const testMessage = "مرحبا، هذا اختبار اتصال";
+      const chatResponse = await this.sendMessage(testMessage);
+      console.log('✅ Railway Chat test passed:', chatResponse);
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Railway connection test failed:', error);
+      return false;
+    }
   }
 }

@@ -1,245 +1,241 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export interface PaymentData {
+export interface MockPaymentResponse {
+  id: string;
+  status: string;
   amount: number;
   currency: string;
   description: string;
-  customer_name: string;
-  customer_email: string;
-  plan_id: string;
-  billing_cycle: 'monthly' | 'yearly';
+  invoice_id?: string;
+  callback_url?: string;
+  payment_method?: {
+    type: string;
+    company?: string;
+    name?: string;
+    number?: string;
+  };
+  source?: {
+    type: string;
+    company?: string;
+    name?: string;
+    number?: string;
+  };
+  created_at: string;
+  updated_at: string;
 }
 
-export interface MockPaymentResponse {
-  id: string;
-  status: 'paid' | 'failed' | 'pending';
+export interface CreatePaymentRequest {
   amount: number;
   currency: string;
-  created_at: string;
-  source: {
-    type: 'creditcard' | 'stcpay' | 'applepay';
-    company: string;
+  description: string;
+  callback_url: string;
+  source?: {
+    type: string;
     name: string;
     number: string;
+    cvc: string;
+    month: string;
+    year: string;
   };
 }
 
 export class PaymentService {
-  private static readonly MOYASAR_API_URL = 'https://api.moyasar.com/v1/payments';
-  private static readonly MOCK_MODE = true; // تغيير إلى false للاستخدام الحقيقي
+  private static readonly MOYASAR_API_URL = 'https://api.moyasar.com/v1';
+  private static readonly MOYASAR_PUBLISHABLE_KEY = 'pk_test_moyasar_key'; // Mock key for development
 
-  static async processPayment(paymentData: PaymentData): Promise<MockPaymentResponse> {
-    if (this.MOCK_MODE) {
-      return this.mockPayment(paymentData);
-    } else {
-      return this.realPayment(paymentData);
+  static async createPayment(request: CreatePaymentRequest): Promise<MockPaymentResponse> {
+    try {
+      console.log('Creating payment with Moyasar:', request);
+
+      // محاكاة استجابة Moyasar
+      const mockResponse: MockPaymentResponse = {
+        id: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        status: Math.random() > 0.1 ? 'paid' : 'failed', // 90% نجاح للاختبار
+        amount: request.amount,
+        currency: request.currency,
+        description: request.description,
+        callback_url: request.callback_url,
+        payment_method: request.source ? {
+          type: request.source.type,
+          company: 'visa',
+          name: request.source.name,
+          number: `****-****-****-${request.source.number.slice(-4)}`
+        } : undefined,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Mock Moyasar response:', mockResponse);
+      return mockResponse;
+    } catch (error) {
+      console.error('Payment creation failed:', error);
+      throw new Error('فشل في إنشاء عملية الدفع');
     }
   }
 
-  private static async mockPayment(paymentData: PaymentData): Promise<MockPaymentResponse> {
-    // محاكاة تأخير الشبكة
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // محاكاة نتائج مختلفة
-    const random = Math.random();
-    const status = random > 0.1 ? 'paid' : 'failed'; // 90% نجاح
-
-    const mockResponse: MockPaymentResponse = {
-      id: `pay_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-      status,
-      amount: paymentData.amount * 100, // Moyasar يستخدم الهللات
-      currency: paymentData.currency,
-      created_at: new Date().toISOString(),
-      source: {
-        type: 'creditcard',
-        company: 'visa',
-        name: paymentData.customer_name,
-        number: '4111 **** **** 1111'
-      }
-    };
-
-    // حفظ المعاملة في قاعدة البيانات
-    await this.saveTransaction(paymentData, mockResponse);
-
-    return mockResponse;
-  }
-
-  private static async realPayment(paymentData: PaymentData): Promise<MockPaymentResponse> {
-    // التكامل الحقيقي مع Moyasar
-    const moyasarData = {
-      amount: paymentData.amount * 100, // تحويل إلى هللات
-      currency: paymentData.currency,
-      description: paymentData.description,
-      publishable_api_key: process.env.MOYASAR_PUBLISHABLE_KEY,
-      callback_url: `${window.location.origin}/payment/callback`,
-      source: {
-        type: 'creditcard'
-      },
-      metadata: {
-        plan_id: paymentData.plan_id,
-        billing_cycle: paymentData.billing_cycle
-      }
-    };
-
+  static async savePaymentTransaction(
+    clientId: string,
+    subscriptionId: string,
+    paymentData: MockPaymentResponse
+  ): Promise<void> {
     try {
-      const response = await fetch(this.MOYASAR_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${btoa(process.env.MOYASAR_SECRET_KEY + ':')}`
-        },
-        body: JSON.stringify(moyasarData)
-      });
+      // تحويل البيانات إلى JSON متوافق مع Supabase
+      const metadata = JSON.parse(JSON.stringify({
+        payment_flow: 'moyasar_mock',
+        test_mode: true
+      }));
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Payment failed');
-      }
+      const moyasarResponse = JSON.parse(JSON.stringify(paymentData));
 
-      await this.saveTransaction(paymentData, result);
-      return result;
+      await supabase
+        .from('payment_transactions')
+        .insert({
+          client_id: clientId,
+          subscription_id: subscriptionId,
+          moyasar_payment_id: paymentData.id,
+          amount: paymentData.amount,
+          currency: paymentData.currency,
+          status: paymentData.status,
+          payment_method: paymentData.payment_method?.type || 'card',
+          moyasar_response: moyasarResponse,
+          metadata: metadata
+        });
+
+      console.log('Payment transaction saved successfully');
     } catch (error) {
-      console.error('خطأ في معالجة الدفع:', error);
+      console.error('Error saving payment transaction:', error);
       throw error;
     }
   }
 
-  private static async saveTransaction(
-    paymentData: PaymentData, 
-    response: MockPaymentResponse
-  ): Promise<void> {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.user?.id) return;
+  static async createSubscription(
+    clientId: string,
+    planId: string,
+    billingCycle: 'monthly' | 'yearly' = 'monthly'
+  ): Promise<string> {
+    try {
+      const { data, error } = await supabase
+        .from('user_subscriptions')
+        .insert({
+          client_id: clientId,
+          plan_id: planId,
+          billing_cycle: billingCycle,
+          status: 'trial',
+          start_date: new Date().toISOString(),
+          trial_end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days trial
+          auto_renew: true
+        })
+        .select()
+        .single();
 
-    // حفظ معاملة الدفع
-    const { data: transaction } = await supabase
-      .from('payment_transactions')
-      .insert({
-        client_id: session.user.id,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        status: response.status === 'paid' ? 'completed' : 'failed',
-        payment_method: response.source.type,
-        moyasar_payment_id: response.id,
-        moyasar_response: response,
-        metadata: {
-          plan_id: paymentData.plan_id,
-          billing_cycle: paymentData.billing_cycle,
-          customer_name: paymentData.customer_name,
-          customer_email: paymentData.customer_email
-        }
-      })
-      .select()
-      .single();
-
-    // إنشاء الاشتراك إذا نجح الدفع
-    if (response.status === 'paid' && transaction) {
-      await this.createSubscription(session.user.id, paymentData, transaction.id);
+      if (error) throw error;
+      
+      console.log('Subscription created:', data);
+      return data.id;
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      throw error;
     }
   }
 
-  private static async createSubscription(
-    userId: string, 
-    paymentData: PaymentData, 
-    transactionId: string
+  static async updateSubscriptionStatus(
+    subscriptionId: string,
+    status: 'active' | 'inactive' | 'cancelled',
+    endDate?: string
   ): Promise<void> {
-    const endDate = new Date();
-    if (paymentData.billing_cycle === 'monthly') {
-      endDate.setMonth(endDate.getMonth() + 1);
-    } else {
-      endDate.setFullYear(endDate.getFullYear() + 1);
-    }
+    try {
+      const updateData: any = { status };
+      if (endDate) updateData.end_date = endDate;
 
-    await supabase
-      .from('user_subscriptions')
-      .insert({
-        client_id: userId,
-        plan_id: paymentData.plan_id,
-        status: 'active',
-        billing_cycle: paymentData.billing_cycle,
-        start_date: new Date().toISOString(),
-        end_date: endDate.toISOString(),
-        payment_method: {
-          transaction_id: transactionId
-        }
-      });
+      await supabase
+        .from('user_subscriptions')
+        .update(updateData)
+        .eq('id', subscriptionId);
+
+      console.log('Subscription status updated');
+    } catch (error) {
+      console.error('Error updating subscription status:', error);
+      throw error;
+    }
   }
 
   static async getSubscriptionPlans() {
-    const { data, error } = await supabase
-      .from('subscription_plans')
-      .select('*')
-      .eq('is_active', true)
-      .order('price_monthly', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price_monthly');
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      return [];
+    }
   }
 
-  // Mock data للخطط
   static getMockPlans() {
     return [
       {
-        id: 'basic',
-        plan_name: 'الخطة الأساسية',
-        plan_code: 'basic',
+        id: 'plan_starter',
+        plan_name: 'الباقة الأساسية',
+        plan_code: 'starter',
         price_monthly: 99,
         price_yearly: 990,
         currency: 'SAR',
-        description: 'مثالية للشركات الصغيرة',
+        description: 'مثالية للشركات الصغيرة والناشئة',
         features: {
-          agents: ['customer_service', 'marketing_advisor'],
-          monthly_messages: 1000,
+          agents: ['marketing_agent', 'customer_service_agent'],
           ai_models: ['gpt-3.5-turbo'],
-          integrations: ['basic_analytics']
+          integrations: ['basic_analytics'],
+          support: 'email'
         },
         limits: {
-          messages: 1000,
-          reports: 10,
-          projects: 1
+          messages_per_month: 1000,
+          reports_per_month: 10,
+          data_sources: 3
         }
       },
       {
-        id: 'professional',
-        plan_name: 'الخطة المهنية',
+        id: 'plan_professional',
+        plan_name: 'الباقة الاحترافية',
         plan_code: 'professional',
-        price_monthly: 199,
-        price_yearly: 1990,
+        price_monthly: 299,
+        price_yearly: 2990,
         currency: 'SAR',
-        description: 'للشركات المتوسطة',
+        description: 'للشركات المتوسطة التي تحتاج مزيد من الوكلاء',
         features: {
-          agents: ['customer_service', 'marketing_advisor', 'data_analyst'],
-          monthly_messages: 5000,
-          ai_models: ['gpt-4', 'claude-3'],
-          integrations: ['advanced_analytics', 'social_media']
+          agents: ['marketing_agent', 'customer_service_agent', 'analytics_agent', 'content_agent'],
+          ai_models: ['gpt-4', 'gpt-3.5-turbo'],
+          integrations: ['advanced_analytics', 'social_media', 'email_marketing'],
+          support: 'priority'
         },
         limits: {
-          messages: 5000,
-          reports: 50,
-          projects: 5
+          messages_per_month: 5000,
+          reports_per_month: 50,
+          data_sources: 10
         }
       },
       {
-        id: 'enterprise',
-        plan_name: 'خطة المؤسسات',
+        id: 'plan_enterprise',
+        plan_name: 'باقة المؤسسات',
         plan_code: 'enterprise',
-        price_monthly: 499,
-        price_yearly: 4990,
+        price_monthly: 999,
+        price_yearly: 9990,
         currency: 'SAR',
-        description: 'للشركات الكبيرة',
+        description: 'حل شامل للمؤسسات الكبيرة',
         features: {
           agents: 'unlimited',
-          monthly_messages: 'unlimited',
-          ai_models: ['gpt-4', 'claude-3', 'custom_models'],
-          integrations: 'all'
+          ai_models: ['gpt-4', 'gpt-3.5-turbo', 'claude-3'],
+          integrations: 'all',
+          support: 'dedicated'
         },
         limits: {
-          messages: 'unlimited',
-          reports: 'unlimited',
-          projects: 'unlimited'
+          messages_per_month: 'unlimited',
+          reports_per_month: 'unlimited',
+          data_sources: 'unlimited'
         }
       }
     ];

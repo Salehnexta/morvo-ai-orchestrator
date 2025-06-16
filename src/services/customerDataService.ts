@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface CustomerData {
@@ -169,6 +168,12 @@ export class CustomerDataService {
     message: string,
     extractedData: CustomerData
   ): Promise<void> {
+    // تحويل البيانات إلى JSON متوافق مع Supabase
+    const metadata = {
+      extracted_data: JSON.parse(JSON.stringify(extractedData)),
+      analysis_timestamp: new Date().toISOString()
+    };
+
     await supabase
       .from('conversation_messages')
       .insert({
@@ -177,10 +182,7 @@ export class CustomerDataService {
         content: message,
         sender_type: 'user',
         sender_id: clientId,
-        metadata: {
-          extracted_data: extractedData,
-          analysis_timestamp: new Date().toISOString()
-        },
+        metadata: metadata,
         timestamp: new Date().toISOString()
       });
   }
