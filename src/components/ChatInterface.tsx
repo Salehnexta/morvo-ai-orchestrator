@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
@@ -310,7 +311,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       }
 
       // Use retry mechanism for better reliability
-      const response = await MorvoAIService.sendMessageWithRetry(enrichedMessage, userProfile);
+      const response = await MorvoAIService.sendMessageWithRetry(messageToSend, userProfile);
       console.log('استجابة Morvo AI:', response);
 
       const { message: cleanMessage, commands } = AgentControlService.parseAgentResponse(response.message);
