@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AgentCommand {
-  type: 'button' | 'form' | 'info_request' | 'save_data' | 'query_data';
+  type: 'button' | 'form' | 'info_request' | 'save_data';
   data: any;
   id: string;
 }

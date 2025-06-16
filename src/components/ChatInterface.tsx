@@ -272,6 +272,13 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       }
 
       if (clientId) {
+        // Convert commands to serializable format for database storage
+        const serializableCommands = commands.map(cmd => ({
+          type: cmd.type,
+          data: cmd.data,
+          id: cmd.id
+        }));
+
         await supabase
           .from('conversation_messages')
           .insert({
@@ -284,8 +291,8 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
               processing_time: response.processing_time,
               cost: response.cost_tracking?.total_cost,
               agents_involved: response.agents_involved,
-              commands: commands
-            },
+              commands: serializableCommands
+            } as any,
             timestamp: new Date().toISOString()
           });
       }
