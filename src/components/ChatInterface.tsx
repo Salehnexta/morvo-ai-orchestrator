@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MorvoAIService } from "@/services/morvoAIService";
+import { CustomerDataService } from "@/services/customerDataService";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -26,6 +28,7 @@ interface ChatInterfaceProps {
 export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, isRTL } = useLanguage();
+  const [clientId, setClientId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -59,6 +62,21 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   };
 
   const t = content[language];
+
+  useEffect(() => {
+    initializeClient();
+  }, []);
+
+  const initializeClient = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        setClientId(session.user.id);
+      }
+    } catch (error) {
+      console.error('Error getting session:', error);
+    }
+  };
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -123,6 +141,15 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
 
     setMessages(prev => [...prev, userMessage]);
     
+    // جمع بيانات العميل تلقائياً
+    if (clientId) {
+      await CustomerDataService.extractAndSaveCustomerData(
+        input, 
+        clientId, 
+        MorvoAIService.getConversationInfo().conversationId || 'default'
+      );
+    }
+
     // Analyze message for dashboard updates
     const dashboardData = analyzeMessageForDashboard(input);
     if (dashboardData && onDashboardUpdate) {
@@ -149,6 +176,25 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       };
 
       setMessages(prev => [...prev, agentMessage]);
+
+      // حفظ استجابة الوكيل أيضاً
+      if (clientId) {
+        await supabase
+          .from('conversation_messages')
+          .insert({
+            client_id: clientId,
+            conversation_id: MorvoAIService.getConversationInfo().conversationId || 'default',
+            content: response.message,
+            sender_type: 'agent',
+            sender_id: response.agents_involved?.[0] || 'morvo_ai',
+            metadata: {
+              processing_time: response.processing_time,
+              cost: response.cost_tracking?.total_cost,
+              agents_involved: response.agents_involved
+            },
+            timestamp: new Date().toISOString()
+          });
+      }
 
       if (response.processing_time) {
         toast({
