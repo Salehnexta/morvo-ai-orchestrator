@@ -26,6 +26,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ProfileSetup from "./pages/ProfileSetup";
 import Billing from "./pages/Billing";
+import Admin from "./pages/Admin";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               <Route path="/billing" element={<Billing />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

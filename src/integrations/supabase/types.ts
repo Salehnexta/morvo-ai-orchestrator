@@ -130,6 +130,30 @@ export type Database = {
           },
         ]
       }
+      admin_dashboard_stats: {
+        Row: {
+          calculated_at: string | null
+          created_at: string | null
+          id: string
+          metric_name: string
+          metric_value: Json
+        }
+        Insert: {
+          calculated_at?: string | null
+          created_at?: string | null
+          id?: string
+          metric_name: string
+          metric_value?: Json
+        }
+        Update: {
+          calculated_at?: string | null
+          created_at?: string | null
+          id?: string
+          metric_name?: string
+          metric_value?: Json
+        }
+        Relationships: []
+      }
       agent_activity_log: {
         Row: {
           activity_type: string
@@ -2075,6 +2099,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           auto_renew: boolean | null
@@ -2230,9 +2278,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       initialize_conversation_system: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       link_clients_to_auth: {
         Args: Record<PropertyKey, never>
@@ -2246,7 +2305,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user" | "moderator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2361,6 +2420,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user", "moderator"],
+    },
   },
 } as const
