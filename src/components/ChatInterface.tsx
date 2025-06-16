@@ -396,10 +396,10 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const remainingTokens = getRemainingTokens();
 
   return (
-    <div className={`h-screen flex flex-col bg-transparent transition-colors duration-300`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="h-full flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Token Warning Banner */}
       {isLowTokens() && (
-        <div className="glass-morphism border-b border-yellow-400/20 p-3">
+        <div className="bg-yellow-600/20 backdrop-blur-sm border-b border-yellow-400/30 p-3">
           <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <AlertTriangle className="w-4 h-4 text-yellow-300" />
             <span className="text-sm text-yellow-200">

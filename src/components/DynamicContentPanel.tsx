@@ -54,71 +54,51 @@ export const DynamicContentPanel = ({ contentType = 'hero', onActionClick }: Dyn
   if (contentType === 'hero') {
     return (
       <div 
-        className="h-full w-full relative overflow-hidden"
+        className="h-full w-full flex flex-col justify-center items-center text-center px-12"
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        {/* Clean background overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm"></div>
-        
-        {/* Content */}
-        <div className="relative h-full flex flex-col items-center justify-center text-center px-8 text-white">
-          {/* AI Brain Icon with glow effect */}
-          <div className="mb-8">
-            <div className="relative">
-              <div className="w-24 h-24 glass-morphism rounded-full flex items-center justify-center mb-4 shadow-2xl">
-                <Brain className="w-12 h-12 text-white" />
-              </div>
-              <div className="absolute -top-2 -right-2">
-                <Sparkles className="w-6 h-6 text-yellow-300 animate-pulse" />
-              </div>
-            </div>
-          </div>
-
-          {/* Main Title */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 drop-shadow-2xl text-white">
+        {/* Main Hero Content */}
+        <div className="max-w-4xl">
+          {/* Main Title - Large and Bold like Layla */}
+          <h1 className="text-7xl md:text-8xl lg:text-9xl font-bold text-white mb-8 leading-tight drop-shadow-2xl">
             {t.title}
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xl md:text-2xl mb-4 drop-shadow-lg text-white/95 max-w-2xl font-light">
+          <p className="text-2xl md:text-3xl mb-6 text-white/95 max-w-3xl font-light drop-shadow-lg">
             {t.subtitle}
           </p>
 
           {/* Description */}
-          <p className="text-lg mb-12 text-white/90 max-w-xl font-medium">
+          <p className="text-xl mb-12 text-white/90 max-w-2xl font-medium drop-shadow-md">
             {t.description}
           </p>
 
-          {/* Action Buttons Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mb-8">
-            {t.actions.map((action) => {
+          {/* Action Buttons - Simple and Clean */}
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            {t.actions.slice(0, 3).map((action) => {
               const IconComponent = action.icon;
               return (
                 <Button
                   key={action.key}
                   onClick={() => handleActionClick(action.key)}
-                  className="h-20 glass-morphism hover:bg-white/20 border border-white/30 text-white flex flex-col items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-xl backdrop-blur-md"
+                  className="bg-white/20 hover:bg-white/30 border border-white/30 text-white px-6 py-3 rounded-full backdrop-blur-sm transition-all duration-300 hover:scale-105 text-base font-medium drop-shadow-lg"
                   variant="ghost"
                 >
-                  <IconComponent className="w-6 h-6" />
-                  <span className="text-xs font-medium leading-tight">{action.label}</span>
+                  <IconComponent className="w-5 h-5 mr-2" />
+                  {action.label}
                 </Button>
               );
             })}
           </div>
 
           {/* Bottom CTA */}
-          <div className="max-w-md">
-            <p className="text-sm text-white/80 leading-relaxed">
+          <div className="max-w-lg">
+            <p className="text-lg text-white/85 leading-relaxed drop-shadow-md">
               {t.cta}
             </p>
           </div>
         </div>
-
-        {/* Subtle decorative elements */}
-        <div className="absolute top-20 left-20 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-20 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-10 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
       </div>
     );
   }
@@ -126,14 +106,14 @@ export const DynamicContentPanel = ({ contentType = 'hero', onActionClick }: Dyn
   // Placeholder for other content types with clean styling
   return (
     <div className="h-full w-full flex items-center justify-center">
-      <div className="text-center glass-morphism p-8 rounded-2xl max-w-md">
-        <h2 className="text-2xl font-bold mb-4 text-white">
+      <div className="text-center bg-black/30 backdrop-blur-sm p-12 rounded-2xl max-w-md border border-white/20">
+        <h2 className="text-3xl font-bold mb-6 text-white drop-shadow-lg">
           {contentType === 'analytics' && (language === 'ar' ? 'لوحة التحليلات' : 'Analytics Dashboard')}
           {contentType === 'content-creator' && (language === 'ar' ? 'إنشاء المحتوى' : 'Content Creator')}
           {contentType === 'calendar' && (language === 'ar' ? 'التقويم' : 'Calendar')}
           {contentType === 'campaign' && (language === 'ar' ? 'إدارة الحملات' : 'Campaign Manager')}
         </h2>
-        <p className="text-white/80">
+        <p className="text-white/80 text-lg">
           {language === 'ar' ? 'قريباً...' : 'Coming soon...'}
         </p>
       </div>

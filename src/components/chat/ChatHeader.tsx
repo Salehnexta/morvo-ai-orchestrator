@@ -38,7 +38,7 @@ export const ChatHeader = ({
   };
 
   return (
-    <div className="glass-morphism border-b border-white/10 p-4">
+    <div className="bg-black/20 backdrop-blur-sm border-b border-white/20 p-4">
       <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
         {/* Bot Avatar and Info */}
         <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -59,7 +59,7 @@ export const ChatHeader = ({
         <div className={`${isRTL ? 'mr-auto' : 'ml-auto'} flex items-center gap-2`}>
           {/* Token Balance Display */}
           {clientId && tokenBalance !== undefined && (
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full glass-morphism text-xs">
+            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-xs border border-white/20">
               <Coins className={`w-3 h-3 ${getTokenColor()}`} />
               <span className={`font-medium ${getTokenColor()}`}>
                 {tokenBalance.toLocaleString()}

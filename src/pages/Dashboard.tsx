@@ -43,30 +43,24 @@ const Dashboard = () => {
   return (
     <SimpleAuthWrapper>
       <div 
-        className="min-h-screen bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('/lovable-uploads/ac9c9c9b-a4db-48f3-ae39-d0ae9a8c5ed4.png')` }}
+        className="h-screen w-full bg-cover bg-center bg-no-repeat flex"
+        style={{ backgroundImage: `url('/lovable-uploads/362bdb5b-6c5c-4340-8368-eee2d1eb2564.png')` }}
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        {/* Natural overlay for better text readability */}
-        <div className="min-h-screen bg-gradient-to-br from-blue-900/20 via-transparent to-green-900/20">
-          {/* 2-Panel Dashboard Layout - 40/60 split */}
-          <div className="h-screen flex">
-            {/* Chat Panel - 40% width */}
-            <div className="w-2/5 glass-panel border-r border-white/20">
-              <ChatInterface 
-                onBack={() => {}} 
-                onDashboardUpdate={handleDashboardUpdate}
-              />
-            </div>
+        {/* Chat Panel - Left 40% with dark overlay */}
+        <div className="w-2/5 bg-black/40 backdrop-blur-sm border-r border-white/10">
+          <ChatInterface 
+            onBack={() => {}} 
+            onDashboardUpdate={handleDashboardUpdate}
+          />
+        </div>
 
-            {/* Dynamic Content Panel - 60% width */}
-            <div className="w-3/5 glass-panel">
-              <DynamicContentPanel 
-                contentType={contentType}
-                onActionClick={handleContentAction}
-              />
-            </div>
-          </div>
+        {/* Dynamic Content Panel - Right 60% directly over background */}
+        <div className="w-3/5">
+          <DynamicContentPanel 
+            contentType={contentType}
+            onActionClick={handleContentAction}
+          />
         </div>
       </div>
     </SimpleAuthWrapper>
