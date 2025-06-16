@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, Sun, Moon } from "lucide-react";
+import { Send, Bot, User, Loader2, Sun, Moon, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
+import { RailwayConnectionTest } from "@/components/RailwayConnectionTest";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Message {
   id: string;
@@ -29,16 +31,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const { theme, toggleTheme } = useTheme();
   const { language, isRTL } = useLanguage();
   const [clientId, setClientId] = useState<string>('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: language === 'ar' 
-        ? 'أنا مورفو وأبشرك وصلت خير، راح أكون مسؤول التسويق عندك.'
-        : 'Hello! I\'m your smart assistant at Zid platform. I can help you analyze data and create reports and charts. Try asking me about sales or analytics!',
-      sender: 'agent',
-      timestamp: new Date()
-    }
-  ]);
+  const [showConnectionTest, setShowConnectionTest] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -260,6 +253,19 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setShowConnectionTest(!showConnectionTest)}
+              className={`${
+                theme === 'dark' 
+                  ? 'text-white hover:bg-gray-800' 
+                  : 'text-gray-900 hover:bg-white/50'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={toggleTheme}
               className={`${
                 theme === 'dark' 
@@ -278,6 +284,13 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
             </div>
           </div>
         </div>
+
+        {/* Railway Connection Test */}
+        <Collapsible open={showConnectionTest} onOpenChange={setShowConnectionTest}>
+          <CollapsibleContent className="mt-4">
+            <RailwayConnectionTest />
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {/* Messages */}

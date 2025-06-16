@@ -91,10 +91,10 @@ export const RailwayConnectionTest = () => {
 
         <Button 
           onClick={runConnectionTest} 
-          disabled={isLoading}
+          disabled={isTesting}
           className="w-full"
         >
-          {isLoading ? (
+          {isTesting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
               جاري الاختبار...
