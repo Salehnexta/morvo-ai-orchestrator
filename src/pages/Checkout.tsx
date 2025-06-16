@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PaymentService, PaymentData } from "@/services/paymentService";
 import { useToast } from "@/hooks/use-toast";
-import { CreditCard, Lock, CheckCircle } from "lucide-react";
+import { CreditCard, Lock, CheckCircle, ArrowRight, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Checkout() {
   const { language, isRTL } = useLanguage();
@@ -23,6 +24,7 @@ export default function Checkout() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [user, setUser] = useState<any>(null);
   const [customerData, setCustomerData] = useState({
     name: '',
     email: '',
@@ -49,7 +51,14 @@ export default function Checkout() {
       total: "المجموع",
       currency: "ريال سعودي",
       secure: "عملية دفع آمنة ومشفرة",
-      mockNotice: "هذا نظام دفع تجريبي - لن يتم خصم أي مبلغ حقيقي"
+      mockNotice: "هذا نظام دفع تجريبي - لن يتم خصم أي مبلغ حقيقي",
+      loginRequired: "يجب تسجيل الدخول للمتابعة",
+      loginButton: "تسجيل الدخول",
+      popular: "الأكثر شعبية",
+      benefits: "المزايا المضمنة",
+      guarantee: "ضمان استرداد الأموال لمدة 30 يوم",
+      support: "دعم فني على مدار الساعة",
+      upgradePath: "يمكنك الترقية أو التراجع في أي وقت"
     },
     en: {
       title: "Complete Payment",
@@ -69,13 +78,35 @@ export default function Checkout() {
       total: "Total",
       currency: "SAR",
       secure: "Secure and encrypted payment",
-      mockNotice: "This is a demo payment system - no real charges will be made"
+      mockNotice: "This is a demo payment system - no real charges will be made",
+      loginRequired: "Login required to continue",
+      loginButton: "Login",
+      popular: "Most Popular",
+      benefits: "What's Included",
+      guarantee: "30-day money back guarantee",
+      support: "24/7 premium support",
+      upgradePath: "Upgrade or downgrade anytime"
     }
   };
 
   const t = content[language];
 
   useEffect(() => {
+    // التحقق من المستخدم المسجل
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUser(user);
+        setCustomerData(prev => ({
+          ...prev,
+          email: user.email || '',
+          name: user.user_metadata?.full_name || ''
+        }));
+      }
+    };
+    
+    checkUser();
+
     const planId = searchParams.get('plan');
     const cycle = searchParams.get('cycle') as 'monthly' | 'yearly' || 'monthly';
     
@@ -105,7 +136,20 @@ export default function Checkout() {
     return billingCycle === 'yearly' ? selectedPlan.price_yearly : selectedPlan.price_monthly;
   };
 
+  const handleLogin = () => {
+    navigate('/auth/login?redirect=/checkout' + window.location.search);
+  };
+
   const handlePayment = async () => {
+    if (!user) {
+      toast({
+        title: "تسجيل الدخول مطلوب",
+        description: "يجب تسجيل الدخول أولاً لإتمام عملية الشراء",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!selectedPlan || !customerData.name || !customerData.email) {
       toast({
         title: "بيانات ناقصة",
@@ -171,22 +215,38 @@ export default function Checkout() {
   return (
     <MainLayout>
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} py-8`} dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>
+            <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>
               {t.title}
             </h1>
-            <p className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className={`text-xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               {t.subtitle}
             </p>
           </div>
 
           {/* Mock Notice */}
-          <div className={`mb-6 p-4 rounded-lg border-2 border-yellow-300 ${theme === 'dark' ? 'bg-yellow-900/20' : 'bg-yellow-50'}`}>
-            <p className={`text-center font-medium ${theme === 'dark' ? 'text-yellow-200' : 'text-yellow-800'}`}>
+          <div className={`mb-8 p-6 rounded-xl border-2 border-yellow-300 ${theme === 'dark' ? 'bg-yellow-900/20' : 'bg-yellow-50'}`}>
+            <p className={`text-center text-lg font-medium ${theme === 'dark' ? 'text-yellow-200' : 'text-yellow-800'}`}>
               {t.mockNotice}
             </p>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={`text-center p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border`}>
+              <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t.guarantee}</p>
+            </div>
+            <div className={`text-center p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border`}>
+              <Lock className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t.secure}</p>
+            </div>
+            <div className={`text-center p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border`}>
+              <Star className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t.support}</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -197,7 +257,21 @@ export default function Checkout() {
                   {t.customerInfo}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                {!user && (
+                  <div className={`p-6 rounded-lg border-2 border-blue-300 ${theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
+                    <p className={`text-center mb-4 font-medium ${theme === 'dark' ? 'text-blue-200' : 'text-blue-800'}`}>
+                      {t.loginRequired}
+                    </p>
+                    <Button 
+                      onClick={handleLogin}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {t.loginButton}
+                    </Button>
+                  </div>
+                )}
+
                 <div>
                   <Label htmlFor="name">{t.name} *</Label>
                   <Input
@@ -206,6 +280,7 @@ export default function Checkout() {
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
                     required
+                    disabled={!user}
                   />
                 </div>
 
@@ -218,6 +293,7 @@ export default function Checkout() {
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
                     required
+                    disabled={!user}
                   />
                 </div>
 
@@ -228,6 +304,7 @@ export default function Checkout() {
                     value={customerData.company}
                     onChange={(e) => handleInputChange('company', e.target.value)}
                     className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
+                    disabled={!user}
                   />
                 </div>
 
@@ -238,6 +315,7 @@ export default function Checkout() {
                     value={customerData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
+                    disabled={!user}
                   />
                 </div>
               </CardContent>
@@ -252,19 +330,26 @@ export default function Checkout() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Plan Info */}
-                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                  <h3 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {selectedPlan.plan_name}
-                  </h3>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
+                <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border-2 border-blue-200`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`font-bold text-2xl ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {selectedPlan.plan_name}
+                    </h3>
+                    {selectedPlan.plan_code === 'pro' && (
+                      <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        {t.popular}
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
                     {selectedPlan.description}
                   </p>
 
                   {/* Billing Cycle Selector */}
-                  <div className="mb-4">
-                    <Label>{t.paymentMethod}</Label>
+                  <div className="mb-6">
+                    <Label className="text-lg font-semibold">{t.paymentMethod}</Label>
                     <Select value={billingCycle} onValueChange={(value: 'monthly' | 'yearly') => setBillingCycle(value)}>
-                      <SelectTrigger className={`${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-white' : ''}`}>
+                      <SelectTrigger className={`mt-2 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-white' : ''}`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -277,14 +362,41 @@ export default function Checkout() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Benefits */}
+                  <div className="mb-6">
+                    <h4 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {t.benefits}
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                          جميع المميزات المتقدمة
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                          دعم فني متميز
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {t.upgradePath}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Total */}
-                <div className={`flex justify-between items-center p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-gray-700 border-blue-600' : 'bg-blue-50 border-blue-200'}`}>
-                  <span className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <div className={`flex justify-between items-center p-6 rounded-xl border-2 ${theme === 'dark' ? 'bg-gray-700 border-blue-600' : 'bg-blue-50 border-blue-200'}`}>
+                  <span className={`font-bold text-xl ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                     {t.total}:
                   </span>
-                  <span className={`text-2xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                  <span className={`text-3xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
                     {calculateTotal()} {t.currency}
                   </span>
                 </div>
@@ -292,25 +404,26 @@ export default function Checkout() {
                 {/* Payment Button */}
                 <Button
                   onClick={handlePayment}
-                  disabled={isLoading || !customerData.name || !customerData.email}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3"
+                  disabled={isLoading || !user || !customerData.name || !customerData.email}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 text-lg font-semibold"
                   size="lg"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
                       {t.processing}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center">
-                      <CreditCard className="w-5 h-5 mr-2" />
+                    <div className="flex items-center justify-center gap-3">
+                      <CreditCard className="w-6 h-6" />
                       {t.payNow}
+                      <ArrowRight className="w-5 h-5" />
                     </div>
                   )}
                 </Button>
 
                 {/* Security Notice */}
-                <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+                <div className="flex items-center justify-center space-x-2 text-sm text-gray-500 pt-4">
                   <Lock className="w-4 h-4" />
                   <span>{t.secure}</span>
                 </div>

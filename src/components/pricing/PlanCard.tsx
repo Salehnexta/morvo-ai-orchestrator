@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { FeatureList } from "./FeatureList";
 import { Plan, FeatureCategory } from "@/data/pricingContent";
+import { useNavigate } from "react-router-dom";
 
 interface PlanCardProps {
   plan: Plan;
@@ -15,6 +16,11 @@ interface PlanCardProps {
 export const PlanCard = ({ plan, features }: PlanCardProps) => {
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
+  const navigate = useNavigate();
+
+  const handleSelectPlan = (billingCycle: 'monthly' | 'yearly' = 'monthly') => {
+    navigate(`/checkout?plan=${plan.id}&cycle=${billingCycle}`);
+  };
 
   let discountBadge = null;
   if (plan.originalPrice && plan.price) {
@@ -98,8 +104,9 @@ export const PlanCard = ({ plan, features }: PlanCardProps) => {
         </div>
       </CardHeader>
       
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 space-y-3">
         <Button 
+          onClick={() => handleSelectPlan('monthly')}
           className={`w-full h-12 text-lg font-semibold font-cairo transition-all duration-300 ${
             plan.popular 
               ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl' 
@@ -107,7 +114,15 @@ export const PlanCard = ({ plan, features }: PlanCardProps) => {
           }`}
           variant={plan.popular ? 'default' : 'outline'}
         >
-          {plan.buttonText}
+          {language === 'ar' ? 'ابدأ الآن - شهري' : 'Start Now - Monthly'}
+        </Button>
+        
+        <Button 
+          onClick={() => handleSelectPlan('yearly')}
+          className="w-full h-12 text-lg font-semibold font-cairo"
+          variant="outline"
+        >
+          {language === 'ar' ? 'ابدأ الآن - سنوي (خصم 17%)' : 'Start Now - Yearly (17% off)'}
         </Button>
       </CardContent>
 

@@ -1593,6 +1593,53 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          amount: number
+          billing_cycle: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          plan_id: string | null
+          status: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          billing_cycle?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          billing_cycle?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_transactions: {
         Row: {
           amount: number
@@ -1877,8 +1924,12 @@ export type Database = {
           limits: Json | null
           plan_code: string
           plan_name: string
+          popular: boolean | null
           price_monthly: number
           price_yearly: number | null
+          stripe_price_id_monthly: string | null
+          stripe_price_id_yearly: string | null
+          trial_days: number | null
           updated_at: string | null
         }
         Insert: {
@@ -1891,8 +1942,12 @@ export type Database = {
           limits?: Json | null
           plan_code: string
           plan_name: string
+          popular?: boolean | null
           price_monthly: number
           price_yearly?: number | null
+          stripe_price_id_monthly?: string | null
+          stripe_price_id_yearly?: string | null
+          trial_days?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -1905,8 +1960,12 @@ export type Database = {
           limits?: Json | null
           plan_code?: string
           plan_name?: string
+          popular?: boolean | null
           price_monthly?: number
           price_yearly?: number | null
+          stripe_price_id_monthly?: string | null
+          stripe_price_id_yearly?: string | null
+          trial_days?: number | null
           updated_at?: string | null
         }
         Relationships: []
