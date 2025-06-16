@@ -53,7 +53,9 @@ export const TokenCounter = ({ theme, clientId, onTokensUpdated }: TokenCounterP
         return;
       }
 
-      const monthlyLimit = subscriptionData.subscription_plans.limits?.monthly_ai_requests || 0;
+      // Handle the limits as a generic JSON object
+      const planLimits = subscriptionData.subscription_plans.limits as any;
+      const monthlyLimit = planLimits?.monthly_ai_requests || 0;
 
       // Get current month's token usage
       const startOfMonth = new Date();

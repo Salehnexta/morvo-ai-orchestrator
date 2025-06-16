@@ -2,35 +2,33 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-interface ProtectedDashboardProps {
+interface SimpleAuthWrapperProps {
   children: React.ReactNode;
 }
 
-export const ProtectedDashboard = ({ children }: ProtectedDashboardProps) => {
+export const SimpleAuthWrapper = ({ children }: SimpleAuthWrapperProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
 
   const content = {
     ar: {
-      checking: "جاري التحقق من صلاحيات الوصول...",
+      checking: "جاري التحقق من تسجيل الدخول...",
       accessDenied: "الوصول مرفوض",
-      requiresAuth: "يتطلب الوصول إلى لوحة التحكم تسجيل الدخول",
+      requiresAuth: "يتطلب الوصول إلى المحادثة تسجيل الدخول أولاً",
       loginButton: "تسجيل الدخول"
     },
     en: {
-      checking: "Checking access permissions...",
+      checking: "Checking authentication...",
       accessDenied: "Access Denied",
-      requiresAuth: "Dashboard access requires login",
+      requiresAuth: "Chat access requires login",
       loginButton: "Login"
     }
   };
@@ -52,13 +50,36 @@ export const ProtectedDashboard = ({ children }: ProtectedDashboardProps) => {
       }
 
       setIsAuthenticated(true);
+      console.log('User authenticated:', session.user.email);
+
+      // Get or create client record for the user
+      let { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (clientError || !clientData) {
+        console.log('Creating client record for user');
+        const { data: newClient, error: createError } = await supabase
+          .from('clients')
+          .insert({
+            name: session.user.email || 'User',
+            user_id: session.user.id,
+            active: true
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Error creating client:', createError);
+        }
+      }
+
+      console.log('✅ Access granted - user is authenticated');
+
     } catch (error) {
-      console.error('Error checking auth:', error);
-      toast({
-        title: "Error",
-        description: "Failed to verify access permissions",
-        variant: "destructive",
-      });
+      console.error('Error checking authentication:', error);
     } finally {
       setIsLoading(false);
     }

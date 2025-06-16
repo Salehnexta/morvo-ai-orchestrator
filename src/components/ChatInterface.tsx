@@ -75,7 +75,36 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.id) {
-        setClientId(session.user.id);
+        // Get or create client record
+        let { data: clientData, error: clientError } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (clientError || !clientData) {
+          // Create client if doesn't exist
+          const { data: newClient, error: createError } = await supabase
+            .from('clients')
+            .insert({
+              name: session.user.email || 'User',
+              user_id: session.user.id,
+              active: true
+            })
+            .select('id')
+            .single();
+
+          if (createError) {
+            console.error('Error creating client:', createError);
+            return;
+          }
+          clientData = newClient;
+        }
+
+        setClientId(clientData.id);
+        
+        // Ensure user has a subscription
+        await ensureUserSubscription(clientData.id);
         
         // تحديث حالة العميل كمدفوع إذا كان saleh@nexta.sa
         if (session.user.email === 'saleh@nexta.sa') {
@@ -85,6 +114,45 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
       }
     } catch (error) {
       console.error('Error getting session:', error);
+    }
+  };
+
+  const ensureUserSubscription = async (clientId: string) => {
+    try {
+      // Check if user has an active subscription
+      const { data: existingSubscription } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('client_id', clientId)
+        .in('status', ['active', 'trial'])
+        .single();
+
+      if (!existingSubscription) {
+        // Get free plan
+        const { data: freePlan } = await supabase
+          .from('subscription_plans')
+          .select('id')
+          .eq('plan_code', 'free-plan')
+          .single();
+
+        if (freePlan) {
+          // Create free subscription
+          await supabase
+            .from('user_subscriptions')
+            .insert({
+              client_id: clientId,
+              plan_id: freePlan.id,
+              status: 'active',
+              start_date: new Date().toISOString(),
+              trial_end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year
+              auto_renew: false
+            });
+
+          console.log('✅ Created free subscription for user');
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring subscription:', error);
     }
   };
 
