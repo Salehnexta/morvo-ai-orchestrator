@@ -67,25 +67,79 @@ export const ProtectedChat = ({ children }: ProtectedChatProps) => {
       }
 
       setIsAuthenticated(true);
+      console.log('User authenticated:', session.user.email);
 
-      // Check subscription status
+      // Get or create client record for the user
+      let { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (clientError || !clientData) {
+        console.log('Creating client record for user');
+        const { data: newClient, error: createError } = await supabase
+          .from('clients')
+          .insert({
+            name: session.user.email || 'User',
+            user_id: session.user.id,
+            active: true
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Error creating client:', createError);
+          setIsLoading(false);
+          return;
+        }
+        clientData = newClient;
+      }
+
+      console.log('Client ID:', clientData.id);
+
+      // Check subscription status using client_id
       const { data: subscriptionData, error: subError } = await supabase
         .from('user_subscriptions')
         .select('*, subscription_plans(*)')
-        .eq('client_id', session.user.id)
+        .eq('client_id', clientData.id)
         .in('status', ['active', 'trial'])
-        .gte('end_date', new Date().toISOString())
         .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
-      if (subError || !subscriptionData) {
+      console.log('Subscription query result:', subscriptionData, subError);
+
+      if (subError) {
+        console.error('Subscription query error:', subError);
         setHasActiveSubscription(false);
         setIsLoading(false);
         return;
       }
 
-      setHasActiveSubscription(true);
+      // Check if user has any active subscription
+      let hasValidSubscription = false;
+      if (subscriptionData && subscriptionData.length > 0) {
+        const subscription = subscriptionData[0];
+        console.log('Found subscription:', subscription);
+        
+        // Check if subscription is still valid
+        if (subscription.status === 'active' || subscription.status === 'trial') {
+          if (!subscription.end_date || new Date(subscription.end_date) > new Date()) {
+            hasValidSubscription = true;
+            console.log('Subscription is valid');
+          } else {
+            console.log('Subscription expired:', subscription.end_date);
+          }
+        }
+      }
+
+      setHasActiveSubscription(hasValidSubscription);
+
+      if (!hasValidSubscription) {
+        console.log('No valid subscription found');
+        setIsLoading(false);
+        return;
+      }
 
       // Check profile completion
       const { data: profileData, error: profileError } = await supabase
@@ -95,6 +149,7 @@ export const ProtectedChat = ({ children }: ProtectedChatProps) => {
         .single();
 
       if (profileError || !profileData) {
+        console.log('Profile not found or incomplete');
         setIsProfileComplete(false);
         setIsLoading(false);
         return;
@@ -112,6 +167,7 @@ export const ProtectedChat = ({ children }: ProtectedChatProps) => {
       );
 
       setIsProfileComplete(isComplete);
+      console.log('Profile complete:', isComplete);
 
     } catch (error) {
       console.error('Error checking access:', error);
@@ -208,7 +264,7 @@ export const ProtectedChat = ({ children }: ProtectedChatProps) => {
             </Button>
             
             <Button
-              onClick={() => navigate('/subscription')}
+              onClick={() => navigate('/billing')}
               variant="outline"
               className="w-full"
             >
