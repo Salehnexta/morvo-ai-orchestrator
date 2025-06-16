@@ -9,7 +9,7 @@ export interface TokenUsage {
 }
 
 export class TokenService {
-  private static readonly FREE_ACCOUNT_LIMIT = 5000;
+  private static readonly FREE_ACCOUNT_LIMIT = 20000; // Updated to 20,000 tokens
   private static readonly GUEST_LIMIT = 100;
 
   // تتبع استخدام التوكنز

@@ -1,4 +1,3 @@
-
 import { Settings, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectionStatus } from "./ConnectionStatus";
@@ -34,13 +33,13 @@ export const ChatHeader = ({ theme, isRTL, content, isConnecting, onToggleTheme,
               <div className={`px-3 py-1 rounded-full text-sm ${
                 tokenUsage.isLimitReached 
                   ? 'bg-red-100 text-red-800 border border-red-200' 
-                  : tokenUsage.remainingTokens < 500
+                  : tokenUsage.remainingTokens < 1000
                   ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
                   : 'bg-green-100 text-green-800 border border-green-200'
               }`}>
                 {tokenUsage.accountType === 'guest' 
                   ? `تجريبي: ${tokenUsage.remainingTokens} توكن متبقي`
-                  : `${tokenUsage.remainingTokens} توكن متبقي`
+                  : `حساب مجاني: ${tokenUsage.remainingTokens} توكن متبقي`
                 }
               </div>
             )}

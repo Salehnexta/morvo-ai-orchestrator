@@ -57,9 +57,11 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               
-              {/* All routes with main layout including public chat */}
+              {/* Public chat without main layout to avoid double header */}
+              <Route path="/public-chat" element={<PublicChat />} />
+              
+              {/* All other routes with main layout */}
               <Route path="/" element={<MainLayout><Index /></MainLayout>} />
-              <Route path="/public-chat" element={<MainLayout><PublicChat /></MainLayout>} />
               <Route path="/features" element={<MainLayout><Features /></MainLayout>} />
               <Route path="/pricing" element={<MainLayout><Pricing /></MainLayout>} />
               <Route path="/support" element={<MainLayout><Support /></MainLayout>} />

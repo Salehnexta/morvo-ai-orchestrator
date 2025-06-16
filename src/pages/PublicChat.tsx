@@ -9,10 +9,10 @@ const PublicChat = () => {
 
   const content = {
     ar: {
-      note: "ملاحظة: هذه محادثة تجريبية مجانية. يمكنك إنشاء حساب مجاني للحصول على 5000 توكن شهرياً"
+      note: "ملاحظة: هذه محادثة تجريبية مجانية. يمكنك إنشاء حساب مجاني للحصول على 20,000 توكن مجاناً"
     },
     en: {
-      note: "Note: This is a free demo chat. You can create a free account to get 5000 tokens monthly"
+      note: "Note: This is a free demo chat. You can create a free account to get 20,000 tokens for free"
     }
   };
 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,7 @@ export const FreeAccountDialog = ({ open, onClose, onAccountCreated, isUpgrade =
   const content = {
     ar: {
       title: isUpgrade ? "ترقية الحساب" : "إنشاء حساب مجاني",
-      subtitle: isUpgrade ? "احصل على المزيد من التوكنز مع الحساب المدفوع" : "احصل على 5000 توكن شهرياً مجاناً!",
+      subtitle: isUpgrade ? "احصل على المزيد من التوكنز مع الحساب المدفوع" : "احصل على 20,000 توكن مجاناً!",
       email: "البريد الإلكتروني",
       name: "الاسم",
       companyName: "اسم الشركة",
@@ -71,7 +70,7 @@ export const FreeAccountDialog = ({ open, onClose, onAccountCreated, isUpgrade =
     },
     en: {
       title: isUpgrade ? "Upgrade Account" : "Create Free Account",
-      subtitle: isUpgrade ? "Get more tokens with a paid account" : "Get 5000 free tokens monthly!",
+      subtitle: isUpgrade ? "Get more tokens with a paid account" : "Get 20,000 free tokens!",
       email: "Email",
       name: "Name",
       companyName: "Company Name",
