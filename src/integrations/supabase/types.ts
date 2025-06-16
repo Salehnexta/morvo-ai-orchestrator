@@ -943,6 +943,7 @@ export type Database = {
           budget_range: string | null
           communication_preferences: Json | null
           company_name: string | null
+          company_size: string | null
           created_at: string | null
           current_marketing_activities: Json | null
           customer_id: string
@@ -951,18 +952,22 @@ export type Database = {
           industry: string | null
           marketing_budget_history: string | null
           marketing_experience_level: string | null
+          marketing_goals: Json | null
           marketing_knowledge_gaps: Json | null
           marketing_measurement_experience: string | null
           marketing_pain_points: Json | null
           marketing_team_size: string | null
           marketing_tools_used: Json | null
+          monthly_marketing_budget: string | null
           personality_profile: Json | null
+          preferred_language: string | null
           preferred_marketing_channels: Json | null
           previous_marketing_results: Json | null
           primary_goal: string | null
           session_id: string | null
           social_accounts: Json | null
           status: string | null
+          target_audience: string | null
           target_customers: string | null
           team_experience: string | null
           updated_at: string | null
@@ -972,6 +977,7 @@ export type Database = {
           budget_range?: string | null
           communication_preferences?: Json | null
           company_name?: string | null
+          company_size?: string | null
           created_at?: string | null
           current_marketing_activities?: Json | null
           customer_id: string
@@ -980,18 +986,22 @@ export type Database = {
           industry?: string | null
           marketing_budget_history?: string | null
           marketing_experience_level?: string | null
+          marketing_goals?: Json | null
           marketing_knowledge_gaps?: Json | null
           marketing_measurement_experience?: string | null
           marketing_pain_points?: Json | null
           marketing_team_size?: string | null
           marketing_tools_used?: Json | null
+          monthly_marketing_budget?: string | null
           personality_profile?: Json | null
+          preferred_language?: string | null
           preferred_marketing_channels?: Json | null
           previous_marketing_results?: Json | null
           primary_goal?: string | null
           session_id?: string | null
           social_accounts?: Json | null
           status?: string | null
+          target_audience?: string | null
           target_customers?: string | null
           team_experience?: string | null
           updated_at?: string | null
@@ -1001,6 +1011,7 @@ export type Database = {
           budget_range?: string | null
           communication_preferences?: Json | null
           company_name?: string | null
+          company_size?: string | null
           created_at?: string | null
           current_marketing_activities?: Json | null
           customer_id?: string
@@ -1009,18 +1020,22 @@ export type Database = {
           industry?: string | null
           marketing_budget_history?: string | null
           marketing_experience_level?: string | null
+          marketing_goals?: Json | null
           marketing_knowledge_gaps?: Json | null
           marketing_measurement_experience?: string | null
           marketing_pain_points?: Json | null
           marketing_team_size?: string | null
           marketing_tools_used?: Json | null
+          monthly_marketing_budget?: string | null
           personality_profile?: Json | null
+          preferred_language?: string | null
           preferred_marketing_channels?: Json | null
           previous_marketing_results?: Json | null
           primary_goal?: string | null
           session_id?: string | null
           social_accounts?: Json | null
           status?: string | null
+          target_audience?: string | null
           target_customers?: string | null
           team_experience?: string | null
           updated_at?: string | null

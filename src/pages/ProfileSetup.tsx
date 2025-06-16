@@ -27,6 +27,20 @@ interface ProfileData {
   preferred_language: string;
 }
 
+interface StepWithPlaceholder {
+  title: string;
+  description: string;
+  placeholder: string;
+}
+
+interface StepWithOptions {
+  title: string;
+  description: string;
+  options: Array<{ value: string; label: string }>;
+}
+
+type StepContent = StepWithPlaceholder | StepWithOptions;
+
 export default function ProfileSetup() {
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
@@ -66,7 +80,7 @@ export default function ProfileSetup() {
           title: "اسم الشركة",
           description: "ما هو اسم شركتك أو مشروعك؟",
           placeholder: "أدخل اسم الشركة"
-        },
+        } as StepWithPlaceholder,
         2: {
           title: "القطاع",
           description: "في أي قطاع تعمل شركتك؟",
@@ -82,7 +96,7 @@ export default function ProfileSetup() {
             { value: "services", label: "الخدمات المهنية" },
             { value: "other", label: "أخرى" }
           ]
-        },
+        } as StepWithOptions,
         3: {
           title: "حجم الشركة",
           description: "كم عدد الموظفين في شركتك؟",
@@ -93,7 +107,7 @@ export default function ProfileSetup() {
             { value: "201-500", label: "201-500 موظف" },
             { value: "500+", label: "أكثر من 500 موظف" }
           ]
-        },
+        } as StepWithOptions,
         4: {
           title: "مستوى الخبرة التسويقية",
           description: "ما هو مستوى خبرتك في التسويق الرقمي؟",
@@ -103,7 +117,7 @@ export default function ProfileSetup() {
             { value: "advanced", label: "متقدم - لدي خبرة جيدة" },
             { value: "expert", label: "خبير - لدي خبرة واسعة" }
           ]
-        },
+        } as StepWithOptions,
         5: {
           title: "الأنشطة التسويقية الحالية",
           description: "ما هي الأنشطة التسويقية التي تقوم بها حالياً؟ (يمكن اختيار أكثر من واحد)",
@@ -117,7 +131,7 @@ export default function ProfileSetup() {
             { value: "events", label: "الفعاليات والمعارض" },
             { value: "none", label: "لا أقوم بأي أنشطة حالياً" }
           ]
-        },
+        } as StepWithOptions,
         6: {
           title: "الأهداف التسويقية",
           description: "ما هي أهدافك الرئيسية من التسويق؟ (يمكن اختيار أكثر من واحد)",
@@ -130,12 +144,12 @@ export default function ProfileSetup() {
             { value: "cost_optimization", label: "تحسين تكلفة التسويق" },
             { value: "digital_transformation", label: "التحول الرقمي" }
           ]
-        },
+        } as StepWithOptions,
         7: {
           title: "الجمهور المستهدف",
           description: "من هو جمهورك المستهدف؟",
           placeholder: "مثال: الشباب من سن 18-35، أصحاب الأعمال، ربات البيوت..."
-        },
+        } as StepWithPlaceholder,
         8: {
           title: "الميزانية الشهرية",
           description: "ما هي ميزانيتك الشهرية للتسويق الرقمي؟",
@@ -146,7 +160,7 @@ export default function ProfileSetup() {
             { value: "15000_50000", label: "15,000 - 50,000 ريال" },
             { value: "more_than_50000", label: "أكثر من 50,000 ريال" }
           ]
-        },
+        } as StepWithOptions,
         9: {
           title: "اللغة المفضلة",
           description: "ما هي لغة التفاعل المفضلة لك؟",
@@ -154,7 +168,7 @@ export default function ProfileSetup() {
             { value: "ar", label: "العربية" },
             { value: "en", label: "English" }
           ]
-        }
+        } as StepWithOptions
       }
     },
     en: {
@@ -172,7 +186,7 @@ export default function ProfileSetup() {
           title: "Company Name",
           description: "What is your company or project name?",
           placeholder: "Enter company name"
-        },
+        } as StepWithPlaceholder,
         2: {
           title: "Industry",
           description: "What industry does your company operate in?",
@@ -188,7 +202,7 @@ export default function ProfileSetup() {
             { value: "services", label: "Professional Services" },
             { value: "other", label: "Other" }
           ]
-        },
+        } as StepWithOptions,
         3: {
           title: "Company Size",
           description: "How many employees does your company have?",
@@ -199,7 +213,7 @@ export default function ProfileSetup() {
             { value: "201-500", label: "201-500 employees" },
             { value: "500+", label: "500+ employees" }
           ]
-        },
+        } as StepWithOptions,
         4: {
           title: "Marketing Experience Level",
           description: "What is your level of experience in digital marketing?",
@@ -209,7 +223,7 @@ export default function ProfileSetup() {
             { value: "advanced", label: "Advanced - Good experience" },
             { value: "expert", label: "Expert - Extensive experience" }
           ]
-        },
+        } as StepWithOptions,
         5: {
           title: "Current Marketing Activities",
           description: "What marketing activities are you currently doing? (Select multiple)",
@@ -223,7 +237,7 @@ export default function ProfileSetup() {
             { value: "events", label: "Events & Trade Shows" },
             { value: "none", label: "None currently" }
           ]
-        },
+        } as StepWithOptions,
         6: {
           title: "Marketing Goals",
           description: "What are your main marketing objectives? (Select multiple)",
@@ -236,12 +250,12 @@ export default function ProfileSetup() {
             { value: "cost_optimization", label: "Cost Optimization" },
             { value: "digital_transformation", label: "Digital Transformation" }
           ]
-        },
+        } as StepWithOptions,
         7: {
           title: "Target Audience",
           description: "Who is your target audience?",
           placeholder: "Example: Young adults 18-35, business owners, homemakers..."
-        },
+        } as StepWithPlaceholder,
         8: {
           title: "Monthly Budget",
           description: "What is your monthly budget for digital marketing?",
@@ -252,7 +266,7 @@ export default function ProfileSetup() {
             { value: "15000_50000", label: "15,000 - 50,000 SAR" },
             { value: "more_than_50000", label: "More than 50,000 SAR" }
           ]
-        },
+        } as StepWithOptions,
         9: {
           title: "Preferred Language",
           description: "What is your preferred interaction language?",
@@ -260,7 +274,7 @@ export default function ProfileSetup() {
             { value: "ar", label: "Arabic" },
             { value: "en", label: "English" }
           ]
-        }
+        } as StepWithOptions
       }
     }
   };
@@ -291,8 +305,12 @@ export default function ProfileSetup() {
           industry: profile.industry || '',
           company_size: profile.company_size || '',
           marketing_experience_level: profile.marketing_experience_level || '',
-          current_marketing_activities: profile.current_marketing_activities || [],
-          marketing_goals: profile.marketing_goals || [],
+          current_marketing_activities: Array.isArray(profile.current_marketing_activities) 
+            ? profile.current_marketing_activities as string[]
+            : [],
+          marketing_goals: Array.isArray(profile.marketing_goals) 
+            ? profile.marketing_goals as string[]
+            : [],
           target_audience: profile.target_audience || '',
           monthly_marketing_budget: profile.monthly_marketing_budget || '',
           preferred_language: profile.preferred_language || language
@@ -368,6 +386,14 @@ export default function ProfileSetup() {
     }
   };
 
+  const hasPlaceholder = (step: StepContent): step is StepWithPlaceholder => {
+    return 'placeholder' in step;
+  };
+
+  const hasOptions = (step: StepContent): step is StepWithOptions => {
+    return 'options' in step;
+  };
+
   const renderStepContent = () => {
     const stepData = t.steps[currentStep as keyof typeof t.steps];
     
@@ -380,7 +406,7 @@ export default function ProfileSetup() {
               id="company_name"
               value={profileData.company_name}
               onChange={(e) => handleInputChange('company_name', e.target.value)}
-              placeholder={stepData.placeholder}
+              placeholder={hasPlaceholder(stepData) ? stepData.placeholder : ''}
               className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
             />
           </div>
@@ -408,7 +434,7 @@ export default function ProfileSetup() {
                 <SelectValue placeholder="اختر..." />
               </SelectTrigger>
               <SelectContent>
-                {stepData.options?.map((option) => (
+                {hasOptions(stepData) && stepData.options.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -427,7 +453,7 @@ export default function ProfileSetup() {
           <div className="space-y-4">
             <Label>{stepData.title} *</Label>
             <div className="grid grid-cols-1 gap-3">
-              {stepData.options?.map((option) => (
+              {hasOptions(stepData) && stepData.options.map((option) => (
                 <div key={option.value} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -453,7 +479,7 @@ export default function ProfileSetup() {
               id="target_audience"
               value={profileData.target_audience}
               onChange={(e) => handleInputChange('target_audience', e.target.value)}
-              placeholder={stepData.placeholder}
+              placeholder={hasPlaceholder(stepData) ? stepData.placeholder : ''}
               rows={4}
               className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
             />
