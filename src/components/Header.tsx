@@ -1,5 +1,4 @@
-
-import { ShoppingCart, User, Globe, Menu, X, ChevronDown, Settings, LogOut } from "lucide-react";
+import { ShoppingCart, User, Globe, Menu, X, ChevronDown, Settings, LogOut, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -65,7 +64,8 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       storeName: "مورفو",
       dashboard: "لوحة التحكم",
       profile: "الملف الشخصي",
-      logout: "تسجيل الخروج"
+      logout: "تسجيل الخروج",
+      tryChat: "جرب المحادثة"
     },
     en: {
       welcome: "Welcome to Morvo",
@@ -80,7 +80,8 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       storeName: "Morvo",
       dashboard: "Dashboard",
       profile: "Profile",
-      logout: "Sign Out"
+      logout: "Sign Out",
+      tryChat: "Try Chat"
     }
   };
 
@@ -149,6 +150,11 @@ export const Header = ({ onStartChat }: HeaderProps) => {
               theme === 'dark' ? 'text-white hover:text-blue-400' : 'text-gray-900 hover:text-blue-600'
             }`}>
               {t.home}
+            </Link>
+            <Link to="/public-chat" className={`text-sm font-medium transition-colors ${
+              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+            }`}>
+              {t.tryChat}
             </Link>
             <Link to="/features" className={`text-sm font-medium transition-colors ${
               theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
@@ -278,6 +284,11 @@ export const Header = ({ onStartChat }: HeaderProps) => {
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
                 {t.home}
+              </Link>
+              <Link to="/public-chat" className={`block text-base font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {t.tryChat}
               </Link>
               <Link to="/features" className={`block text-base font-medium ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
