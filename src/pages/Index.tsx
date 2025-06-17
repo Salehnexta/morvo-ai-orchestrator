@@ -1,3 +1,4 @@
+
 import React, { useState, memo } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -16,20 +17,276 @@ import { ChatInterface } from "@/components/ChatInterface";
 /**
  * Marketing landing page – Morvo AI
  * --------------------------------------------------
- * ➜ Fixes “chat input can’t type” bug by ensuring decorative overlays
- *    don’t capture pointer‑events.
+ * ➜ Fixes "chat input can't type" bug by ensuring decorative overlays
+ *    don't capture pointer‑events.
  * ➜ Small performance tweaks (memoised heavy lists, unique React keys).
  * ➜ Consistent dark‑mode + RTL handling.
  *
  * Author: ChatGPT (refactor 2025‑06‑17)
  */
 
-const content = { /*  -- UNCHANGED COPY FROM ORIGINAL -- */ };
+const content = {
+  ar: {
+    hero: {
+      title: "مورفو إيه آي - مساعدك الذكي للمبيعات",
+      subtitle: "احصل على 5 وكلاء ذكيين لزيادة مبيعاتك بنسبة 300% في 30 يوماً",
+      description: "استخدم قوة الذكاء الاصطناعي لتحويل عملائك المحتملين إلى عملاء حقيقيين بطريقة آلية ومربحة",
+      startButton: "ابدأ الآن - مجاني",
+      stats: [
+        { number: "300%", label: "زيادة في المبيعات" },
+        { number: "24/7", label: "عمل متواصل" },
+        { number: "5", label: "وكلاء ذكيين" },
+        { number: "30", label: "يوم للنتائج" }
+      ]
+    },
+    agents: {
+      title: "وكلاء الذكاء الاصطناعي الخمسة",
+      subtitle: "كل وكيل متخصص في مجال محدد لضمان أفضل النتائج",
+      items: [
+        {
+          name: "وكيل المبيعات",
+          englishName: "Sales Agent",
+          description: "يتابع العملاء المحتملين ويحولهم إلى مشترين حقيقيين"
+        },
+        {
+          name: "وكيل التسويق",
+          englishName: "Marketing Agent", 
+          description: "ينشئ حملات تسويقية مستهدفة وفعالة"
+        },
+        {
+          name: "وكيل خدمة العملاء",
+          englishName: "Customer Service Agent",
+          description: "يجيب على استفسارات العملاء على مدار الساعة"
+        },
+        {
+          name: "وكيل التحليل",
+          englishName: "Analytics Agent",
+          description: "يحلل البيانات ويقدم تقارير مفصلة"
+        },
+        {
+          name: "وكيل إدارة المشاريع",
+          englishName: "Project Management Agent",
+          description: "ينظم ويتابع جميع مشاريعك بكفاءة"
+        }
+      ]
+    },
+    process: {
+      title: "كيف يعمل النظام؟",
+      subtitle: "عملية بسيطة من 3 خطوات فقط",
+      steps: [
+        {
+          title: "التسجيل والإعداد",
+          description: "سجل حسابك واختر الوكلاء المناسبين لعملك",
+          icon: "🚀"
+        },
+        {
+          title: "تخصيص الوكلاء",
+          description: "قم بتدريب الوكلاء على بياناتك وأهدافك التجارية",
+          icon: "⚙️"
+        },
+        {
+          title: "مراقبة النتائج",
+          description: "تابع الأداء والنتائج من خلال لوحة التحكم المتقدمة",
+          icon: "📊"
+        }
+      ]
+    },
+    dashboard: {
+      title: "لوحة تحكم متقدمة",
+      subtitle: "مراقبة شاملة لجميع أنشطة الوكلاء",
+      features: [
+        {
+          title: "تقارير لحظية",
+          description: "احصل على تقارير مفصلة عن أداء كل وكيل",
+          icon: "📈"
+        },
+        {
+          title: "تحليلات ذكية",
+          description: "فهم عميق لسلوك العملاء وتوقعات السوق",
+          icon: "🧠"
+        },
+        {
+          title: "تنبيهات فورية",
+          description: "اشعارات لحظية للفرص الجديدة والمهام المهمة",
+          icon: "🔔"
+        },
+        {
+          title: "تكامل سهل",
+          description: "ربط سهل مع جميع أدواتك الحالية",
+          icon: "🔗"
+        }
+      ]
+    },
+    successStory: {
+      title: "قصة نجاح حقيقية",
+      subtitle: "كيف غيّر مورفو إيه آي حياة أحمد التجارية",
+      before: {
+        title: "قبل مورفو إيه آي",
+        description: "كان أحمد يعمل 12 ساعة يومياً، يتابع العملاء يدوياً، ومبيعاته لا تتجاوز 50,000 ريال شهرياً"
+      },
+      after: {
+        title: "بعد مورفو إيه آي",
+        description: "الآن يعمل 4 ساعات فقط، الوكلاء تدير كل شيء، ومبيعاته وصلت إلى 200,000 ريال شهرياً"
+      },
+      quote: "مورفو إيه آي غيّر حياتي تماماً. الآن لدي وقت لعائلتي ومبيعاتي تضاعفت 4 مرات!",
+      author: "أحمد العتيبي، صاحب متجر إلكتروني"
+    },
+    pricing: {
+      title: "عرض خاص - خصم 70%",
+      price: "297 ريال/شهر",
+      oldPrice: "997 ريال/شهر",
+      discount: "وفر 700 ريال!",
+      subtitle: "كل ما تحتاجه لبناء إمبراطوريتك التجارية",
+      features: [
+        "5 وكلاء ذكيين متخصصين",
+        "لوحة تحكم متقدمة",
+        "تقارير مفصلة يومية",
+        "دعم فني 24/7",
+        "تدريب مجاني للوكلاء",
+        "ضمان استرداد المال 30 يوم"
+      ],
+      remaining: "متبقي 23 مقعد فقط!",
+      urgency: "العرض ينتهي خلال 48 ساعة",
+      ctaButton: "احجز مقعدك الآن"
+    },
+    finalCta: {
+      title: "هل أنت مستعد لتغيير حياتك التجارية؟",
+      description: "انضم إلى أكثر من 10,000 رائد أعمال يستخدمون مورفو إيه آي لمضاعفة أرباحهم",
+      question: "السؤال الوحيد: هل ستكون منهم؟",
+      button: "نعم، أريد مضاعفة أرباحي"
+    }
+  },
+  en: {
+    hero: {
+      title: "Morvo AI - Your Smart Sales Assistant",
+      subtitle: "Get 5 intelligent agents to increase your sales by 300% in 30 days",
+      description: "Harness the power of AI to automatically convert your leads into real customers profitably",
+      startButton: "Start Now - Free",
+      stats: [
+        { number: "300%", label: "Sales Increase" },
+        { number: "24/7", label: "Always Working" },
+        { number: "5", label: "Smart Agents" },
+        { number: "30", label: "Days to Results" }
+      ]
+    },
+    agents: {
+      title: "Five AI Agents",
+      subtitle: "Each agent specializes in a specific area to ensure the best results",
+      items: [
+        {
+          name: "Sales Agent",
+          description: "Follows up with prospects and converts them into real buyers"
+        },
+        {
+          name: "Marketing Agent",
+          description: "Creates targeted and effective marketing campaigns"
+        },
+        {
+          name: "Customer Service Agent",
+          description: "Answers customer inquiries around the clock"
+        },
+        {
+          name: "Analytics Agent",
+          description: "Analyzes data and provides detailed reports"
+        },
+        {
+          name: "Project Management Agent",
+          description: "Organizes and tracks all your projects efficiently"
+        }
+      ]
+    },
+    process: {
+      title: "How Does It Work?",
+      subtitle: "Simple 3-step process",
+      steps: [
+        {
+          title: "Sign Up & Setup",
+          description: "Register your account and choose the right agents for your business",
+          icon: "🚀"
+        },
+        {
+          title: "Customize Agents",
+          description: "Train the agents on your data and business goals",
+          icon: "⚙️"
+        },
+        {
+          title: "Monitor Results",
+          description: "Track performance and results through the advanced dashboard",
+          icon: "📊"
+        }
+      ]
+    },
+    dashboard: {
+      title: "Advanced Dashboard",
+      subtitle: "Comprehensive monitoring of all agent activities",
+      features: [
+        {
+          title: "Real-time Reports",
+          description: "Get detailed reports on each agent's performance",
+          icon: "📈"
+        },
+        {
+          title: "Smart Analytics",
+          description: "Deep understanding of customer behavior and market predictions",
+          icon: "🧠"
+        },
+        {
+          title: "Instant Alerts",
+          description: "Real-time notifications for new opportunities and important tasks",
+          icon: "🔔"
+        },
+        {
+          title: "Easy Integration",
+          description: "Simple connection with all your existing tools",
+          icon: "🔗"
+        }
+      ]
+    },
+    successStory: {
+      title: "Real Success Story",
+      subtitle: "How Morvo AI changed Ahmed's business life",
+      before: {
+        title: "Before Morvo AI",
+        description: "Ahmed worked 12 hours daily, followed up with customers manually, and his sales didn't exceed 50,000 SAR monthly"
+      },
+      after: {
+        title: "After Morvo AI", 
+        description: "Now he works only 4 hours, agents manage everything, and his sales reached 200,000 SAR monthly"
+      },
+      quote: "Morvo AI completely changed my life. Now I have time for my family and my sales quadrupled!",
+      author: "Ahmed Al-Otaibi, E-commerce Store Owner"
+    },
+    pricing: {
+      title: "Special Offer - 70% Discount",
+      price: "$79/month",
+      oldPrice: "$267/month", 
+      discount: "Save $188!",
+      subtitle: "Everything you need to build your business empire",
+      features: [
+        "5 specialized smart agents",
+        "Advanced dashboard",
+        "Detailed daily reports",
+        "24/7 technical support",
+        "Free agent training",
+        "30-day money-back guarantee"
+      ],
+      remaining: "Only 23 seats left!",
+      urgency: "Offer ends in 48 hours",
+      ctaButton: "Reserve Your Seat Now"
+    },
+    finalCta: {
+      title: "Are You Ready to Transform Your Business Life?",
+      description: "Join over 10,000 entrepreneurs using Morvo AI to double their profits",
+      question: "The only question: Will you be one of them?",
+      button: "Yes, I Want to Double My Profits"
+    }
+  }
+};
 
 /**
  * Utility: gradient overlay (non‑interactive)
  */
-const BackgroundGradient = ({ className }) => (
+const BackgroundGradient = ({ className }: { className: string }) => (
   <div
     className={`pointer-events-none absolute inset-0 ${className}`}
     aria-hidden="true"
@@ -129,7 +386,7 @@ const Index = () => {
 /*==============================  Sub‑components  ============================*/
 /*===========================================================================*/
 
-const StatsGrid = memo(({ stats, theme }) => (
+const StatsGrid = memo(({ stats, theme }: { stats: any[]; theme: string }) => (
   <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">
     {stats.map(({ number, label }) => (
       <div key={label} className="text-center">
@@ -140,12 +397,12 @@ const StatsGrid = memo(({ stats, theme }) => (
   </div>
 ));
 
-const AgentsSection = ({ t, theme }) => (
+const AgentsSection = ({ t, theme }: { t: any; theme: string }) => (
   <section className={theme === "dark" ? "py-20 bg-gray-800/50" : "py-20 bg-gray-50/50"}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeader title={t.agents.title} subtitle={t.agents.subtitle} theme={theme} />
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {t.agents.items.map(({ name, englishName, description }) => (
+        {t.agents.items.map(({ name, englishName, description }: any) => (
           <div
             key={name}
             className={`p-6 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
@@ -153,7 +410,7 @@ const AgentsSection = ({ t, theme }) => (
             }`}
           >
             <h3 className={`text-lg font-bold mb-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{name}</h3>
-            {t === content.ar && (
+            {content.ar === t && (
               <p className={`text-sm mb-3 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{englishName}</p>
             )}
             <p className={theme === "dark" ? "text-gray-300 leading-relaxed text-sm" : "text-gray-700 leading-relaxed text-sm"}>{description}</p>
@@ -164,12 +421,12 @@ const AgentsSection = ({ t, theme }) => (
   </section>
 );
 
-const ProcessSection = ({ t, theme }) => (
+const ProcessSection = ({ t, theme }: { t: any; theme: string }) => (
   <section className="py-20">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeader title={t.process.title} subtitle={t.process.subtitle} theme={theme} />
       <div className="grid md:grid-cols-3 gap-8">
-        {t.process.steps.map(({ title, description, icon }) => (
+        {t.process.steps.map(({ title, description, icon }: any) => (
           <div
             key={title}
             className={`text-center p-8 rounded-2xl border ${theme === "dark" ? "bg-gray-900/50 border-gray-700" : "bg-white border-gray-200"}`}
@@ -184,12 +441,12 @@ const ProcessSection = ({ t, theme }) => (
   </section>
 );
 
-const DashboardSection = ({ t, theme }) => (
+const DashboardSection = ({ t, theme }: { t: any; theme: string }) => (
   <section className={theme === "dark" ? "py-20 bg-gray-800/50" : "py-20 bg-gray-50/50"}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeader title={t.dashboard.title} subtitle={t.dashboard.subtitle} theme={theme} />
       <div className="grid md:grid-cols-2 gap-8">
-        {t.dashboard.features.map(({ title, description, icon }) => (
+        {t.dashboard.features.map(({ title, description, icon }: any) => (
           <div
             key={title}
             className={`p-6 rounded-xl border flex items-start gap-4 ${theme === "dark" ? "bg-gray-900/50 border-gray-700" : "bg-white border-gray-200"}`}
@@ -206,7 +463,7 @@ const DashboardSection = ({ t, theme }) => (
   </section>
 );
 
-const SuccessStorySection = ({ t, theme, isRTL }) => (
+const SuccessStorySection = ({ t, theme, isRTL }: { t: any; theme: string; isRTL: boolean }) => (
   <section className="py-20">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeader title={t.successStory.title} subtitle={t.successStory.subtitle} theme={theme} />
@@ -235,7 +492,7 @@ const SuccessStorySection = ({ t, theme, isRTL }) => (
       >
         <Star className="w-10 h-10 text-yellow-400 absolute -top-5 left-1/2 -translate-x-1/2" aria-hidden="true" />
         <p className={theme === "dark" ? "text-xl italic mb-4 text-gray-300" : "text-xl italic mb-4 text-gray-700"}>
-          “{t.successStory.quote}”
+          "{t.successStory.quote}"
         </p>
         <footer className={theme === "dark" ? "font-semibold text-white" : "font-semibold text-gray-900"}>— {t.successStory.author}</footer>
       </blockquote>
@@ -243,7 +500,7 @@ const SuccessStorySection = ({ t, theme, isRTL }) => (
   </section>
 );
 
-const PricingSection = ({ t, theme }) => (
+const PricingSection = ({ t, theme }: { t: any; theme: string }) => (
   <section className={theme === "dark" ? "py-20 bg-gray-800/50" : "py-20 bg-gray-50/50"}>
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div
@@ -261,7 +518,7 @@ const PricingSection = ({ t, theme }) => (
         )}
         <p className={theme === "dark" ? "text-sm text-gray-400 mb-6" : "text-sm text-gray-500 mb-6"}>{t.pricing.subtitle}</p>
         <ul className="space-y-2 mb-8">
-          {t.pricing.features.map((f) => (
+          {t.pricing.features.map((f: string) => (
             <li key={f} className={theme === "dark" ? "flex items-center justify-center gap-2 text-gray-300" : "flex items-center justify-center gap-2 text-gray-700"}>
               <span className="text-green-500">✅</span>
               <span>{f}</span>
@@ -282,7 +539,7 @@ const PricingSection = ({ t, theme }) => (
   </section>
 );
 
-const FinalCTASection = ({ t, theme }) => (
+const FinalCTASection = ({ t, theme }: { t: any; theme: string }) => (
   <section className="py-20 text-center">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 className={`font-bold mb-6 ${theme === "dark" ? "text-3xl md:text-5xl text-white" : "text-3xl md:text-5xl text-gray-900"}`}>{t.finalCta.title}</h2>
@@ -299,14 +556,21 @@ const FinalCTASection = ({ t, theme }) => (
 
 /*----------------------------  Helpers  ----------------------------*/
 
-const SectionHeader = ({ title, subtitle, theme }) => (
+const SectionHeader = ({ title, subtitle, theme }: { title: string; subtitle: string; theme: string }) => (
   <div className="text-center mb-16">
     <h2 className={`font-bold mb-6 ${theme === "dark" ? "text-3xl md:text-5xl text-white" : "text-3xl md:text-5xl text-gray-900"}`}>{title}</h2>
     <p className={`text-xl max-w-4xl mx-auto ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>{subtitle}</p>
   </div>
 );
 
-const StoryCard = ({ icon, title, description, theme, isRTL, success = false }) => (
+const StoryCard = ({ icon, title, description, theme, isRTL, success = false }: { 
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  theme: string;
+  isRTL: boolean;
+  success?: boolean;
+}) => (
   <div className={`p-8 rounded-2xl border ${success ? "border-green-500/30" : ""} ${theme === "dark" ? success ? "bg-gradient-to-br from-gray-900 to-gray-800" : "bg-gray-900/50 border-gray-700" : success ? "bg-white border-green-200" : "bg-white border-gray-200"}`}>
     <div className={`flex items-center gap-4 mb-4 ${isRTL ? "flex-row-reverse" : ""}`}> {icon}
       <h3 className={`text-2xl font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{title}</h3>
