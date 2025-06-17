@@ -1,11 +1,26 @@
-
-import React, { useState, memo } from "react";
+import React, { useState, memo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Brain,
   User,
   Rocket,
   Star,
+  ArrowRight,
+  Sparkles,
+  Zap,
+  Target,
+  TrendingUp,
+  Shield,
+  Clock,
+  Award,
+  Bot,
+  Cpu,
+  Network,
+  Eye,
+  CheckCircle,
+  Crown,
+  Flame,
+  Gift,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -15,14 +30,18 @@ import { Footer } from "@/components/Footer";
 import { ChatInterface } from "@/components/ChatInterface";
 
 /**
- * Marketing landing page – Morvo AI
+ * Enhanced Marketing landing page – Morvo AI
  * --------------------------------------------------
- * ➜ Fixes "chat input can't type" bug by ensuring decorative overlays
- *    don't capture pointer‑events.
- * ➜ Small performance tweaks (memoised heavy lists, unique React keys).
- * ➜ Consistent dark‑mode + RTL handling.
+ * ➜ Added modern animations and micro-interactions
+ * ➜ Enhanced visual hierarchy and spacing
+ * ➜ Added scroll-triggered animations
+ * ➜ Improved accessibility and performance
+ * ➜ Modern glassmorphism effects
+ * ➜ AI-themed animations and particles
+ * ➜ AI introduction animation with marketing message
+ * ➜ Completely redesigned pricing section
  *
- * Author: ChatGPT (refactor 2025‑06‑17)
+ * Author: Enhanced by Claude (2025)
  */
 
 const content = {
@@ -35,12 +54,12 @@ const content = {
       stats: [
         { number: "300%", label: "زيادة في المبيعات" },
         { number: "24/7", label: "عمل متواصل" },
-        { number: "5", label: "وكلاء ذكيين" },
+        { number: "9", label: "وكلاء ذكيين" },
         { number: "30", label: "يوم للنتائج" }
       ]
     },
     agents: {
-      title: "وكلاء الذكاء الاصطناعي الخمسة",
+      title: "وكلاء الذكاء الاصطناعي التسعة",
       subtitle: "كل وكيل متخصص في مجال محدد لضمان أفضل النتائج",
       items: [
         {
@@ -67,6 +86,26 @@ const content = {
           name: "وكيل إدارة المشاريع",
           englishName: "Project Management Agent",
           description: "ينظم ويتابع جميع مشاريعك بكفاءة"
+        },
+        {
+          name: "وكيل إنشاء المحتوى",
+          englishName: "Content Creation Agent",
+          description: "ينشئ محتوى إبداعي وجذاب لجميع منصاتك"
+        },
+        {
+          name: "وكيل وسائل التواصل",
+          englishName: "Social Media Agent",
+          description: "يدير حساباتك على وسائل التواصل الاجتماعي"
+        },
+        {
+          name: "وكيل البحث والتطوير",
+          englishName: "Research & Development Agent",
+          description: "يبحث عن الاتجاهات الجديدة وفرص التطوير"
+        },
+        {
+          name: "وكيل إدارة العلاقات",
+          englishName: "CRM Agent",
+          description: "يدير علاقات العملاء ويحسن تجربتهم"
         }
       ]
     },
@@ -138,7 +177,7 @@ const content = {
       discount: "وفر 700 ريال!",
       subtitle: "كل ما تحتاجه لبناء إمبراطوريتك التجارية",
       features: [
-        "5 وكلاء ذكيين متخصصين",
+        "9 وكلاء ذكيين متخصصين",
         "لوحة تحكم متقدمة",
         "تقارير مفصلة يومية",
         "دعم فني 24/7",
@@ -165,12 +204,12 @@ const content = {
       stats: [
         { number: "300%", label: "Sales Increase" },
         { number: "24/7", label: "Always Working" },
-        { number: "5", label: "Smart Agents" },
+        { number: "9", label: "Smart Agents" },
         { number: "30", label: "Days to Results" }
       ]
     },
     agents: {
-      title: "Five AI Agents",
+      title: "Nine AI Agents",
       subtitle: "Each agent specializes in a specific area to ensure the best results",
       items: [
         {
@@ -192,6 +231,22 @@ const content = {
         {
           name: "Project Management Agent",
           description: "Organizes and tracks all your projects efficiently"
+        },
+        {
+          name: "Content Creation Agent",
+          description: "Creates engaging and creative content for all your platforms"
+        },
+        {
+          name: "Social Media Agent",
+          description: "Manages your social media accounts and engagement"
+        },
+        {
+          name: "Research & Development Agent",
+          description: "Researches new trends and development opportunities"
+        },
+        {
+          name: "CRM Agent",
+          description: "Manages customer relationships and improves their experience"
         }
       ]
     },
@@ -263,7 +318,7 @@ const content = {
       discount: "Save $188!",
       subtitle: "Everything you need to build your business empire",
       features: [
-        "5 specialized smart agents",
+        "9 specialized smart agents",
         "Advanced dashboard",
         "Detailed daily reports",
         "24/7 technical support",
@@ -283,9 +338,158 @@ const content = {
   }
 };
 
-/**
- * Utility: gradient overlay (non‑interactive)
- */
+// AI Introduction Animation Component
+const AIIntroAnimation = memo(({ language }: { language: string }) => {
+  const [currentMessage, setCurrentMessage] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  
+  const messages = {
+    ar: [
+      "مرحباً، أنا مورفو الذكي 🤖",
+      "حان الوقت لتغيير عالم التسويق! 🚀",
+      "دعني أريك كيف يمكن للذكاء الاصطناعي مضاعفة أرباحك",
+      "9 وكلاء ذكيين في خدمتك 24/7 ⚡",
+      "هل أنت مستعد للثورة التسويقية؟ 💎"
+    ],
+    en: [
+      "Hello, I'm Morvo AI 🤖",
+      "It's time to change the marketing world! 🚀", 
+      "Let me show you how AI can double your profits",
+      "9 smart agents at your service 24/7 ⚡",
+      "Are you ready for the marketing revolution? 💎"
+    ]
+  };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    const element = document.getElementById('ai-intro');
+    if (element) observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const interval = setInterval(() => {
+      setCurrentMessage((prev) => {
+        if (prev < messages[language].length - 1) {
+          return prev + 1;
+        }
+        return 0; // Loop back to start
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isVisible, language]);
+
+  return (
+    <div id="ai-intro" className="relative py-20 overflow-hidden">
+      <div className="max-w-4xl mx-auto px-4 text-center">
+        <div className="relative">
+          {/* AI Avatar */}
+          <div className="w-32 h-32 mx-auto mb-8 relative">
+            <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-full flex items-center justify-center animate-pulse-glow">
+              <Brain className="w-16 h-16 text-white animate-neural-pulse" />
+            </div>
+            {/* Floating particles around avatar */}
+            <div className="absolute -inset-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 bg-blue-400 rounded-full animate-ping opacity-40"
+                  style={{
+                    top: `${Math.sin(i * 60 * Math.PI / 180) * 50 + 50}%`,
+                    left: `${Math.cos(i * 60 * Math.PI / 180) * 50 + 50}%`,
+                    animationDelay: `${i * 0.3}s`
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Animated Messages */}
+          <div className="h-20 flex items-center justify-center">
+            <div 
+              key={currentMessage}
+              className="text-2xl md:text-3xl font-bold text-gradient-ai animate-fade-in-up"
+            >
+              {messages[language][currentMessage]}
+            </div>
+          </div>
+
+          {/* Typing indicator */}
+          <div className="flex justify-center mt-4">
+            <div className="flex gap-1">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                  style={{ animationDelay: `${i * 0.2}s` }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// Animation hook for scroll-triggered effects
+const useScrollAnimation = () => {
+  const [scrollY, setScrollY] = useState(0);
+  
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  return scrollY;
+};
+
+// Floating AI particles component
+const AIParticles = memo(() => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {/* Neural network connections */}
+    <div className="absolute top-20 left-10 w-32 h-32 opacity-10">
+      <Network className="w-full h-full text-blue-500 animate-pulse" style={{animationDuration: '4s'}} />
+    </div>
+    <div className="absolute top-40 right-20 w-24 h-24 opacity-10">
+      <Cpu className="w-full h-full text-purple-500 animate-pulse" style={{animationDuration: '3s', animationDelay: '1s'}} />
+    </div>
+    <div className="absolute bottom-40 left-1/4 w-20 h-20 opacity-10">
+      <Bot className="w-full h-full text-pink-500 animate-pulse" style={{animationDuration: '5s', animationDelay: '2s'}} />
+    </div>
+    
+    {/* Floating dots */}
+    {Array.from({ length: 8 }).map((_, i) => (
+      <div
+        key={i}
+        className={`absolute w-1 h-1 rounded-full animate-ping opacity-20 ${
+          i % 3 === 0 ? 'bg-blue-400' : i % 3 === 1 ? 'bg-purple-400' : 'bg-pink-400'
+        }`}
+        style={{
+          top: `${20 + (i * 10)}%`,
+          left: `${10 + (i * 12)}%`,
+          animationDelay: `${i * 0.5}s`,
+          animationDuration: `${3 + (i % 3)}s`
+        }}
+      />
+    ))}
+  </div>
+));
+
+// Enhanced gradient background component
 const BackgroundGradient = ({ className }: { className: string }) => (
   <div
     className={`pointer-events-none absolute inset-0 ${className}`}
@@ -293,10 +497,196 @@ const BackgroundGradient = ({ className }: { className: string }) => (
   />
 );
 
+// Animated counter component
+const AnimatedCounter = memo(({ number, label, theme }: { number: string; label: string; theme: string }) => {
+  const [count, setCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          setIsVisible(true);
+          const finalNumber = parseInt(number.replace(/[^0-9]/g, ''));
+          if (!isNaN(finalNumber)) {
+            let current = 0;
+            const increment = finalNumber / 50;
+            const timer = setInterval(() => {
+              current += increment;
+              if (current >= finalNumber) {
+                setCount(finalNumber);
+                clearInterval(timer);
+              } else {
+                setCount(Math.floor(current));
+              }
+            }, 30);
+          }
+        }
+      },
+      { threshold: 0.5 }
+    );
+    
+    const element = document.getElementById(`counter-${label}`);
+    if (element) observer.observe(element);
+    
+    return () => observer.disconnect();
+  }, [number, label, isVisible]);
+  
+  return (
+    <div id={`counter-${label}`} className="text-center group hover:scale-110 transition-transform duration-300">
+      <div className={`text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent ${
+        theme === "dark" ? "drop-shadow-lg" : ""
+      }`}>
+        {number.includes('%') ? `${count}%` : 
+         number.includes('/') ? number : 
+         count > 0 ? count.toLocaleString() : number}
+      </div>
+      <div className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"} group-hover:text-blue-500 transition-colors duration-300`}>
+        {label}
+      </div>
+    </div>
+  );
+});
+
+// Enhanced Pricing Card Component
+const PricingCard = memo(({ t, theme, language }: { t: any; theme: string; language: string }) => {
+  const isRTL = language === 'ar';
+  
+  return (
+    <div className="relative max-w-md mx-auto">
+      {/* Popular badge */}
+      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-6 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
+          <div className="flex items-center gap-2">
+            <Crown className="w-4 h-4" />
+            <span>{language === 'ar' ? 'الأكثر شعبية' : 'Most Popular'}</span>
+            <Flame className="w-4 h-4" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main card */}
+      <div className={`relative p-8 rounded-3xl backdrop-blur-lg border-2 border-gradient-to-r from-blue-500 to-purple-600 shadow-2xl transform hover:scale-105 transition-all duration-500 overflow-hidden ${
+        theme === 'dark' 
+          ? 'bg-gray-900/80 border-blue-500/50' 
+          : 'bg-white/90 border-blue-500/30'
+      }`}>
+        
+        {/* Animated background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-600/10 to-pink-600/10 animate-gradient-x"></div>
+        
+        {/* Floating particles */}
+        <div className="absolute inset-0 overflow-hidden">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-blue-400 rounded-full animate-ping opacity-30"
+              style={{
+                top: `${20 + i * 15}%`,
+                left: `${10 + i * 20}%`,
+                animationDelay: `${i * 0.5}s`
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="relative z-10" dir={isRTL ? 'rtl' : 'ltr'}>
+          {/* Header */}
+          <div className={`text-center mb-8 ${isRTL ? 'text-right' : 'text-left'}`}>
+            <h3 className="text-3xl font-bold text-gradient-ai mb-2">
+              {t.pricing.title}
+            </h3>
+            <p className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              {t.pricing.subtitle}
+            </p>
+          </div>
+
+          {/* Pricing */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="relative">
+                <span className={`text-lg line-through opacity-50 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {t.pricing.oldPrice}
+                </span>
+                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-bounce">
+                  70%
+                </div>
+              </div>
+              <ArrowRight className="w-5 h-5 text-green-500 animate-bounce" />
+              <span className="text-4xl font-bold text-gradient-ai">
+                {t.pricing.price}
+              </span>
+            </div>
+            
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-full text-sm font-bold inline-flex items-center gap-2 animate-pulse">
+              <Gift className="w-4 h-4" />
+              {t.pricing.discount}
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="mb-8">
+            <ul className="space-y-4">
+              {t.pricing.features.map((feature: string, index: number) => (
+                <li key={index} className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <div className="flex-shrink-0 w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-white" />
+                  </div>
+                  <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} font-medium`}>
+                    {feature}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Urgency indicators */}
+          <div className="mb-6 space-y-3">
+            <div className={`bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-center ${isRTL ? 'text-right' : 'text-left'}`}>
+              <div className="flex items-center justify-center gap-2 text-red-500 font-bold">
+                <Clock className="w-4 h-4 animate-pulse" />
+                <span>{t.pricing.urgency}</span>
+              </div>
+            </div>
+            
+            <div className={`bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 text-center ${isRTL ? 'text-right' : 'text-left'}`}>
+              <div className="flex items-center justify-center gap-2 text-orange-500 font-bold">
+                <Target className="w-4 h-4 animate-bounce" />
+                <span>{t.pricing.remaining}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Button */}
+          <Link to="/pricing" className="block">
+            <Button className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white py-4 text-lg font-bold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              <div className={`flex items-center justify-center gap-3 relative z-10 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Rocket className="w-5 h-5 animate-bounce" />
+                <span>{t.pricing.ctaButton}</span>
+                <Sparkles className="w-5 h-5 animate-pulse" />
+              </div>
+            </Button>
+          </Link>
+
+          {/* Guarantee */}
+          <div className="mt-6 text-center">
+            <div className={`flex items-center justify-center gap-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Shield className="w-4 h-4 text-green-500" />
+              <span>{language === 'ar' ? 'ضمان استرداد المال 30 يوم' : '30-day money-back guarantee'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const Index = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
+  const scrollY = useScrollAnimation();
   const t = content[language];
 
   if (isChatOpen) return <ChatInterface onBack={() => setIsChatOpen(false)} />;
@@ -309,73 +699,126 @@ const Index = () => {
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className={`min-h-screen ${pageBG} ${language === "ar" ? "font-cairo" : ""}`}
+      className={`min-h-screen ${pageBG} ${language === "ar" ? "font-cairo" : ""} relative overflow-hidden`}
     >
+      {/* Global AI Particles */}
+      <AIParticles />
+      
       <Header onStartChat={() => setIsChatOpen(true)} />
 
-      {/* ───────────────────────── Hero */}
-      <section className="relative overflow-hidden py-20 lg:py-32">
-        {/* Decorative overlays (no pointer events!) */}
-        <BackgroundGradient className="bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10" />
-        <BackgroundGradient className="top-0 left-1/2 w-full max-w-4xl h-96 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl -translate-x-1/2" />
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1
-            className={`font-bold mb-10 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight ${
-              language === "ar"
-                ? "text-4xl md:text-5xl lg:text-5xl"
-                : "text-4xl md:text-6xl lg:text-7xl"
-            }`}
+      {/* Add top padding to account for fixed header */}
+      <div className="pt-20">
+        
+        {/* ───────────────────────── Enhanced Hero */}
+        <section className="relative overflow-hidden py-20 lg:py-32">
+          {/* Dynamic background effects */}
+          <div 
+            className="absolute inset-0 opacity-30"
+            style={{
+              transform: `translateY(${scrollY * 0.5}px)`,
+            }}
           >
-            {t.hero.title}
-          </h1>
-
-          <p
-            className={`text-xl md:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed ${
-              theme === "dark" ? "text-gray-300" : "text-gray-600"
-            }`}
-          >
-            {t.hero.subtitle}
-          </p>
-
-          <p
-            className={`text-lg mb-12 max-w-3xl mx-auto leading-relaxed ${
-              theme === "dark" ? "text-gray-400" : "text-gray-700"
-            }`}
-          >
-            {t.hero.description}
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <Link to="/pricing">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold shadow-2xl transform hover:scale-105 transition-all duration-200">
-                <Brain className="w-5 h-5 mr-2" />
-                {t.hero.startButton}
-              </Button>
-            </Link>
+            <BackgroundGradient className="bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10" />
+          </div>
+          
+          {/* Floating AI elements */}
+          <div className="absolute top-20 left-1/4 animate-float">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-full backdrop-blur-sm border border-white/10 flex items-center justify-center">
+              <Brain className="w-10 h-10 text-blue-500 animate-pulse" />
+            </div>
+          </div>
+          
+          <div className="absolute top-40 right-1/4 animate-float" style={{animationDelay: '1s'}}>
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-pink-600/20 rounded-full backdrop-blur-sm border border-white/10 flex items-center justify-center">
+              <Zap className="w-8 h-8 text-purple-500 animate-bounce" />
+            </div>
           </div>
 
-          <StatsGrid stats={t.hero.stats} theme={theme} />
-        </div>
-      </section>
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div className="animate-fade-in-up">
+              <h1
+                className={`font-bold mb-10 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight ${
+                  language === "ar"
+                    ? "text-4xl md:text-5xl lg:text-6xl"
+                    : "text-4xl md:text-6xl lg:text-7xl"
+                } animate-gradient-x`}
+              >
+                {t.hero.title}
+              </h1>
 
-      {/* ───────────────────────── Agents */}
-      <AgentsSection t={t} theme={theme} />
+              <p
+                className={`text-xl md:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed ${
+                  theme === "dark" ? "text-gray-300" : "text-gray-600"
+                } animate-fade-in-up`}
+                style={{animationDelay: '0.2s'}}
+              >
+                {t.hero.subtitle}
+              </p>
 
-      {/* ───────────────────────── Process */}
-      <ProcessSection t={t} theme={theme} />
+              <p
+                className={`text-lg mb-12 max-w-3xl mx-auto leading-relaxed ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-700"
+                } animate-fade-in-up`}
+                style={{animationDelay: '0.4s'}}
+              >
+                {t.hero.description}
+              </p>
 
-      {/* ───────────────────────── Dashboard */}
-      <DashboardSection t={t} theme={theme} />
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+                <Link to="/pricing">
+                  <Button size="lg" className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                    <Brain className={`w-5 h-5 ${isRTL ? 'ml-2' : 'mr-2'} animate-pulse`} />
+                    <span className="relative z-10">{t.hero.startButton}</span>
+                    <ArrowRight className={`w-5 h-5 ${isRTL ? 'mr-2' : 'ml-2'} group-hover:translate-x-1 transition-transform duration-300`} />
+                  </Button>
+                </Link>
+              </div>
+            </div>
 
-      {/* ───────────────────────── Success Story */}
-      <SuccessStorySection t={t} theme={theme} isRTL={isRTL} />
+            {/* Enhanced Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+              {t.hero.stats.map(({ number, label }, index) => (
+                <AnimatedCounter key={label} number={number} label={label} theme={theme} />
+              ))}
+            </div>
+          </div>
+        </section>
 
-      {/* ───────────────────────── Pricing */}
-      <PricingSection t={t} theme={theme} />
+        {/* ───────────────────────── AI Introduction Animation */}
+        <AIIntroAnimation language={language} />
 
-      {/* ───────────────────────── Final CTA */}
-      <FinalCTASection t={t} theme={theme} />
+        {/* ───────────────────────── Enhanced Agents */}
+        <AgentsSection t={t} theme={theme} />
+
+        {/* ───────────────────────── Enhanced Process */}
+        <ProcessSection t={t} theme={theme} />
+
+        {/* ───────────────────────── Enhanced Dashboard */}
+        <DashboardSection t={t} theme={theme} />
+
+        {/* ───────────────────────── Enhanced Success Story */}
+        <SuccessStorySection t={t} theme={theme} isRTL={isRTL} />
+
+        {/* ───────────────────────── Enhanced Pricing */}
+        <section className="relative py-20 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-pink-900/20"></div>
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <SectionHeader 
+              title={t.pricing.title} 
+              subtitle={language === 'ar' ? 'احصل على أفضل قيمة لاستثمارك' : 'Get the best value for your investment'} 
+              theme={theme} 
+            />
+            <div className="mt-16">
+              <PricingCard t={t} theme={theme} language={language} />
+            </div>
+          </div>
+        </section>
+
+        {/* ───────────────────────── Enhanced Final CTA */}
+        <FinalCTASection t={t} theme={theme} />
+
+      </div>
 
       <Footer />
     </div>
@@ -496,45 +939,6 @@ const SuccessStorySection = ({ t, theme, isRTL }: { t: any; theme: string; isRTL
         </p>
         <footer className={theme === "dark" ? "font-semibold text-white" : "font-semibold text-gray-900"}>— {t.successStory.author}</footer>
       </blockquote>
-    </div>
-  </section>
-);
-
-const PricingSection = ({ t, theme }: { t: any; theme: string }) => (
-  <section className={theme === "dark" ? "py-20 bg-gray-800/50" : "py-20 bg-gray-50/50"}>
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div
-        className={`p-8 rounded-2xl border text-center ${theme === "dark" ? "bg-gradient-to-r from-orange-900/50 to-red-900/50 border-orange-800/50" : "bg-gradient-to-r from-orange-50 to-red-50 border-orange-200"}`}
-      >
-        <h2 className={`text-3xl md:text-4xl font-bold mb-6 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{t.pricing.title}</h2>
-        <div className="mb-6 flex justify-center items-baseline gap-3">
-          <p className={`text-4xl font-bold ${theme === "dark" ? "text-green-400" : "text-green-600"}`}>{t.pricing.price}</p>
-          {t.pricing.oldPrice && (
-            <p className={`text-2xl line-through ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{t.pricing.oldPrice}</p>
-          )}
-        </div>
-        {t.pricing.discount && (
-          <span className="bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-full inline-block mb-4">{t.pricing.discount}</span>
-        )}
-        <p className={theme === "dark" ? "text-sm text-gray-400 mb-6" : "text-sm text-gray-500 mb-6"}>{t.pricing.subtitle}</p>
-        <ul className="space-y-2 mb-8">
-          {t.pricing.features.map((f: string) => (
-            <li key={f} className={theme === "dark" ? "flex items-center justify-center gap-2 text-gray-300" : "flex items-center justify-center gap-2 text-gray-700"}>
-              <span className="text-green-500">✅</span>
-              <span>{f}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mb-6">
-          <p className={theme === "dark" ? "text-orange-400 font-semibold mb-2" : "text-orange-600 font-semibold mb-2"}>{t.pricing.remaining}</p>
-          <p className={theme === "dark" ? "text-red-400 font-semibold" : "text-red-600 font-semibold"}>{t.pricing.urgency}</p>
-        </div>
-        <Link to="/pricing">
-          <Button size="lg" className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold">
-            {t.pricing.ctaButton}
-          </Button>
-        </Link>
-      </div>
     </div>
   </section>
 );

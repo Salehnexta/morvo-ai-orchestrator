@@ -72,18 +72,18 @@ export const Footer = () => {
 
       {/* Main Footer Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 ${rtlTextClass}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 ${isRTL ? 'text-right' : 'text-left'}`}>
           
           {/* Company Info */}
           <div className="lg:col-span-1 space-y-6">
-            <Link to="/" className={`inline-flex items-center gap-4 group ${rtlFlexClass}`}>
+            <Link to="/" className={`inline-flex items-center gap-4 group ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className="relative">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
                   <span className="text-white font-bold text-xl">M</span>
                 </div>
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
               </div>
-              <div className={rtlTextClass}>
+              <div className={isRTL ? 'text-right' : 'text-left'}>
                 <h3 className={`text-2xl font-bold text-white group-hover:text-blue-300 transition-colors duration-300 ${fontClass}`}>
                   {t.companyName}
                 </h3>

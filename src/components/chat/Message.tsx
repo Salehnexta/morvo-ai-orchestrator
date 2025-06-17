@@ -2,6 +2,7 @@
 import React from 'react';
 import { Bot, User } from "lucide-react";
 import AgentCommands from "../AgentCommands";
+import { ActionButtons } from "./ActionButtons";
 import { AgentCommand, AgentResponse } from "@/services/agent";
 
 interface MessageProps {
@@ -16,6 +17,8 @@ interface MessageProps {
   theme: 'light' | 'dark';
   isRTL: boolean;
   onCommandResponse?: (response: AgentResponse) => void;
+  language?: string;
+  onActionClick?: (action: string, prompt: string) => void;
 }
 
 export const Message = ({ 
@@ -28,7 +31,9 @@ export const Message = ({
   commands,
   theme, 
   isRTL,
-  onCommandResponse 
+  onCommandResponse,
+  language = 'en',
+  onActionClick
 }: MessageProps) => {
   return (
     <div key={id} className="space-y-2">
@@ -111,6 +116,21 @@ export const Message = ({
               theme={theme}
             />
           ))}
+        </div>
+      )}
+
+      {/* Action buttons for agent messages */}
+      {sender === 'agent' && onActionClick && (
+        <div className={`${
+          isRTL ? 'mr-11' : 'ml-11'
+        }`}>
+          <ActionButtons
+            messageContent={content}
+            language={language}
+            theme={theme}
+            isRTL={isRTL}
+            onActionClick={onActionClick}
+          />
         </div>
       )}
     </div>

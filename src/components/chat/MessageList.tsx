@@ -23,6 +23,8 @@ interface MessageListProps {
   isRTL: boolean;
   thinkingText: string;
   onCommandResponse: (response: AgentResponse) => void;
+  language?: string;
+  onActionClick?: (action: string, prompt: string) => void;
 }
 
 export const MessageList = ({ 
@@ -31,7 +33,9 @@ export const MessageList = ({
   theme, 
   isRTL, 
   thinkingText, 
-  onCommandResponse 
+  onCommandResponse,
+  language = 'en',
+  onActionClick
 }: MessageListProps) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -52,6 +56,8 @@ export const MessageList = ({
               theme={theme}
               isRTL={isRTL}
               onCommandResponse={onCommandResponse}
+              language={language}
+              onActionClick={onActionClick}
             />
           ))}
           

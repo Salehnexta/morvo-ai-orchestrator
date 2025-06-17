@@ -28,6 +28,7 @@ import Billing from "./pages/Billing";
 import Admin from "./pages/Admin";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import ApiSettings from "./pages/admin/ApiSettings";
 
 const queryClient = new QueryClient();
@@ -36,38 +37,40 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <LanguageProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/support" element={<Support />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/success-stories" element={<SuccessStories />} />
-              <Route path="/help" element={<HelpCenter />} />
-              <Route path="/updates" element={<Updates />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/cookies" element={<Cookies />} />
-              <Route path="/auth/login" element={<Login />} />
-              <Route path="/auth/register" element={<Register />} />
-              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-              <Route path="/auth/reset-password" element={<ResetPassword />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/profile-setup" element={<ProfileSetup />} />
-              <Route path="/billing" element={<Billing />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/api-settings" element={<ApiSettings />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/features" element={<Features />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/support" element={<Support />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/how-it-works" element={<HowItWorks />} />
+                <Route path="/success-stories" element={<SuccessStories />} />
+                <Route path="/help" element={<HelpCenter />} />
+                <Route path="/updates" element={<Updates />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/cookies" element={<Cookies />} />
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/register" element={<Register />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                <Route path="/auth/reset-password" element={<ResetPassword />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile-setup" element={<ProfileSetup />} />
+                <Route path="/billing" element={<Billing />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/api-settings" element={<ApiSettings />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
   </QueryClientProvider>

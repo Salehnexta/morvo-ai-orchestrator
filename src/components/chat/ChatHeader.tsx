@@ -38,65 +38,26 @@ export const ChatHeader = ({
   };
 
   return (
-    <div className="bg-black/20 backdrop-blur-sm border-b border-white/20 p-4">
-      <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-        {/* Bot Avatar and Info */}
+    <div className="p-6 border-b border-white/10">
+      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+        {/* Simple title like Layla */}
+        <h1 className="text-lg font-medium text-white">
+          {content.masterAgent}
+        </h1>
+
+        {/* Minimal controls */}
         <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-            <Bot className="w-5 h-5 text-white" />
-          </div>
-          <div className={isRTL ? 'text-right' : 'text-left'}>
-            <h1 className="text-sm font-semibold text-white">
-              {content.masterAgent}
-            </h1>
-            <p className="text-xs text-white/70">
-              {content.clientAgent}
-            </p>
-          </div>
-        </div>
-
-        {/* Right side controls */}
-        <div className={`${isRTL ? 'mr-auto' : 'ml-auto'} flex items-center gap-2`}>
-          {/* Token Balance Display */}
+          {/* Token Balance - minimal */}
           {clientId && tokenBalance !== undefined && (
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-xs border border-white/20">
-              <Coins className={`w-3 h-3 ${getTokenColor()}`} />
-              <span className={`font-medium ${getTokenColor()}`}>
-                {tokenBalance.toLocaleString()}
-              </span>
-            </div>
+            <span className={`text-sm ${getTokenColor()}`}>
+              {tokenBalance.toLocaleString()}
+            </span>
           )}
 
-          {/* Upgrade Button for Low Tokens */}
-          {tokenBalance !== undefined && tokenBalance < 1000 && onUpgrade && (
-            <Button
-              size="sm"
-              onClick={onUpgrade}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-xs px-3 py-1 h-8 shadow-lg"
-            >
-              ترقية
-            </Button>
-          )}
-
-          {/* Theme Toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleTheme}
-            className="h-8 w-8 p-0 text-white/80 hover:text-white hover:bg-white/10"
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </Button>
-          
-          {/* Connection Status */}
-          <ConnectionStatus 
-            isConnecting={isConnecting}
-            theme={theme}
-            content={{
-              connecting: content.connecting,
-              connected: content.connected
-            }}
-          />
+          {/* Connection dot */}
+          <div className={`w-2 h-2 rounded-full ${
+            isConnecting ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'
+          }`} />
         </div>
       </div>
     </div>

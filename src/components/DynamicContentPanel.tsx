@@ -2,11 +2,99 @@
 import React from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Brain, TrendingUp, Calendar, PenTool, Target, BarChart3, Sparkles } from 'lucide-react';
+import { Brain, TrendingUp, Calendar, PenTool, Target, BarChart3, Sparkles, Play, Edit, Share2, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConnectionTest } from './ConnectionTest';
+
+// Smart Panel Components
+const AnalyticsPanel = ({ language, theme }: { language: string; theme: string }) => (
+  <div className="h-full p-8 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900">
+    <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+      {language === 'ar' ? 'لوحة التحليلات' : 'Analytics Dashboard'}
+    </h2>
+    <div className="grid grid-cols-2 gap-6">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+        <h3 className="text-lg font-semibold mb-2">{language === 'ar' ? 'العائد على الاستثمار' : 'ROAS'}</h3>
+        <p className="text-3xl font-bold text-green-600">4.2x</p>
+      </div>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+        <h3 className="text-lg font-semibold mb-2">{language === 'ar' ? 'معدل النقر' : 'CTR'}</h3>
+        <p className="text-3xl font-bold text-blue-600">2.8%</p>
+      </div>
+    </div>
+  </div>
+);
+
+const ContentCreatorPanel = ({ language, theme }: { language: string; theme: string }) => (
+  <div className="h-full p-8 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
+    <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+      {language === 'ar' ? 'منشئ المحتوى' : 'Content Creator'}
+    </h2>
+    <div className="space-y-4">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+        <h3 className="text-lg font-semibold mb-4">{language === 'ar' ? 'محتوى جاهز للنشر' : 'Ready to Post'}</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">
+          "🚀 Exciting news! Our new AI-powered marketing tool is here..."
+        </p>
+        <div className="flex gap-2">
+          <Button size="sm"><Play className="w-4 h-4 mr-2" />{language === 'ar' ? 'نشر' : 'Post'}</Button>
+          <Button variant="outline" size="sm"><Edit className="w-4 h-4 mr-2" />{language === 'ar' ? 'تعديل' : 'Edit'}</Button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const CalendarPanel = ({ language, theme }: { language: string; theme: string }) => (
+  <div className="h-full p-8 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900">
+    <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+      {language === 'ar' ? 'التقويم' : 'Content Calendar'}
+    </h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+      <h3 className="text-lg font-semibold mb-4">{language === 'ar' ? 'المنشورات المجدولة' : 'Scheduled Posts'}</h3>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <span>LinkedIn Post - Tomorrow 9 AM</span>
+          <Button size="sm" variant="outline">{language === 'ar' ? 'تعديل' : 'Edit'}</Button>
+        </div>
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <span>Instagram Story - Today 6 PM</span>
+          <Button size="sm" variant="outline">{language === 'ar' ? 'تعديل' : 'Edit'}</Button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const CampaignPanel = ({ language, theme }: { language: string; theme: string }) => (
+  <div className="h-full p-8 bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-900">
+    <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+      {language === 'ar' ? 'إدارة الحملات' : 'Campaign Manager'}
+    </h2>
+    <div className="space-y-6">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+        <h3 className="text-lg font-semibold mb-4">{language === 'ar' ? 'حملة تيك توك الجديدة' : 'New TikTok Campaign'}</h3>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{language === 'ar' ? 'الوصول المتوقع' : 'Estimated Reach'}</p>
+            <p className="text-2xl font-bold">240K</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{language === 'ar' ? 'معدل النقر المتوقع' : 'Predicted CTR'}</p>
+            <p className="text-2xl font-bold">1.9%</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button><Share2 className="w-4 h-4 mr-2" />{language === 'ar' ? 'إطلاق الحملة' : 'Launch Campaign'}</Button>
+          <Button variant="outline"><DollarSign className="w-4 h-4 mr-2" />{language === 'ar' ? 'تعديل الميزانية' : 'Adjust Budget'}</Button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 interface DynamicContentPanelProps {
-  contentType?: 'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign';
+  contentType?: 'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test';
   onActionClick?: (action: string) => void;
 }
 
@@ -51,71 +139,73 @@ export const DynamicContentPanel = ({ contentType = 'hero', onActionClick }: Dyn
     }
   };
 
+  // Smart panel rendering based on content type
+  const renderSmartPanel = () => {
+    switch (contentType) {
+      case 'analytics':
+        return <AnalyticsPanel language={language} theme={theme} />;
+      case 'content-creator':
+        return <ContentCreatorPanel language={language} theme={theme} />;
+      case 'calendar':
+        return <CalendarPanel language={language} theme={theme} />;
+      case 'campaign':
+        return <CampaignPanel language={language} theme={theme} />;
+      case 'connection-test':
+        return (
+          <div className="h-full p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
+            <ConnectionTest />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   if (contentType === 'hero') {
     return (
       <div 
-        className="h-full w-full flex flex-col justify-center items-center text-center px-12"
+        className="h-full w-full flex flex-col justify-center items-center text-center px-8"
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        {/* Main Hero Content */}
-        <div className="max-w-4xl">
-          {/* Main Title - Large and Bold like Layla */}
-          <h1 className="text-7xl md:text-8xl lg:text-9xl font-bold text-white mb-8 leading-tight drop-shadow-2xl">
-            {t.title}
+        {/* Layla-style Hero Content */}
+        <div className="max-w-2xl space-y-8">
+          {/* Main Title - Exactly like Layla */}
+          <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
+            {language === 'ar' ? 'عبقري التسويق الذكي' : 'Your marketing AI Genius'}
           </h1>
 
-          {/* Subtitle */}
-          <p className="text-2xl md:text-3xl mb-6 text-white/95 max-w-3xl font-light drop-shadow-lg">
-            {t.subtitle}
+          {/* Subtitle - Layla style */}
+          <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed">
+            {language === 'ar' 
+              ? 'هل لديك حملة قادمة؟ ابدأ من هنا واسألني أي شيء عنها'
+              : 'Got a campaign coming up? Start here by asking me anything about it'
+            }
           </p>
 
-          {/* Description */}
-          <p className="text-xl mb-12 text-white/90 max-w-2xl font-medium drop-shadow-md">
-            {t.description}
-          </p>
-
-          {/* Action Buttons - Simple and Clean */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {t.actions.slice(0, 3).map((action) => {
-              const IconComponent = action.icon;
-              return (
-                <Button
-                  key={action.key}
-                  onClick={() => handleActionClick(action.key)}
-                  className="bg-white/20 hover:bg-white/30 border border-white/30 text-white px-6 py-3 rounded-full backdrop-blur-sm transition-all duration-300 hover:scale-105 text-base font-medium drop-shadow-lg"
-                  variant="ghost"
-                >
-                  <IconComponent className="w-5 h-5 mr-2" />
-                  {action.label}
-                </Button>
-              );
-            })}
-          </div>
-
-          {/* Bottom CTA */}
-          <div className="max-w-lg">
-            <p className="text-lg text-white/85 leading-relaxed drop-shadow-md">
-              {t.cta}
-            </p>
+          {/* Arrow - Layla style pointing to chat */}
+          <div className="flex justify-start">
+            <div className="text-white/70 text-6xl font-thin">
+              {isRTL ? '←' : '→'}
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Placeholder for other content types with clean styling
+  // Render smart panels based on content type
+  const smartPanel = renderSmartPanel();
+  if (smartPanel) {
+    return smartPanel;
+  }
+
+  // Fallback for unknown content types
   return (
     <div className="h-full w-full flex items-center justify-center">
       <div className="text-center bg-black/30 backdrop-blur-sm p-12 rounded-2xl max-w-md border border-white/20">
         <h2 className="text-3xl font-bold mb-6 text-white drop-shadow-lg">
-          {contentType === 'analytics' && (language === 'ar' ? 'لوحة التحليلات' : 'Analytics Dashboard')}
-          {contentType === 'content-creator' && (language === 'ar' ? 'إنشاء المحتوى' : 'Content Creator')}
-          {contentType === 'calendar' && (language === 'ar' ? 'التقويم' : 'Calendar')}
-          {contentType === 'campaign' && (language === 'ar' ? 'إدارة الحملات' : 'Campaign Manager')}
-        </h2>
-        <p className="text-white/80 text-lg">
           {language === 'ar' ? 'قريباً...' : 'Coming soon...'}
-        </p>
+        </h2>
       </div>
     </div>
   );

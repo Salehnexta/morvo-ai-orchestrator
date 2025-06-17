@@ -1,129 +1,164 @@
-
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useTheme } from "@/contexts/ThemeContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, ArrowLeft, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, ArrowRight } from "lucide-react";
 
-export const Register = () => {
-  const { language, isRTL } = useLanguage();
-  const { theme } = useTheme();
+const Register = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: ""
-  });
+  const { theme } = useTheme();
+  const { language, isRTL } = useLanguage();
+  const { signUp, user } = useAuth();
+
+  // Redirect if already authenticated
+  if (user) {
+    navigate('/dashboard');
+    return null;
+  }
 
   const content = {
     ar: {
       title: "إنشاء حساب جديد",
-      subtitle: "انضم إلى مورفو وابدأ رحلتك معنا",
-      name: "الاسم الكامل",
+      subtitle: "ابدأ رحلتك مع مورفو الذكي",
+      fullName: "الاسم الكامل",
       email: "البريد الإلكتروني",
       password: "كلمة المرور",
       confirmPassword: "تأكيد كلمة المرور",
       register: "إنشاء الحساب",
+      registering: "جاري إنشاء الحساب...",
       haveAccount: "لديك حساب بالفعل؟",
       signIn: "تسجيل الدخول",
-      backToHome: "العودة للرئيسية",
-      orContinueWith: "أو تابع باستخدام",
+      continueWith: "أو المتابعة مع",
       google: "جوجل",
-      microsoft: "مايكروسوفت",
-      terms: "بإنشاء حساب، أنت توافق على",
-      termsLink: "الشروط والأحكام",
-      and: "و",
-      privacyLink: "سياسة الخصوصية",
-      registerSuccess: "تم إنشاء الحساب بنجاح!",
-      registerError: "خطأ في إنشاء الحساب",
-      passwordMismatch: "كلمات المرور غير متطابقة",
-      welcomeMessage: "مرحباً بك في مورفو! يمكنك البدء بالمحادثة الآن مع 20,000 طلب مجاني."
+      github: "جيت هاب",
+      backToHome: "العودة للرئيسية",
+      errors: {
+        fillAll: "يرجى ملء جميع الحقول",
+        passwordMismatch: "كلمات المرور غير متطابقة",
+        passwordLength: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+        invalidEmail: "البريد الإلكتروني غير صحيح",
+        registrationFailed: "فشل في إنشاء الحساب",
+        emailExists: "البريد الإلكتروني مستخدم بالفعل"
+      },
+      success: {
+        accountCreated: "تم إنشاء الحساب بنجاح!",
+        redirecting: "جاري التوجيه إلى لوحة التحكم..."
+      }
     },
     en: {
-      title: "Create Account",
-      subtitle: "Join Morvo and start your journey with us",
-      name: "Full Name",
-      email: "Email",
+      title: "Create New Account",
+      subtitle: "Start your journey with Morvo AI",
+      fullName: "Full Name",
+      email: "Email Address",
       password: "Password",
       confirmPassword: "Confirm Password",
       register: "Create Account",
+      registering: "Creating account...",
       haveAccount: "Already have an account?",
       signIn: "Sign In",
-      backToHome: "Back to Home",
-      orContinueWith: "Or continue with",
+      continueWith: "Or continue with",
       google: "Google",
-      microsoft: "Microsoft",
-      terms: "By creating an account, you agree to our",
-      termsLink: "Terms of Service",
-      and: "and",
-      privacyLink: "Privacy Policy",
-      registerSuccess: "Account created successfully!",
-      registerError: "Registration error",
-      passwordMismatch: "Passwords don't match",
-      welcomeMessage: "Welcome to Morvo! You can start chatting now with 20,000 free requests."
+      github: "GitHub",
+      backToHome: "Back to Home",
+      errors: {
+        fillAll: "Please fill in all fields",
+        passwordMismatch: "Passwords do not match",
+        passwordLength: "Password must be at least 6 characters",
+        invalidEmail: "Invalid email address",
+        registrationFailed: "Registration failed",
+        emailExists: "Email already exists"
+      },
+      success: {
+        accountCreated: "Account created successfully!",
+        redirecting: "Redirecting to dashboard..."
+      }
     }
   };
 
   const t = content[language];
-  const BackIcon = isRTL ? ArrowRight : ArrowLeft;
+
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+
+    if (!fullName.trim()) newErrors.fullName = t.errors.fillAll;
+    if (!email.trim()) newErrors.email = t.errors.fillAll;
+    if (!password) newErrors.password = t.errors.fillAll;
+    if (!confirmPassword) newErrors.confirmPassword = t.errors.fillAll;
+
+    if (email && !/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = t.errors.invalidEmail;
+    }
+
+    if (password && password.length < 6) {
+      newErrors.password = t.errors.passwordLength;
+    }
+
+    if (password && confirmPassword && password !== confirmPassword) {
+      newErrors.confirmPassword = t.errors.passwordMismatch;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: t.registerError,
-        description: t.passwordMismatch,
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsLoading(true);
+    setErrors({});
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: formData.name,
-          },
-        },
-      });
+      const { error } = await signUp(email.trim(), password);
 
       if (error) {
-        toast({
-          title: t.registerError,
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: t.registerSuccess,
-          description: t.welcomeMessage,
-          duration: 5000,
-        });
-        
-        // Redirect directly to chat instead of profile setup
-        navigate("/dashboard");
+        console.error('Registration error:', error);
+        if (error.message.includes('already registered')) {
+          setErrors({ email: t.errors.emailExists });
+        } else {
+          toast({
+            title: t.errors.registrationFailed,
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+        return;
       }
-    } catch (error) {
+
       toast({
-        title: t.registerError,
-        description: "An unexpected error occurred",
+        title: t.success.accountCreated,
+        description: t.success.redirecting,
+      });
+
+      // The AuthContext will handle the session state change
+      // and SimpleAuthWrapper will create the client record
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
+
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast({
+        title: t.errors.registrationFailed,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
@@ -131,153 +166,234 @@ export const Register = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleSocialLogin = async (provider: 'google' | 'github') => {
+    // Social login functionality temporarily disabled
+    // Will be implemented in future update
+    toast({
+      title: "Coming Soon",
+      description: "Social login will be available in a future update",
+      variant: "default",
+    });
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 ${
-      theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
-    }`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="w-full max-w-md">
-        <Link 
-          to="/" 
-          className={`inline-flex items-center gap-2 mb-8 text-sm text-gray-600 hover:text-gray-900 transition-colors ${
-            isRTL ? 'flex-row-reverse' : ''
-          }`}
+    <div 
+      className={`min-h-screen flex items-center justify-center p-4 ${
+        theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+      }`}
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
+      <div className="w-full max-w-md space-y-6">
+        {/* Back to Home Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className={`${isRTL ? 'self-end' : 'self-start'} flex items-center gap-2`}
         >
-          <BackIcon className="w-4 h-4" />
+          {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
           {t.backToHome}
-        </Link>
+        </Button>
 
-        <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
-          <CardHeader className={`text-center ${isRTL ? 'text-right' : 'text-left'}`}>
-            <div className={`mx-auto mb-4 w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center ${
-              isRTL ? 'mr-auto' : 'ml-auto'
+        <Card className={`${
+          theme === 'dark' 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        }`}>
+          <CardHeader className="text-center">
+            <CardTitle className={`text-2xl font-bold ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              <span className="text-white font-bold text-2xl">M</span>
-            </div>
-            <CardTitle className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               {t.title}
             </CardTitle>
-            <CardDescription className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
+            <CardDescription className={`${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               {t.subtitle}
             </CardDescription>
           </CardHeader>
-          
-          <CardContent className="space-y-6">
+
+          <CardContent className="space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Full Name */}
               <div className="space-y-2">
-                <Label htmlFor="name" className={`${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.name}
+                <Label htmlFor="fullName" className={`${
+                  theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                }`}>
+                  {t.fullName}
                 </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className={`pl-10 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300'
+                    } ${errors.fullName ? 'border-red-500' : ''}`}
+                    placeholder={t.fullName}
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.fullName && (
+                  <p className="text-red-500 text-sm">{errors.fullName}</p>
+                )}
               </div>
 
+              {/* Email */}
               <div className="space-y-2">
-                <Label htmlFor="email" className={`${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} ${isRTL ? 'text-right' : 'text-left'}`}>
+                <Label htmlFor="email" className={`${
+                  theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                }`}>
                   {t.email}
                 </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={`pl-10 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300'
+                    } ${errors.email ? 'border-red-500' : ''}`}
+                    placeholder={t.email}
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-red-500 text-sm">{errors.email}</p>
+                )}
               </div>
-              
+
+              {/* Password */}
               <div className="space-y-2">
-                <Label htmlFor="password" className={`${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} ${isRTL ? 'text-right' : 'text-left'}`}>
+                <Label htmlFor="password" className={`${
+                  theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                }`}>
                   {t.password}
                 </Label>
                 <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right pr-10' : 'text-left pl-10'}`}
-                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={`pl-10 pr-10 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300'
+                    } ${errors.password ? 'border-red-500' : ''}`}
+                    placeholder={t.password}
                     disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}
-                    disabled={isLoading}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-red-500 text-sm">{errors.password}</p>
+                )}
               </div>
 
+              {/* Confirm Password */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className={`${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} ${isRTL ? 'text-right' : 'text-left'}`}>
+                <Label htmlFor="confirmPassword" className={`${
+                  theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                }`}>
                   {t.confirmPassword}
                 </Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={`pl-10 pr-10 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300'
+                    } ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                    placeholder={t.confirmPassword}
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
+                )}
               </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 disabled={isLoading}
               >
-                {isLoading ? "..." : t.register}
+                {isLoading ? t.registering : t.register}
               </Button>
             </form>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className={`w-full border-t ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`} />
+            <div className="space-y-4">
+              <Separator />
+              
+              <p className={`text-center text-sm ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                {t.continueWith}
+              </p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => handleSocialLogin('google')}
+                  className={`${
+                    theme === 'dark' 
+                      ? 'border-gray-600 text-gray-200 hover:bg-gray-700' 
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {t.google}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleSocialLogin('github')}
+                  className={`${
+                    theme === 'dark' 
+                      ? 'border-gray-600 text-gray-200 hover:bg-gray-700' 
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {t.github}
+                </Button>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className={`px-2 ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-500'}`}>
-                  {t.orContinueWith}
-                </span>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full" disabled={isLoading}>
-                {t.google}
-              </Button>
-              <Button variant="outline" className="w-full" disabled={isLoading}>
-                {t.microsoft}
-              </Button>
-            </div>
-
-            <div className={`text-center text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-              {t.terms}{" "}
-              <Link to="/terms" className="text-blue-600 hover:text-blue-700 underline">{t.termsLink}</Link>
-              {" "}{t.and}{" "}
-              <Link to="/privacy" className="text-blue-600 hover:text-blue-700 underline">{t.privacyLink}</Link>
-            </div>
-
-            <div className={`text-center text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-              {t.haveAccount}{" "}
-              <Link to="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                {t.signIn}
-              </Link>
+              <p className={`text-center text-sm ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                {t.haveAccount}{' '}
+                <Link 
+                  to="/auth/login" 
+                  className="text-blue-600 hover:text-blue-500 font-medium"
+                >
+                  {t.signIn}
+                </Link>
+              </p>
             </div>
           </CardContent>
         </Card>

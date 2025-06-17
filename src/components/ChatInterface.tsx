@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
-import { MorvoAIService } from "@/services/morvoAIService";
-import { CustomerDataService } from "@/services/customerDataService";
-import { AgentControlService, AgentCommand, AgentResponse } from "@/services/agent";
-import { useToast } from "@/hooks/use-toast";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useTokens } from "@/hooks/useTokens";
-import { supabase } from "@/integrations/supabase/client";
-import { ChatHeader } from "./chat/ChatHeader";
-import { MessageList } from "./chat/MessageList";
-import { ChatInput } from "./chat/ChatInput";
-import { AlertTriangle } from "lucide-react";
+import React, { useState, useRef, useEffect } from 'react';
+import { MessageList } from './chat/MessageList';
+import { ChatInput } from './chat/ChatInput';
+import { ChatHeader } from './chat/ChatHeader';
+import { ConnectionStatus } from './chat/ConnectionStatus';
+import { TokenCounter } from './chat/TokenCounter';
+import { ActionButtons } from './chat/ActionButtons';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { AgentResponse } from '@/services/agent';
 
-interface Message {
+interface MessageData {
   id: string;
   content: string;
   sender: 'user' | 'agent';
@@ -20,384 +20,170 @@ interface Message {
   processing_time?: number;
   cost?: number;
   agents_involved?: string[];
-  commands?: AgentCommand[];
-  isError?: boolean;
 }
 
 interface ChatInterfaceProps {
-  onBack: () => void;
-  onDashboardUpdate?: (data: any) => void;
+  onContentTypeChange?: (type: string) => void;
 }
 
-export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps) => {
-  const { theme, toggleTheme } = useTheme();
-  const { language, isRTL } = useLanguage();
-  const { tokenData, deductTokens, getRemainingTokens, isLowTokens } = useTokens();
-  const [clientId, setClientId] = useState<string>('');
-  const [messages, setMessages] = useState<Message[]>([]);
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChange }) => {
+  const [messages, setMessages] = useState<MessageData[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionChecked, setConnectionChecked] = useState(false);
+  const [clientId, setClientId] = useState<string>('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user, session } = useAuth();
+  const { language, isRTL } = useLanguage();
+  const { theme } = useTheme();
   const { toast } = useToast();
 
   const content = {
     ar: {
-      masterAgent: "المساعد الذكي",
-      clientAgent: "وكيل خدمة العملاء",
-      active: "نشط",
-      connecting: "جاري الاتصال...",
-      connected: "متصل",
-      connectionFailed: "فشل الاتصال",
-      thinking: "المساعد الذكي يفكر...",
-      placeholder: "اكتب رسالتك بالعربية أو الإنجليزية...",
-      noTokens: "نفد رصيدك من الطلبات",
-      upgradePrompt: "يرجى ترقية باقتك للمتابعة",
-      lowTokens: "رصيدك من الطلبات يقترب من النهاية"
+      masterAgent: 'مورفو الذكي',
+      clientAgent: 'مساعد خدمة العملاء',
+      connecting: 'جاري الاتصال...',
+      connected: 'متصل',
+      thinking: 'مورفو يفكر...',
+      placeholder: 'اكتب رسالتك هنا...'
     },
     en: {
-      masterAgent: "Smart Assistant",
-      clientAgent: "Customer Service Agent", 
-      active: "Active",
-      connecting: "Connecting...",
-      connected: "Connected",
-      connectionFailed: "Connection Failed",
-      thinking: "Smart Assistant is thinking...",
-      placeholder: "Type your message in Arabic or English...",
-      noTokens: "You've exhausted your request limit",
-      upgradePrompt: "Please upgrade your plan to continue",
-      lowTokens: "Your request balance is running low"
+      masterAgent: 'Morvo AI',
+      clientAgent: 'Customer Service Agent',
+      connecting: 'Connecting...',
+      connected: 'Connected',
+      thinking: 'Morvo is thinking...',
+      placeholder: 'Type your message here...'
     }
   };
 
   const t = content[language];
 
   useEffect(() => {
-    initializeClient();
-    testRailwayConnection();
-  }, []);
+    if (user?.id) {
+      setClientId(user.id);
+    }
+  }, [user]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    if (clientId) {
-      loadUserProfile();
-    }
-  }, [clientId]);
+    scrollToBottom();
+  }, [messages]);
 
-  // Check connection status periodically
+  // Check connection on mount
   useEffect(() => {
     const checkConnection = async () => {
+      if (!session?.access_token) {
+        setIsConnected(false);
+        setConnectionChecked(true);
+        return;
+      }
+
       try {
-        await MorvoAIService.healthCheck();
-        setConnectionStatus('connected');
-      } catch (error) {
-        setConnectionStatus('disconnected');
-      }
-    };
-    
-    const interval = setInterval(checkConnection, 30000); // Check every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  const initializeClient = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        setClientId(session.user.id);
-        
-        // تحديث حالة العميل كمدفوع إذا كان saleh@nexta.sa
-        if (session.user.email === 'saleh@nexta.sa') {
-          await AgentControlService.markCustomerAsPaid(session.user.id);
-          console.log('✅ تم تحديث حالة العميل saleh@nexta.sa كمدفوع');
-        }
-      }
-    } catch (error) {
-      console.error('Error getting session:', error);
-    }
-  };
-
-  const loadUserProfile = async () => {
-    if (!clientId) return;
-    
-    try {
-      const { data: profile } = await supabase
-        .from('customer_profiles')
-        .select('*')
-        .eq('customer_id', clientId)
-        .single();
-      
-      setUserProfile(profile);
-    } catch (error) {
-      console.log('No profile found, will collect during chat');
-    }
-  };
-
-  const testRailwayConnection = async () => {
-    setConnectionStatus('checking');
-    try {
-      console.log('اختبار الاتصال التلقائي مع Railway...');
-      
-      const isConnected = await MorvoAIService.testRailwayConnection();
-      
-      if (isConnected) {
-        setConnectionStatus('connected');
-        toast({
-          title: "✅ تم الاتصال بنجاح",
-          description: "Morvo AI متصل وجاهز للاستخدام",
-          duration: 3000,
+        const response = await fetch('https://morvo-ai-orchestrator-production.up.railway.app/health', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
         });
 
-        const welcomeMessage: Message = {
-          id: Date.now().toString(),
-          content: "مرحباً بك! أنا المساعد الذكي مورفو. أستطيع مساعدتك في التسويق الرقمي والاستراتيجيات التجارية. كيف يمكنني مساعدتك اليوم؟",
-          sender: 'agent',
-          timestamp: new Date()
-        };
+        const isHealthy = response.ok;
+        setIsConnected(isHealthy);
         
-        setMessages([welcomeMessage]);
-      } else {
-        throw new Error('Connection test failed');
+        if (!isHealthy) {
+          console.error('Backend connection failed:', response.status);
+        }
+      } catch (error) {
+        console.error('Connection check failed:', error);
+        setIsConnected(false);
+      } finally {
+        setConnectionChecked(true);
       }
-      
-    } catch (error) {
-      console.error('❌ فشل اختبار الاتصال:', error);
-      setConnectionStatus('disconnected');
-      toast({
-        title: "❌ فشل الاتصال",
-        description: "لا يمكن الاتصال بـ Morvo AI. سيتم المحاولة مرة أخرى.",
-        variant: "destructive",
-        duration: 5000,
-      });
-      
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        content: "عذراً، حدث خطأ في الاتصال مع الخدمة. يرجى المحاولة مرة أخرى لاحقاً.",
-        sender: 'agent',
-        timestamp: new Date(),
-        isError: true
-      };
-      
-      setMessages([errorMessage]);
-    }
-  };
-
-  const analyzeMessageForDashboard = (message: string) => {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('sales') || lowerMessage.includes('مبيعات')) {
-      return {
-        chartType: 'bar',
-        title: 'Sales Analytics',
-        data: [
-          { month: "Jan", sales: 4000 },
-          { month: "Feb", sales: 3000 },
-          { month: "Mar", sales: 2000 },
-          { month: "Apr", sales: 2780 },
-          { month: "May", sales: 1890 },
-          { month: "Jun", sales: 2390 },
-        ]
-      };
-    } else if (lowerMessage.includes('trend') || lowerMessage.includes('اتجاه')) {
-      return {
-        chartType: 'line',
-        title: 'Trend Analysis',
-        data: [
-          { month: "Jan", sales: 2000 },
-          { month: "Feb", sales: 2200 },
-          { month: "Mar", sales: 2800 },
-          { month: "Apr", sales: 3200 },
-          { month: "May", sales: 3800 },
-          { month: "Jun", sales: 4200 },
-        ]
-      };
-    }
-    return null;
-  };
-
-  const handleAgentCommandResponse = async (response: AgentResponse) => {
-    console.log('استجابة العميل على أمر الوكيل:', response);
-
-    if (clientId) {
-      await AgentControlService.processUserResponse(clientId, response);
-    }
-
-    const userResponseMessage: Message = {
-      id: Date.now().toString(),
-      content: response.type === 'form_submitted' 
-        ? `تم إرسال النموذج: ${response.data ? Object.entries(response.data).map(([key, value]) => `${key}: ${value}`).join(', ') : ''}`
-        : response.type === 'button_clicked'
-        ? `تم الضغط على: ${response.data?.text || 'زر'}`
-        : JSON.stringify(response.data),
-      sender: 'user',
-      timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userResponseMessage]);
+    checkConnection();
+  }, [session]);
 
-    const updateMessage = `تفاعل العميل: ${JSON.stringify(response)}`;
-    await handleSend(updateMessage, false);
-  };
-
-  const handleSend = async (messageText?: string, shouldClearInput: boolean = true) => {
-    const messageToSend = messageText || input.trim();
-    if (!messageToSend || isLoading) return;
-
-    // Check connection status
-    if (connectionStatus === 'disconnected') {
-      toast({
-        title: "❌ لا يوجد اتصال",
-        description: "يرجى انتظار إعادة الاتصال",
-        variant: "destructive",
-        duration: 3000,
-      });
+  const handleSendMessage = async () => {
+    if (!input.trim() || !session?.access_token) {
       return;
     }
 
-    // Check if user has tokens
-    const remainingTokens = getRemainingTokens();
-    if (remainingTokens <= 0) {
-      toast({
-        title: "🚫 " + t.noTokens,
-        description: t.upgradePrompt,
-        variant: "destructive",
-        duration: 5000,
-      });
-      return;
-    }
-
-    // Show warning if very low on tokens
-    if (remainingTokens <= 5 && remainingTokens > 0) {
-      toast({
-        title: "⚠️ " + t.lowTokens,
-        description: `باقي لديك ${remainingTokens} طلب فقط`,
-        duration: 4000,
-      });
-    }
-
-    const userMessage: Message = {
+    const userMessage: MessageData = {
       id: Date.now().toString(),
-      content: messageToSend,
+      content: input,
       sender: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
-    if (clientId) {
-      await CustomerDataService.extractAndSaveCustomerData(
-        messageToSend, 
-        clientId, 
-        MorvoAIService.getConversationInfo().conversationId || 'default'
-      );
-    }
-
-    const dashboardData = analyzeMessageForDashboard(messageToSend);
-    if (dashboardData && onDashboardUpdate) {
-      onDashboardUpdate(dashboardData);
-    }
-
-    if (shouldClearInput) {
-      setInput('');
-    }
+    const messageText = input;
+    setInput('');
     setIsLoading(true);
 
     try {
-      console.log('إرسال رسالة إلى Morvo AI مع السياق الكامل:', messageToSend);
-      
-      // Deduct token before API call
-      const tokenDeducted = await deductTokens(1);
-      if (!tokenDeducted) {
-        throw new Error('فشل في خصم الرمز المميز');
+      const response = await fetch('https://morvo-ai-orchestrator-production.up.railway.app/chat', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: messageText,
+          user_id: user?.id,
+          client_id: user?.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Use retry mechanism for better reliability
-      const response = await MorvoAIService.sendMessageWithRetry(messageToSend, userProfile);
-      console.log('استجابة Morvo AI:', response);
-
-      const { message: cleanMessage, commands } = AgentControlService.parseAgentResponse(response.message);
-
-      const agentMessage: Message = {
+      const data = await response.json();
+      
+      const botMessage: MessageData = {
         id: (Date.now() + 1).toString(),
-        content: cleanMessage,
+        content: data.response || 'Sorry, I could not process your request.',
         sender: 'agent',
         timestamp: new Date(),
-        processing_time: response.processing_time,
-        cost: response.cost_tracking?.total_cost,
-        agents_involved: response.agents_involved,
-        commands: commands.length > 0 ? commands : undefined
+        processing_time: data.processing_time,
+        cost: data.cost,
+        agents_involved: data.agents_involved,
       };
 
-      setMessages(prev => [...prev, agentMessage]);
+      setMessages(prev => [...prev, botMessage]);
 
-      // Update connection status on successful response
-      setConnectionStatus('connected');
-
-      for (const command of commands) {
-        if (command.type === 'save_data' && clientId) {
-          await AgentControlService.saveCustomerData(clientId, command.data);
-          console.log('تم حفظ البيانات تلقائياً:', command.data);
-          // Reload profile after saving data
-          await loadUserProfile();
-        }
+      // Update content panel based on response
+      if (onContentTypeChange && data.content_type) {
+        onContentTypeChange(data.content_type);
       }
 
-      if (clientId) {
-        const serializableCommands = commands.map(cmd => ({
-          type: cmd.type,
-          data: cmd.data,
-          id: cmd.id
-        }));
-
-        await supabase
-          .from('conversation_messages')
-          .insert({
-            client_id: clientId,
-            conversation_id: MorvoAIService.getConversationInfo().conversationId || 'default',
-            content: cleanMessage,
-            sender_type: 'agent',
-            sender_id: response.agents_involved?.[0] || 'morvo_ai',
-            metadata: {
-              processing_time: response.processing_time,
-              cost: response.cost_tracking?.total_cost,
-              agents_involved: response.agents_involved,
-              commands: serializableCommands,
-              context_enriched: true
-            } as any,
-            timestamp: new Date().toISOString()
-          });
-      }
-
-      if (response.processing_time) {
-        toast({
-          title: "تم إنشاء الاستجابة",
-          description: `تمت المعالجة في ${response.processing_time}s${response.cost_tracking?.total_cost ? ` - التكلفة: $${response.cost_tracking.total_cost.toFixed(4)}` : ''}`,
-          duration: 3000,
-        });
-      }
     } catch (error) {
-      console.error('خطأ في إرسال الرسالة:', error);
+      console.error('Chat error:', error);
       
-      // Update connection status on error
-      setConnectionStatus('disconnected');
-      
-      // Refund token on error
-      await deductTokens(-1);
-      
-      // Add error message
-      const errorMessage: Message = {
+      const errorMessage: MessageData = {
         id: (Date.now() + 1).toString(),
-        content: 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.\n\nSorry, there was a connection error. Please try again.',
+        content: language === 'ar' 
+          ? 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.'
+          : 'Sorry, there was a connection error. Please try again.',
         sender: 'agent',
         timestamp: new Date(),
-        isError: true
       };
 
       setMessages(prev => [...prev, errorMessage]);
-      
+
+      // Only show critical errors to user
       toast({
-        title: "خطأ في الاتصال",
-        description: "فشل الاتصال مع Morvo AI. يرجى المحاولة مرة أخرى.",
+        title: language === 'ar' ? 'خطأ في الاتصال' : 'Connection Error',
+        description: language === 'ar' 
+          ? 'تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.'
+          : 'Unable to connect to server. Please check your internet connection.',
         variant: "destructive",
-        duration: 5000,
       });
     } finally {
       setIsLoading(false);
@@ -407,72 +193,96 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSendMessage();
     }
   };
 
-  const handleUpgrade = () => {
-    window.location.href = '/pricing';
+  const handleActionClick = (action: string, prompt: string) => {
+    setInput(prompt);
+    if (onContentTypeChange) {
+      onContentTypeChange(action);
+    }
   };
 
-  const remainingTokens = getRemainingTokens();
-  const isConnecting = connectionStatus === 'checking';
+  const handleCommandResponse = (response: AgentResponse) => {
+    console.log('Agent command response:', response);
+  };
 
   return (
-    <div className="h-full flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Token Warning Banner */}
-      {isLowTokens() && (
-        <div className="bg-yellow-600/20 backdrop-blur-sm border-b border-yellow-400/30 p-3">
-          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <AlertTriangle className="w-4 h-4 text-yellow-300" />
-            <span className="text-sm text-yellow-200">
-              رصيد منخفض: {remainingTokens} طلب متبقي
-            </span>
-            <button
-              onClick={() => window.location.href = '/pricing'}
-              className={`px-3 py-1 text-xs rounded transition-colors ${
-                isRTL ? 'mr-auto' : 'ml-auto'
-              } bg-yellow-500 hover:bg-yellow-600 text-white`}
-            >
-              ترقية
-            </button>
-          </div>
-        </div>
-      )}
-
+    <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800" dir={isRTL ? 'rtl' : 'ltr'}>
       <ChatHeader 
         theme={theme}
         isRTL={isRTL}
         content={{
-          ...t,
-          connecting: connectionStatus === 'checking' ? t.connecting : connectionStatus === 'connected' ? t.connected : t.connectionFailed
+          masterAgent: t.masterAgent,
+          clientAgent: t.clientAgent,
+          connecting: connectionChecked ? (isConnected ? t.connected : 'Connection Failed') : t.connecting,
+          connected: t.connected
         }}
-        isConnecting={isConnecting}
+        isConnecting={!connectionChecked || !isConnected}
         clientId={clientId}
-        tokenBalance={remainingTokens}
-        onToggleTheme={toggleTheme}
-        onUpgrade={() => window.location.href = '/pricing'}
+        onToggleTheme={() => {}}
       />
-
-      <MessageList 
-        messages={messages}
-        isLoading={isLoading}
-        theme={theme}
-        isRTL={isRTL}
-        thinkingText={t.thinking}
-        onCommandResponse={handleAgentCommandResponse}
-      />
-
-      <ChatInput 
-        input={input}
-        isLoading={isLoading || remainingTokens <= 0 || connectionStatus === 'disconnected'}
-        theme={theme}
-        isRTL={isRTL}
-        placeholder={remainingTokens <= 0 ? t.noTokens : connectionStatus === 'disconnected' ? 'غير متصل...' : t.placeholder}
-        onInputChange={setInput}
-        onSend={handleSend}
-        onKeyPress={handleKeyPress}
-      />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <MessageList 
+          messages={messages}
+          isLoading={isLoading}
+          theme={theme}
+          isRTL={isRTL}
+          thinkingText={t.thinking}
+          onCommandResponse={handleCommandResponse}
+          language={language}
+          onActionClick={handleActionClick}
+        />
+        
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+          <div className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <ConnectionStatus 
+                isConnecting={!connectionChecked || !isConnected}
+                theme={theme}
+                content={{
+                  connecting: t.connecting,
+                  connected: t.connected
+                }}
+              />
+              {clientId && (
+                <TokenCounter 
+                  theme={theme}
+                  clientId={clientId}
+                />
+              )}
+            </div>
+            
+            {messages.length > 0 && (
+              <ActionButtons 
+                messageContent={messages[messages.length - 1]?.content || ''}
+                language={language}
+                theme={theme}
+                isRTL={isRTL}
+                onActionClick={handleActionClick}
+              />
+            )}
+            
+            <ChatInput
+              input={input}
+              isLoading={isLoading}
+              theme={theme}
+              isRTL={isRTL}
+              placeholder={
+                !isConnected
+                  ? t.connecting
+                  : t.placeholder
+              }
+              onInputChange={setInput}
+              onSend={handleSendMessage}
+              onKeyPress={handleKeyPress}
+              hasTokens={true}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,19 +1,22 @@
-
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
 
 interface SimpleAuthWrapperProps {
   children: React.ReactNode;
 }
 
-export const SimpleAuthWrapper = ({ children }: SimpleAuthWrapperProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export const SimpleAuthWrapper: React.FC<SimpleAuthWrapperProps> = ({ children }) => {
+  const { user, session, loading } = useAuth();
+  const { toast } = useToast();
+  const [clientRecord, setClientRecord] = useState<any>(null);
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
@@ -36,56 +39,77 @@ export const SimpleAuthWrapper = ({ children }: SimpleAuthWrapperProps) => {
   const t = content[language];
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    if (!user || !session) {
+      setClientRecord(null);
+      return;
+    }
 
-  const checkAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        return;
-      }
-
-      setIsAuthenticated(true);
-      console.log('User authenticated:', session.user.email);
-
-      // Get or create client record for the user
-      let { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (clientError || !clientData) {
-        console.log('Creating client record for user');
-        const { data: newClient, error: createError } = await supabase
+    const ensureClientRecord = async () => {
+      try {
+        // First, check if client record exists
+        const { data: existingClient, error: fetchError } = await supabase
           .from('clients')
-          .insert({
-            name: session.user.email || 'User',
-            user_id: session.user.id,
-            active: true
-          })
-          .select('id')
+          .select('*')
+          .eq('user_id', user.id)
           .single();
 
-        if (createError) {
-          console.error('Error creating client:', createError);
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          console.error('Error fetching client record:', fetchError);
+          return;
         }
+
+        if (existingClient) {
+          setClientRecord(existingClient);
+          return;
+        }
+
+        // If no client record exists, create one
+        if (!isCreatingClient) {
+          setIsCreatingClient(true);
+          
+          const { data: newClient, error: createError } = await supabase
+            .from('clients')
+            .insert([
+              {
+                user_id: user.id,
+                email: user.email,
+                name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+                token_quota: 10000,
+                tokens_used: 0,
+                subscription_plan: 'free',
+                status: 'active',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }
+            ])
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Error creating client record:', createError);
+            toast({
+              title: "Setup Error",
+              description: "Failed to initialize your account. Please try refreshing the page.",
+              variant: "destructive",
+            });
+          } else {
+            setClientRecord(newClient);
+            console.log('Client record created successfully');
+          }
+          
+          setIsCreatingClient(false);
+        }
+      } catch (error) {
+        console.error('Error in ensureClientRecord:', error);
+        setIsCreatingClient(false);
       }
+    };
 
-      console.log('✅ Access granted - user is authenticated');
+    ensureClientRecord();
+  }, [user, session, isCreatingClient, toast]);
 
-    } catch (error) {
-      console.error('Error checking authentication:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
+  // Show loading state
+  if (loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${
         theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
@@ -100,7 +124,8 @@ export const SimpleAuthWrapper = ({ children }: SimpleAuthWrapperProps) => {
     );
   }
 
-  if (!isAuthenticated) {
+  // Show login required state
+  if (!user || !session) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${
         theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
@@ -135,5 +160,18 @@ export const SimpleAuthWrapper = ({ children }: SimpleAuthWrapperProps) => {
     );
   }
 
+  // Show client setup loading state
+  if (isCreatingClient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Setting up your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render children when everything is ready
   return <>{children}</>;
 };

@@ -1,4 +1,3 @@
-
 import { ChatInterface } from "@/components/ChatInterface";
 import { DynamicContentPanel } from "@/components/DynamicContentPanel";
 import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
@@ -9,35 +8,41 @@ import { useState } from "react";
 const Dashboard = () => {
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
-  const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign'>('hero');
+  const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test'>('hero');
 
-  const handleDashboardUpdate = (data: any) => {
-    console.log('Dashboard update:', data);
-    // Handle chart data updates from chat
-    if (data.chartType) {
-      setContentType('analytics');
-    }
-  };
-
-  const handleContentAction = (action: string) => {
-    console.log('Content action:', action);
-    // Handle action button clicks from the dynamic panel
-    switch (action) {
+  const handleContentTypeChange = (type: string) => {
+    console.log('🎯 Content type change:', type);
+    // Handle intent-based content switching from chat
+    switch (type) {
       case 'analytics':
+      case 'view-analytics':
         setContentType('analytics');
         break;
+      case 'content-creator':
       case 'create-content':
         setContentType('content-creator');
         break;
+      case 'calendar':
       case 'schedule':
+      case 'schedule-content':
         setContentType('calendar');
         break;
+      case 'campaign':
       case 'campaigns':
+      case 'create-campaign':
         setContentType('campaign');
+        break;
+      case 'connection-test':
+        setContentType('connection-test');
         break;
       default:
         setContentType('hero');
     }
+  };
+
+  const handleContentAction = (action: string) => {
+    console.log('🔄 Content action clicked:', action);
+    handleContentTypeChange(action);
   };
 
   return (
@@ -47,16 +52,15 @@ const Dashboard = () => {
         style={{ backgroundImage: `url('/lovable-uploads/362bdb5b-6c5c-4340-8368-eee2d1eb2564.png')` }}
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        {/* Chat Panel - Left 40% with dark overlay */}
-        <div className="w-2/5 bg-black/40 backdrop-blur-sm border-r border-white/10">
+        {/* Chat Panel - Left side like Layla */}
+        <div className="w-1/2 bg-black/40 backdrop-blur-sm border-r border-white/10">
           <ChatInterface 
-            onBack={() => {}} 
-            onDashboardUpdate={handleDashboardUpdate}
+            onContentTypeChange={handleContentTypeChange}
           />
         </div>
 
-        {/* Dynamic Content Panel - Right 60% directly over background */}
-        <div className="w-3/5">
+        {/* Dynamic Content Panel - Right side like Layla */}
+        <div className="w-1/2">
           <DynamicContentPanel 
             contentType={contentType}
             onActionClick={handleContentAction}

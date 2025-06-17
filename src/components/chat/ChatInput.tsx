@@ -30,22 +30,14 @@ export const ChatInput = ({
   const isDisabled = isLoading || !hasTokens;
   
   return (
-    <div className={`backdrop-blur-md border-t p-4 ${
-      theme === 'dark' 
-        ? 'bg-black/20 border-white/10' 
-        : 'bg-white/20 border-white/30'
-    }`}>
-      <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+    <div className="p-6 border-t border-white/10">
+      <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
         <Input
           value={input}
           onChange={(e) => onInputChange(e.target.value)}
           onKeyDown={onKeyPress}
           placeholder={hasTokens ? placeholder : 'لا يوجد رصيد كافٍ من الطلبات'}
-          className={`flex-1 transition-colors ${
-            theme === 'dark' 
-              ? 'bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-blue-500' 
-              : 'bg-black/5 border-black/20 text-black placeholder:text-gray-700 focus:border-blue-500'
-          } ${isRTL ? 'text-right' : 'text-left'} ${
+          className={`flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40 focus:bg-white/15 rounded-xl px-4 py-3 ${isRTL ? 'text-right' : 'text-left'} ${
             !hasTokens ? 'opacity-50' : ''
           }`}
           disabled={isDisabled}
@@ -54,7 +46,7 @@ export const ChatInput = ({
         <Button
           onClick={onSend}
           disabled={!input.trim() || isDisabled}
-          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white disabled:opacity-50"
+          className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 rounded-xl px-4 py-3 h-auto"
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -65,8 +57,8 @@ export const ChatInput = ({
       </div>
       
       {!hasTokens && (
-        <div className="mt-2 text-center">
-          <span className="text-xs text-red-400">
+        <div className="mt-3 text-center">
+          <span className="text-xs text-red-300">
             نفد رصيد الطلبات - يرجى ترقية باقتك
           </span>
         </div>

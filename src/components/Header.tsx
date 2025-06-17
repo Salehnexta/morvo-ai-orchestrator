@@ -1,8 +1,8 @@
-import { ShoppingCart, User, Globe, Menu, X, ChevronDown } from "lucide-react";
+import { ShoppingCart, User, Globe, Menu, X, ChevronDown, Brain, Sparkles, Zap, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 interface HeaderProps {
@@ -13,241 +13,294 @@ export const Header = ({ onStartChat }: HeaderProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, toggleLanguage, isRTL } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Scroll effect for header
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const content = {
     ar: {
-      welcome: "مرحباً بك في مورفو",
       languageLabel: "العربية",
       home: "الرئيسية",
-      agents: "المنتجات",
+      features: "المميزات",
       pricing: "الأسعار",
       support: "الدعم",
       about: "من نحن",
       login: "تسجيل الدخول",
       register: "إنشاء حساب",
       startNow: "ابدأ الآن",
-      storeName: "مورفو"
+      storeName: "مورفو",
+      aiPowered: "مدعوم بالذكاء الاصطناعي"
     },
     en: {
-      welcome: "Welcome to Morvo",
       languageLabel: "English",
       home: "Home",
-      agents: "Products", 
+      features: "Features", 
       pricing: "Pricing",
       support: "Support",
       about: "About",
       login: "Login",
       register: "Sign Up",
       startNow: "Start Now",
-      storeName: "Morvo"
+      storeName: "Morvo",
+      aiPowered: "AI-Powered"
     }
   };
 
   const t = content[language];
 
   return (
-    <header className={`sticky top-0 z-50 border-b backdrop-blur-sm ${
-      theme === 'dark' 
-        ? 'bg-gray-900/95 border-gray-800' 
-        : 'bg-white/95 border-gray-200'
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      isScrolled 
+        ? 'backdrop-blur-md bg-white/80 dark:bg-gray-900/80 shadow-lg border-b border-white/20 dark:border-gray-800/50' 
+        : 'backdrop-blur-sm bg-white/60 dark:bg-gray-900/60 border-b border-white/10 dark:border-gray-800/30'
     } ${language === 'ar' ? 'font-cairo' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Top Bar */}
-      <div className={`border-b ${theme === 'dark' ? 'border-gray-800 bg-gradient-to-r from-purple-900 to-blue-900' : 'border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-10 text-sm">
-            <div className="flex items-center gap-4">
-              <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                {t.welcome}
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={toggleTheme}
-                className={`p-1 rounded hover:bg-opacity-20 hover:bg-gray-500 transition-colors ${
-                  theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Globe className="w-4 h-4" />
-              </button>
-              <button
-                onClick={toggleLanguage}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                  theme === 'dark' 
-                    ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <span>{t.languageLabel}</span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Header */}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+        <div className="flex items-center justify-between h-20">
+          
+          {/* AI-Themed Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">M</span>
+            <Link to="/" className="group flex items-center gap-3 transition-all duration-300 hover:scale-105">
+              <div className="relative">
+                {/* Animated AI Brain Logo */}
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Brain className="w-7 h-7 text-white animate-pulse" />
+                  {/* AI Sparkles Animation */}
+                  <div className="absolute -top-1 -right-1 w-3 h-3">
+                    <Sparkles className="w-3 h-3 text-yellow-400 animate-spin" style={{animationDuration: '3s'}} />
+                  </div>
+                  <div className="absolute -bottom-1 -left-1 w-2 h-2">
+                    <Zap className="w-2 h-2 text-cyan-400 animate-bounce" style={{animationDelay: '1s'}} />
+                  </div>
+                </div>
+                {/* Floating particles */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
-              <div>
-                <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              
+              <div className="flex flex-col">
+                <h1 className={`text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105 ${
+                  theme === 'dark' ? 'drop-shadow-lg' : ''
+                }`}>
                   {t.storeName}
                 </h1>
+                <span className={`text-xs font-medium opacity-70 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                } group-hover:opacity-100 transition-opacity duration-300`}>
+                  {t.aiPowered}
+                </span>
               </div>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link to="/" className={`text-sm font-medium transition-colors ${
-              theme === 'dark' ? 'text-white hover:text-blue-400' : 'text-gray-900 hover:text-blue-600'
-            }`}>
-              {t.home}
-            </Link>
-            <Link to="/features" className={`text-sm font-medium transition-colors ${
-              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
-            }`}>
-              {t.agents}
-            </Link>
-            <Link to="/pricing" className={`text-sm font-medium transition-colors ${
-              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
-            }`}>
-              {t.pricing}
-            </Link>
-            <Link to="/support" className={`text-sm font-medium transition-colors ${
-              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
-            }`}>
-              {t.support}
-            </Link>
-            <Link to="/about" className={`text-sm font-medium transition-colors ${
-              theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
-            }`}>
-              {t.about}
-            </Link>
+          <nav className="hidden lg:flex items-center gap-8">
+            {[
+              { key: 'home', href: '/', label: t.home },
+              { key: 'features', href: '/features', label: t.features },
+              { key: 'pricing', href: '/pricing', label: t.pricing },
+              { key: 'support', href: '/support', label: t.support },
+              { key: 'about', href: '/about', label: t.about }
+            ].map(({ key, href, label }) => (
+              <Link 
+                key={key}
+                to={href} 
+                className={`relative text-sm font-medium transition-all duration-300 hover:scale-105 group ${
+                  theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                {label}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+            ))}
           </nav>
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-4">
-            {/* Desktop Actions */}
+            
+            {/* Language & Theme Toggle */}
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                onClick={toggleLanguage}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 hover:scale-105 ${
+                  theme === 'dark' 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-800/50 border border-gray-700/50' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 border border-gray-200/50'
+                } backdrop-blur-sm`}
+              >
+                <Languages className="w-4 h-4" />
+                <span>{language === 'ar' ? 'ع' : 'EN'}</span>
+              </button>
+              
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-lg transition-all duration-300 hover:scale-110 ${
+                  theme === 'dark' 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-800/50' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                } backdrop-blur-sm border border-white/10 dark:border-gray-700/50`}
+              >
+                <Globe className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Enhanced Auth Buttons */}
             <div className="hidden md:flex items-center gap-3">
               <Link to="/auth/login">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`transition-colors ${
+                  className={`transition-all duration-300 hover:scale-105 backdrop-blur-sm border ${
                     theme === 'dark' 
-                      ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
-                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-800/50 border-gray-700/50' 
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/50 border-gray-200/50'
                   }`}
                 >
-                  <User className="w-4 h-4 mr-2" />
+                  <User className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                   {t.login}
                 </Button>
               </Link>
               
               <Link to="/auth/register">
                 <Button
-                  variant="outline"
                   size="sm"
-                  className={`transition-colors ${
-                    theme === 'dark' 
-                      ? 'border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800' 
-                      : 'border-gray-300 text-gray-700 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
                 >
                   {t.register}
                 </Button>
               </Link>
               
               <Link to="/pricing">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  {t.startNow}
+                <Button 
+                  size="sm"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden group"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
+                  <ShoppingCart className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} relative z-10`} />
+                  <span className="relative z-10">{t.startNow}</span>
                 </Button>
               </Link>
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Enhanced Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`md:hidden p-2 rounded-md transition-colors ${
+              className={`lg:hidden p-2 rounded-lg transition-all duration-300 hover:scale-110 ${
                 theme === 'dark' 
-                  ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+                  ? 'text-gray-300 hover:text-white hover:bg-gray-800/50' 
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/50'
+              } backdrop-blur-sm border border-white/10 dark:border-gray-700/50`}
             >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <div className="relative w-5 h-5">
+                <Menu className={`w-5 h-5 absolute transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0 rotate-90' : 'opacity-100 rotate-0'}`} />
+                <X className={`w-5 h-5 absolute transition-all duration-300 ${isMobileMenuOpen ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90'}`} />
+              </div>
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className={`md:hidden border-t ${
-            theme === 'dark' ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
-          }`}>
-            <div className="px-4 py-6 space-y-4">
-              <Link to="/" className={`block text-base font-medium ${
-                theme === 'dark' ? 'text-white' : 'text-gray-900'
-              }`}>
-                {t.home}
-              </Link>
-              <Link to="/features" className={`block text-base font-medium ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {t.agents}
-              </Link>
-              <Link to="/pricing" className={`block text-base font-medium ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {t.pricing}
-              </Link>
-              <Link to="/support" className={`block text-base font-medium ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {t.support}
-              </Link>
-              <Link to="/about" className={`block text-base font-medium ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {t.about}
-              </Link>
+        {/* Enhanced Mobile Menu */}
+        <div className={`lg:hidden overflow-hidden transition-all duration-500 ease-out ${
+          isMobileMenuOpen 
+            ? 'max-h-96 opacity-100' 
+            : 'max-h-0 opacity-0'
+        }`}>
+          <div className={`backdrop-blur-md border-t ${
+            theme === 'dark' 
+              ? 'border-gray-800/50 bg-gray-900/80' 
+              : 'border-gray-200/50 bg-white/80'
+          } rounded-b-2xl mx-4 mb-4 shadow-xl`}>
+            <div className="px-6 py-6 space-y-4">
               
+              {/* Mobile Navigation Links */}
+              {[
+                { key: 'home', href: '/', label: t.home },
+                { key: 'features', href: '/features', label: t.features },
+                { key: 'pricing', href: '/pricing', label: t.pricing },
+                { key: 'support', href: '/support', label: t.support },
+                { key: 'about', href: '/about', label: t.about }
+              ].map(({ key, href, label }) => (
+                <Link 
+                  key={key}
+                  to={href} 
+                  className={`block text-base font-medium transition-all duration-300 hover:scale-105 hover:translate-x-2 ${
+                    theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                  } ${isRTL ? 'text-right hover:-translate-x-2' : 'text-left'}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {label}
+                </Link>
+              ))}
+              
+              {/* Mobile Controls */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200/20 dark:border-gray-700/20">
+                <button
+                  onClick={toggleLanguage}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                    theme === 'dark' 
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-800/50' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  }`}
+                >
+                  <Languages className="w-4 h-4" />
+                  {t.languageLabel}
+                </button>
+                
+                <button
+                  onClick={toggleTheme}
+                  className={`p-2 rounded-lg transition-all duration-300 ${
+                    theme === 'dark' 
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-800/50' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  }`}
+                >
+                  <Globe className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Mobile Auth Buttons */}
               <div className="pt-4 space-y-3">
-                <Link to="/auth/login">
+                <Link to="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
                   <Button
                     variant="outline"
-                    className="w-full justify-start"
+                    className="w-full justify-center backdrop-blur-sm"
                   >
-                    <User className="w-4 h-4 mr-2" />
+                    <User className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                     {t.login}
                   </Button>
                 </Link>
                 
-                <Link to="/auth/register">
+                <Link to="/auth/register" onClick={() => setIsMobileMenuOpen(false)}>
                   <Button
-                    variant="outline"
-                    className="w-full justify-start"
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                   >
                     {t.register}
                   </Button>
                 </Link>
                 
-                <Link to="/pricing">
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
+                <Link to="/pricing" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+                    <ShoppingCart className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                     {t.startNow}
                   </Button>
                 </Link>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* AI Floating Particles Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-4 left-1/4 w-1 h-1 bg-blue-400 rounded-full animate-ping opacity-20" style={{animationDelay: '0s', animationDuration: '4s'}}></div>
+        <div className="absolute top-8 right-1/3 w-1 h-1 bg-purple-400 rounded-full animate-ping opacity-20" style={{animationDelay: '1s', animationDuration: '3s'}}></div>
+        <div className="absolute top-6 left-2/3 w-1 h-1 bg-pink-400 rounded-full animate-ping opacity-20" style={{animationDelay: '2s', animationDuration: '5s'}}></div>
       </div>
     </header>
   );
