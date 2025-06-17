@@ -35,7 +35,7 @@ export const ChatInput = ({
         <Input
           value={input}
           onChange={(e) => onInputChange(e.target.value)}
-          onKeyPress={onKeyPress}
+          onKeyDown={onKeyPress}
           placeholder={placeholder}
           className={`flex-1 transition-colors ${
             theme === 'dark' 

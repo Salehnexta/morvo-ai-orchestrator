@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MorvoAIService } from "@/services/morvoAIService";
 import { CustomerDataService } from "@/services/customerDataService";
@@ -472,12 +471,7 @@ export const ChatInterface = ({ onBack, onDashboardUpdate }: ChatInterfaceProps)
         placeholder={remainingTokens <= 0 ? t.noTokens : connectionStatus === 'disconnected' ? 'غير متصل...' : t.placeholder}
         onInputChange={setInput}
         onSend={handleSend}
-        onKeyPress={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-          }
-        }}
+        onKeyPress={handleKeyPress}
       />
     </div>
   );
