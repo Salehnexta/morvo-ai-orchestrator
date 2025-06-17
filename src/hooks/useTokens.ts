@@ -31,30 +31,37 @@ export const useTokens = () => {
         return;
       }
 
-      const { data: subscription, error } = await supabase
-        .from('user_subscriptions')
-        .select(`
-          status,
-          clients!inner(id, quota_limit, quota_used),
-          subscription_plans!inner(plan_name, limits)
-        `)
-        .eq('client_id', session.user.id)
-        .eq('status', 'active')
+      // First try to get client data directly
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('id, quota_limit, quota_used')
+        .eq('user_id', session.user.id)
         .single();
 
-      if (error) {
-        console.error('Error fetching token data:', error);
+      if (clientError || !clientData) {
+        console.error('Error fetching client data:', clientError);
         setLoading(false);
         return;
       }
 
-      if (subscription) {
-        setTokenData({
-          client: subscription.clients,
-          plan: subscription.subscription_plans,
-          subscription: { status: subscription.status }
-        });
-      }
+      // Try to get subscription data, but don't fail if it doesn't exist
+      const { data: subscription } = await supabase
+        .from('user_subscriptions')
+        .select(`
+          status,
+          subscription_plans!inner(plan_name, limits)
+        `)
+        .eq('client_id', clientData.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      // Set token data with client info and subscription if available
+      setTokenData({
+        client: clientData,
+        plan: subscription?.subscription_plans || { plan_name: 'Free', limits: {} },
+        subscription: { status: subscription?.status || 'active' }
+      });
+
     } catch (error) {
       console.error('Token fetch error:', error);
     } finally {
@@ -63,7 +70,10 @@ export const useTokens = () => {
   };
 
   const deductTokens = async (amount: number = 1): Promise<boolean> => {
-    if (!tokenData?.client) return false;
+    if (!tokenData?.client) {
+      console.log('No token data available');
+      return false;
+    }
 
     const newUsed = tokenData.client.quota_used + amount;
     
@@ -102,7 +112,7 @@ export const useTokens = () => {
 
   const getRemainingTokens = (): number => {
     if (!tokenData?.client) return 0;
-    return tokenData.client.quota_limit - tokenData.client.quota_used;
+    return Math.max(0, tokenData.client.quota_limit - tokenData.client.quota_used);
   };
 
   const getTokenPercentage = (): number => {
@@ -113,6 +123,10 @@ export const useTokens = () => {
 
   const isLowTokens = (): boolean => {
     return getTokenPercentage() < 10;
+  };
+
+  const hasTokens = (): boolean => {
+    return getRemainingTokens() > 0;
   };
 
   useEffect(() => {
@@ -126,6 +140,7 @@ export const useTokens = () => {
     getRemainingTokens,
     getTokenPercentage,
     isLowTokens,
+    hasTokens,
     refetch: fetchTokenData
   };
 };
