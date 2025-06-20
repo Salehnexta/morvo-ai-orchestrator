@@ -63,7 +63,13 @@ export const useOnboarding = () => {
       }
 
       if (data) {
-        setOnboardingData(data);
+        // Type conversion for JSONB fields
+        const typedData: OnboardingProgress = {
+          ...data,
+          completed_steps: (data.completed_steps as any) || [],
+          step_data: (data.step_data as any) || {},
+        };
+        setOnboardingData(typedData);
         setIsFirstTime(false);
       } else {
         // First time user - create onboarding record
@@ -110,7 +116,14 @@ export const useOnboarding = () => {
         return;
       }
 
-      setOnboardingData(data);
+      if (data) {
+        const typedData: OnboardingProgress = {
+          ...data,
+          completed_steps: (data.completed_steps as any) || [],
+          step_data: (data.step_data as any) || {},
+        };
+        setOnboardingData(typedData);
+      }
     } catch (error) {
       console.error('Error in createOnboardingRecord:', error);
     }
@@ -150,7 +163,14 @@ export const useOnboarding = () => {
         return false;
       }
 
-      setOnboardingData(data);
+      if (data) {
+        const typedData: OnboardingProgress = {
+          ...data,
+          completed_steps: (data.completed_steps as any) || [],
+          step_data: (data.step_data as any) || {},
+        };
+        setOnboardingData(typedData);
+      }
 
       // Log interaction
       await logInteraction('onboarding_step_completed', {

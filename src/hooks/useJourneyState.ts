@@ -44,7 +44,13 @@ export const useJourneyState = () => {
       }
 
       if (data) {
-        setJourneyState(data);
+        // Type conversion for JSONB fields
+        const typedData: JourneyState = {
+          ...data,
+          state_data: (data.state_data as any) || {},
+          device_info: (data.device_info as any) || {},
+        };
+        setJourneyState(typedData);
       }
     } catch (error) {
       console.error('Error in fetchJourneyState:', error);
@@ -96,7 +102,14 @@ export const useJourneyState = () => {
           return;
         }
 
-        setJourneyState(data);
+        if (data) {
+          const typedData: JourneyState = {
+            ...data,
+            state_data: (data.state_data as any) || {},
+            device_info: (data.device_info as any) || {},
+          };
+          setJourneyState(typedData);
+        }
       } else {
         // Create new state
         const { data, error } = await supabase
@@ -115,7 +128,14 @@ export const useJourneyState = () => {
           return;
         }
 
-        setJourneyState(data);
+        if (data) {
+          const typedData: JourneyState = {
+            ...data,
+            state_data: (data.state_data as any) || {},
+            device_info: (data.device_info as any) || {},
+          };
+          setJourneyState(typedData);
+        }
       }
     } catch (error) {
       console.error('Error in updateJourneyState:', error);
