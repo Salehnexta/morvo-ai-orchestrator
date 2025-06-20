@@ -2,13 +2,18 @@
 import { ChatInterface } from "@/components/ChatInterface";
 import { DynamicContentPanel } from "@/components/DynamicContentPanel";
 import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { useJourneyState } from "@/hooks/useJourneyState";
 import { useState } from "react";
 
 const Dashboard = () => {
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
+  const { isComplete, loading: onboardingLoading } = useOnboarding();
+  const { updateState } = useJourneyState();
   const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test'>('hero');
 
   const handleContentTypeChange = (type: string) => {
@@ -46,6 +51,21 @@ const Dashboard = () => {
     handleContentTypeChange(action);
   };
 
+  const handleOnboardingComplete = async () => {
+    await updateState('dashboard', { onboarding_completed: true });
+    // The component will re-render and show the main dashboard
+  };
+
+  // Show onboarding if not completed
+  if (!onboardingLoading && !isComplete) {
+    return (
+      <SimpleAuthWrapper>
+        <OnboardingWizard onComplete={handleOnboardingComplete} />
+      </SimpleAuthWrapper>
+    );
+  }
+
+  // Show main dashboard for completed users
   return (
     <SimpleAuthWrapper>
       <div 

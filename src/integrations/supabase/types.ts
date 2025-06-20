@@ -1694,6 +1694,59 @@ export type Database = {
           },
         ]
       }
+      marketing_insights: {
+        Row: {
+          actionable_steps: Json | null
+          client_id: string
+          confidence_score: number | null
+          created_at: string
+          data_sources: Json | null
+          id: string
+          insight_description: string
+          insight_title: string
+          insight_type: string
+          is_active: boolean | null
+          priority_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          actionable_steps?: Json | null
+          client_id: string
+          confidence_score?: number | null
+          created_at?: string
+          data_sources?: Json | null
+          id?: string
+          insight_description: string
+          insight_title: string
+          insight_type: string
+          is_active?: boolean | null
+          priority_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          actionable_steps?: Json | null
+          client_id?: string
+          confidence_score?: number | null
+          created_at?: string
+          data_sources?: Json | null
+          id?: string
+          insight_description?: string
+          insight_title?: string
+          insight_type?: string
+          is_active?: boolean | null
+          priority_score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_insights_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           client_id: string
@@ -1776,6 +1829,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_progress: {
+        Row: {
+          client_id: string
+          completed_at: string | null
+          completed_steps: Json
+          completion_percentage: number
+          created_at: string
+          current_step: number
+          id: string
+          is_completed: boolean
+          step_data: Json
+          total_steps: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          completed_at?: string | null
+          completed_steps?: Json
+          completion_percentage?: number
+          created_at?: string
+          current_step?: number
+          id?: string
+          is_completed?: boolean
+          step_data?: Json
+          total_steps?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          completed_at?: string | null
+          completed_steps?: Json
+          completion_percentage?: number
+          created_at?: string
+          current_step?: number
+          id?: string
+          is_completed?: boolean
+          step_data?: Json
+          total_steps?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_progress_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -2564,6 +2670,97 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_interactions: {
+        Row: {
+          client_id: string
+          id: string
+          interaction_data: Json
+          interaction_type: string
+          page_url: string | null
+          session_id: string | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          interaction_data?: Json
+          interaction_type: string
+          page_url?: string | null
+          session_id?: string | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          interaction_data?: Json
+          interaction_type?: string
+          page_url?: string | null
+          session_id?: string | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_journey_states: {
+        Row: {
+          client_id: string
+          created_at: string
+          current_state: string
+          device_info: Json | null
+          id: string
+          journey_type: string
+          last_interaction_at: string
+          session_id: string | null
+          state_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          current_state: string
+          device_info?: Json | null
+          id?: string
+          journey_type?: string
+          last_interaction_at?: string
+          session_id?: string | null
+          state_data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          current_state?: string
+          device_info?: Json | null
+          id?: string
+          journey_type?: string
+          last_interaction_at?: string
+          session_id?: string | null
+          state_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_journey_states_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

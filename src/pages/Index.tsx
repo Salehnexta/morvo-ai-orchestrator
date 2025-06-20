@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,13 +5,31 @@ import { ChatInterface } from '@/components/ChatInterface';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [showChat, setShowChat] = useState(false);
   const { language } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleStartChat = () => {
-    setShowChat(true);
+    if (user) {
+      // If user is logged in, go to dashboard
+      navigate('/dashboard');
+    } else {
+      // If not logged in, show inline chat
+      setShowChat(true);
+    }
+  };
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth/register');
+    }
   };
 
   return (
@@ -50,22 +67,28 @@ const Index = () => {
             </p>
             <div className="mt-12 flex flex-wrap gap-4 justify-center">
               <Button 
-                onClick={() => setShowChat(true)}
+                onClick={handleGetStarted}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <MessageCircle className="mr-2 h-5 w-5" />
-                {language === 'ar' ? 'جرب مورفو الآن' : 'Try Morvo Now'}
+                {user 
+                  ? (language === 'ar' ? 'الذهاب إلى لوحة التحكم' : 'Go to Dashboard')
+                  : (language === 'ar' ? 'ابدأ مجاناً' : 'Start Free')
+                }
               </Button>
-              <Button 
-                variant="outline" 
-                className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-white/20 hover:border-white/30 text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                {language === 'ar' ? 'اكتشف المزيد' : 'Learn More'}
-              </Button>
+              {!user && (
+                <Button 
+                  onClick={() => setShowChat(true)}
+                  variant="outline" 
+                  className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-white/20 hover:border-white/30 text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  {language === 'ar' ? 'جرب مورفو الآن' : 'Try Morvo Now'}
+                </Button>
+              )}
             </div>
           </div>
 
-          {showChat ? (
+          {showChat && !user ? (
             <div className="mt-12 max-w-4xl mx-auto">
               <div className="bg-black/20 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
                 <div className="p-6 border-b border-white/10 flex items-center justify-between">
