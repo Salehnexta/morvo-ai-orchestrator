@@ -722,6 +722,191 @@ export type Database = {
           },
         ]
       }
+      business_insights: {
+        Row: {
+          business_profile_id: string
+          client_id: string
+          confidence_score: number | null
+          created_at: string | null
+          data_sources: Json | null
+          description: string
+          id: string
+          impact_score: number | null
+          insight_category: string
+          insight_type: string
+          metrics: Json | null
+          priority_score: number | null
+          recommendations: Json | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_profile_id: string
+          client_id: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_sources?: Json | null
+          description: string
+          id?: string
+          impact_score?: number | null
+          insight_category: string
+          insight_type: string
+          metrics?: Json | null
+          priority_score?: number | null
+          recommendations?: Json | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_profile_id?: string
+          client_id?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_sources?: Json | null
+          description?: string
+          id?: string
+          impact_score?: number | null
+          insight_category?: string
+          insight_type?: string
+          metrics?: Json | null
+          priority_score?: number | null
+          recommendations?: Json | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_insights_business_profile_id_fkey"
+            columns: ["business_profile_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_insights_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_profiles: {
+        Row: {
+          budget_currency: string | null
+          business_maturity_score: number | null
+          business_type: string | null
+          client_id: string
+          company_name: string
+          company_size: string | null
+          competitive_advantages: string[] | null
+          created_at: string | null
+          current_marketing_budget: number | null
+          current_marketing_channels: Json | null
+          founded_year: number | null
+          geographic_targets: string[] | null
+          id: string
+          industry: string | null
+          location: string | null
+          main_competitors: string[] | null
+          market_positioning: string | null
+          marketing_experience: string | null
+          marketing_readiness_score: number | null
+          marketing_tools_used: string[] | null
+          monthly_revenue: number | null
+          onboarding_completed: boolean | null
+          onboarding_completed_at: string | null
+          previous_marketing_campaigns: Json | null
+          pricing_strategy: string | null
+          primary_marketing_goals: string[] | null
+          products_services: Json | null
+          profile_completeness_score: number | null
+          target_audience: Json | null
+          unique_value_proposition: string | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          budget_currency?: string | null
+          business_maturity_score?: number | null
+          business_type?: string | null
+          client_id: string
+          company_name: string
+          company_size?: string | null
+          competitive_advantages?: string[] | null
+          created_at?: string | null
+          current_marketing_budget?: number | null
+          current_marketing_channels?: Json | null
+          founded_year?: number | null
+          geographic_targets?: string[] | null
+          id?: string
+          industry?: string | null
+          location?: string | null
+          main_competitors?: string[] | null
+          market_positioning?: string | null
+          marketing_experience?: string | null
+          marketing_readiness_score?: number | null
+          marketing_tools_used?: string[] | null
+          monthly_revenue?: number | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          previous_marketing_campaigns?: Json | null
+          pricing_strategy?: string | null
+          primary_marketing_goals?: string[] | null
+          products_services?: Json | null
+          profile_completeness_score?: number | null
+          target_audience?: Json | null
+          unique_value_proposition?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          budget_currency?: string | null
+          business_maturity_score?: number | null
+          business_type?: string | null
+          client_id?: string
+          company_name?: string
+          company_size?: string | null
+          competitive_advantages?: string[] | null
+          created_at?: string | null
+          current_marketing_budget?: number | null
+          current_marketing_channels?: Json | null
+          founded_year?: number | null
+          geographic_targets?: string[] | null
+          id?: string
+          industry?: string | null
+          location?: string | null
+          main_competitors?: string[] | null
+          market_positioning?: string | null
+          marketing_experience?: string | null
+          marketing_readiness_score?: number | null
+          marketing_tools_used?: string[] | null
+          monthly_revenue?: number | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          previous_marketing_campaigns?: Json | null
+          pricing_strategy?: string | null
+          primary_marketing_goals?: string[] | null
+          products_services?: Json | null
+          profile_completeness_score?: number | null
+          target_audience?: Json | null
+          unique_value_proposition?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chart_data: {
         Row: {
           agent_id: string
@@ -760,10 +945,55 @@ export type Database = {
           },
         ]
       }
+      client_context: {
+        Row: {
+          business_type: string | null
+          client_id: string
+          company_size: string | null
+          created_at: string | null
+          id: string
+          industry: string | null
+          marketing_budget: string | null
+          preferences: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_type?: string | null
+          client_id: string
+          company_size?: string | null
+          created_at?: string | null
+          id?: string
+          industry?: string | null
+          marketing_budget?: string | null
+          preferences?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_type?: string | null
+          client_id?: string
+          company_size?: string | null
+          created_at?: string | null
+          id?: string
+          industry?: string | null
+          marketing_budget?: string | null
+          preferences?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_context_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           active: boolean
           api_key: string
+          business_type: string | null
           created_at: string
           id: string
           name: string
@@ -775,6 +1005,7 @@ export type Database = {
         Insert: {
           active?: boolean
           api_key?: string
+          business_type?: string | null
           created_at?: string
           id?: string
           name: string
@@ -786,6 +1017,7 @@ export type Database = {
         Update: {
           active?: boolean
           api_key?: string
+          business_type?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -1551,6 +1783,72 @@ export type Database = {
           },
         ]
       }
+      onboarding_sessions: {
+        Row: {
+          business_profile_id: string | null
+          client_id: string
+          completed_at: string | null
+          completed_steps: number | null
+          created_at: string | null
+          current_step: string
+          id: string
+          last_activity: string | null
+          session_data: Json | null
+          session_type: string
+          started_at: string | null
+          status: string | null
+          total_steps: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_profile_id?: string | null
+          client_id: string
+          completed_at?: string | null
+          completed_steps?: number | null
+          created_at?: string | null
+          current_step: string
+          id?: string
+          last_activity?: string | null
+          session_data?: Json | null
+          session_type: string
+          started_at?: string | null
+          status?: string | null
+          total_steps?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_profile_id?: string | null
+          client_id?: string
+          completed_at?: string | null
+          completed_steps?: number | null
+          created_at?: string | null
+          current_step?: string
+          id?: string
+          last_activity?: string | null
+          session_data?: Json | null
+          session_type?: string
+          started_at?: string | null
+          status?: string | null
+          total_steps?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_sessions_business_profile_id_fkey"
+            columns: ["business_profile_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       optimization_recommendations: {
         Row: {
           client_id: string | null
@@ -1848,6 +2146,88 @@ export type Database = {
           {
             foreignKeyName: "semrush_data_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_data: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          data: Json
+          data_type: string
+          domain: string
+          id: string
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          data: Json
+          data_type: string
+          domain: string
+          id?: string
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          data?: Json
+          data_type?: string
+          domain?: string
+          id?: string
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_seo_data_client"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seranking_usage: {
+        Row: {
+          api_key_hash: string
+          client_id: string
+          endpoint: string
+          error_message: string | null
+          id: string
+          request_timestamp: string | null
+          response_status: number | null
+          units_consumed: number | null
+        }
+        Insert: {
+          api_key_hash: string
+          client_id: string
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          request_timestamp?: string | null
+          response_status?: number | null
+          units_consumed?: number | null
+        }
+        Update: {
+          api_key_hash?: string
+          client_id?: string
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          request_timestamp?: string | null
+          response_status?: number | null
+          units_consumed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_seranking_usage_client"
+            columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
@@ -2343,7 +2723,25 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      seo_data_summary: {
+        Row: {
+          available_data_types: string[] | null
+          client_id: string | null
+          domain: string | null
+          last_updated: string | null
+          source: string | null
+          total_data_types: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_seo_data_client"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_feature_access: {
@@ -2380,6 +2778,10 @@ export type Database = {
         Returns: boolean
       }
       link_clients_to_auth: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      refresh_seo_data_summary: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
