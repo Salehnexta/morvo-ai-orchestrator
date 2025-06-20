@@ -70,11 +70,18 @@ export const useTokens = () => {
         return;
       }
 
+      // Safely handle the limits field
+      const planLimits = subscriptionData.subscription_plans?.limits;
+      const safeLimits: Record<string, any> = 
+        typeof planLimits === 'object' && planLimits !== null && !Array.isArray(planLimits)
+          ? planLimits as Record<string, any>
+          : {};
+
       setTokenData({
         client: clientData,
         plan: {
           plan_name: subscriptionData.subscription_plans?.plan_name || 'Free',
-          limits: subscriptionData.subscription_plans?.limits || {}
+          limits: safeLimits
         }
       });
 
