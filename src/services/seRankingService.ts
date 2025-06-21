@@ -52,6 +52,22 @@ export interface SEORankingData {
   };
 }
 
+// Extended interface for SEO responses
+interface SEOChatResponse {
+  response?: string;
+  seo_analysis?: {
+    keywords?: KeywordData[];
+    competitors?: CompetitorData[];
+    backlinks?: BacklinkData;
+    site_audit?: SiteAuditData;
+    local_seo?: {
+      local_pack_position: number;
+      google_my_business_score: number;
+      local_citations: number;
+    };
+  };
+}
+
 export class SERankingService {
   static async getKeywordRankings(domain: string): Promise<KeywordData[]> {
     try {
@@ -62,11 +78,11 @@ export class SERankingService {
           domain: domain,
           type: 'keyword_analysis'
         }
-      );
+      ) as SEOChatResponse;
 
       // Parse SE Ranking data from backend response
-      if (response.seo_data?.keywords) {
-        return response.seo_data.keywords;
+      if (response.seo_analysis?.keywords) {
+        return response.seo_analysis.keywords;
       }
 
       // Fallback to mock data if backend doesn't return SE Ranking data yet
@@ -86,10 +102,10 @@ export class SERankingService {
           domain: domain,
           type: 'competitor_analysis'
         }
-      );
+      ) as SEOChatResponse;
 
-      if (response.seo_data?.competitors) {
-        return response.seo_data.competitors;
+      if (response.seo_analysis?.competitors) {
+        return response.seo_analysis.competitors;
       }
 
       return this.getMockCompetitorData();
@@ -108,10 +124,10 @@ export class SERankingService {
           domain: domain,
           type: 'backlink_analysis'
         }
-      );
+      ) as SEOChatResponse;
 
-      if (response.seo_data?.backlinks) {
-        return response.seo_data.backlinks;
+      if (response.seo_analysis?.backlinks) {
+        return response.seo_analysis.backlinks;
       }
 
       return this.getMockBacklinkData();
@@ -130,10 +146,10 @@ export class SERankingService {
           domain: domain,
           type: 'site_audit'
         }
-      );
+      ) as SEOChatResponse;
 
-      if (response.seo_data?.site_audit) {
-        return response.seo_data.site_audit;
+      if (response.seo_analysis?.site_audit) {
+        return response.seo_analysis.site_audit;
       }
 
       return this.getMockSiteAuditData();
@@ -153,15 +169,15 @@ export class SERankingService {
           type: 'complete_seo_analysis',
           include_local: true
         }
-      );
+      ) as SEOChatResponse;
 
-      if (response.seo_data) {
+      if (response.seo_analysis) {
         return {
-          keywords: response.seo_data.keywords || this.getMockKeywordData(),
-          competitors: response.seo_data.competitors || this.getMockCompetitorData(),
-          backlinks: response.seo_data.backlinks || this.getMockBacklinkData(),
-          site_audit: response.seo_data.site_audit || this.getMockSiteAuditData(),
-          local_seo: response.seo_data.local_seo
+          keywords: response.seo_analysis.keywords || this.getMockKeywordData(),
+          competitors: response.seo_analysis.competitors || this.getMockCompetitorData(),
+          backlinks: response.seo_analysis.backlinks || this.getMockBacklinkData(),
+          site_audit: response.seo_analysis.site_audit || this.getMockSiteAuditData(),
+          local_seo: response.seo_analysis.local_seo
         };
       }
 

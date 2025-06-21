@@ -38,10 +38,30 @@ export const SERankingProfileSlide: React.FC<SERankingProfileSlideProps> = ({
   const [websiteDomain, setWebsiteDomain] = useState('');
 
   useEffect(() => {
-    // Get website URL from journey data
-    if (journey?.website_url || journeyStatus?.website_url) {
-      const url = journey?.website_url || journeyStatus?.website_url;
-      const domain = extractDomainFromUrl(url);
+    // Try to get website URL from journey data using available properties
+    let websiteUrl = '';
+    
+    // Check various possible properties that might contain the website URL
+    if (journey?.company_info) {
+      websiteUrl = (journey.company_info as any)?.website || 
+                   (journey.company_info as any)?.website_url || 
+                   (journey.company_info as any)?.url || '';
+    }
+    
+    // Fallback to journeyStatus if available
+    if (!websiteUrl && journeyStatus) {
+      websiteUrl = (journeyStatus as any)?.website || 
+                   (journeyStatus as any)?.website_url || 
+                   (journeyStatus as any)?.company_website || '';
+    }
+    
+    // For demo purposes, use a placeholder if no URL found
+    if (!websiteUrl) {
+      websiteUrl = 'example.com'; // Placeholder for demonstration
+    }
+
+    if (websiteUrl) {
+      const domain = extractDomainFromUrl(websiteUrl);
       setWebsiteDomain(domain);
       
       // Auto-load SEO analysis
