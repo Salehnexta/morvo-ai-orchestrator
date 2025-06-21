@@ -44,6 +44,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionChecked, setConnectionChecked] = useState(false);
+  const [chatInitialized, setChatInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAuth();
@@ -58,7 +59,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setGreeting,
     analyzeWebsite,
     saveAnswer,
-    generateStrategy
+    generateStrategy,
+    loading: journeyLoading
   } = useJourney();
   const { 
     enhanceConversation, 
@@ -97,12 +99,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Initialize chat with journey-aware welcome message
   useEffect(() => {
     const initializeChat = async () => {
+      if (chatInitialized || journeyLoading || !user) {
+        return;
+      }
+
       try {
         console.log('🚀 Initializing journey-aware chat...');
         const isHealthy = await MorvoAIService.testConnection();
         setIsConnected(isHealthy);
         
-        if (isHealthy && user && messages.length === 0) {
+        if (messages.length === 0) {
           let welcomeContent: string;
           
           if (isOnboardingComplete) {
@@ -143,7 +149,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         setIsConnected(false);
         
         // Fallback welcome message
-        if (user && messages.length === 0) {
+        if (messages.length === 0) {
           const fallbackMessage: MessageData = {
             id: Date.now().toString(),
             content: 'مرحباً بك في مورفو! أعمل حالياً في وضع محدود. سأحاول مساعدتك قدر الإمكان.',
@@ -154,13 +160,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       } finally {
         setConnectionChecked(true);
+        setChatInitialized(true);
       }
     };
 
-    if (user) {
-      initializeChat();
-    }
-  }, [user, isOnboardingComplete, currentPhase, journeyStatus, messages.length, emotionalContext]);
+    initializeChat();
+  }, [user, isOnboardingComplete, currentPhase, journeyStatus, messages.length, emotionalContext, chatInitialized, journeyLoading]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || !user) {
@@ -289,15 +294,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleJourneySpecificMessage = async (message: string): Promise<string | null> => {
     if (isOnboardingComplete) return null;
 
-    const lowerMessage = message.toLowerCase();
+    const cleanMessage = message.trim();
 
     switch (currentPhase) {
       case 'welcome':
       case 'greeting_preference':
-        if (message.trim()) {
-          const success = await setGreeting(message.trim());
+        if (cleanMessage) {
+          console.log('🔄 Saving greeting preference:', cleanMessage);
+          const success = await setGreeting(cleanMessage);
           if (success) {
-            return `شكراً لك! سأناديك ${message.trim()} من الآن فصاعداً. 
+            return `شكراً لك! سأناديك ${cleanMessage} من الآن فصاعداً. 
 
 الآن، لأتمكن من تقديم أفضل استراتيجية تسويقية لك، أحتاج لتحليل موقعك الإلكتروني أو نشاطك التجاري.
 
@@ -307,8 +313,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         break;
 
       case 'website_analysis':
-        if (lowerMessage.includes('http') || lowerMessage.includes('www') || lowerMessage.includes('.com') || lowerMessage.includes('.sa')) {
-          const url = extractUrlFromMessage(message);
+        if (cleanMessage.includes('http') || cleanMessage.includes('www') || cleanMessage.includes('.com') || cleanMessage.includes('.sa')) {
+          const url = extractUrlFromMessage(cleanMessage);
           if (url) {
             const success = await analyzeWebsite(url);
             if (success) {
@@ -334,8 +340,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       case 'profile_completion':
         // Handle profile questions
-        if (message.trim()) {
-          await saveAnswer('primary_goal', message);
+        if (cleanMessage) {
+          await saveAnswer('primary_goal', cleanMessage);
           return `شكراً لك على هذه المعلومة المهمة!
 
 سؤال آخر: ما هي الميزانية الشهرية المخصصة للتسويق الرقمي؟

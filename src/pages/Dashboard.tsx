@@ -11,21 +11,42 @@ import { Loader2 } from "lucide-react";
 const Dashboard = () => {
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
-  const { loading, isOnboardingComplete, currentPhase, startJourney, journey } = useJourney();
+  const { 
+    loading, 
+    isOnboardingComplete, 
+    currentPhase, 
+    startJourney, 
+    hasExistingJourney,
+    journey 
+  } = useJourney();
   
   const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test'>('hero');
+  const [journeyInitialized, setJourneyInitialized] = useState(false);
 
-  // Auto-start journey for new users
+  // Auto-start journey for new users (only once)
   useEffect(() => {
     const initializeJourney = async () => {
-      if (!loading && !journey && !isOnboardingComplete) {
+      if (loading || journeyInitialized) {
+        return;
+      }
+
+      console.log('🔍 Checking journey initialization...', {
+        hasExistingJourney,
+        isOnboardingComplete,
+        journey: !!journey
+      });
+
+      // Only start journey if user doesn't have one and hasn't completed onboarding
+      if (!hasExistingJourney && !isOnboardingComplete && !journey) {
         console.log('🚀 Auto-starting journey for new user');
         await startJourney();
       }
+
+      setJourneyInitialized(true);
     };
 
     initializeJourney();
-  }, [loading, journey, isOnboardingComplete, startJourney]);
+  }, [loading, hasExistingJourney, isOnboardingComplete, journey, startJourney, journeyInitialized]);
 
   const handleContentTypeChange = (type: string) => {
     console.log('🎯 Content type change:', type);
