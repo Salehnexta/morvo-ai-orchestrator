@@ -9,11 +9,15 @@ import { useToast } from '@/hooks/use-toast';
 
 interface CompletionStepProps {
   onComplete?: () => void;
-  data: any;
-  onDataChange: (data: any) => void;
+  data?: any;
+  onDataChange?: (data: any) => void;
 }
 
-export const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete, onDataChange }) => {
+export const CompletionStep: React.FC<CompletionStepProps> = ({ 
+  onComplete, 
+  data = {}, 
+  onDataChange = () => {} 
+}) => {
   const { language, isRTL } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();

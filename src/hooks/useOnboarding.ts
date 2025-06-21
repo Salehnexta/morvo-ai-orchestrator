@@ -3,10 +3,31 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
+interface OnboardingStep {
+  id: number;
+  component: string;
+  required: boolean;
+}
+
 export const useOnboarding = () => {
   const { user } = useAuth();
   const [isComplete, setIsComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Define the onboarding steps
+  const steps: OnboardingStep[] = [
+    { id: 1, component: 'Welcome', required: true },
+    { id: 2, component: 'CompanyInfo', required: true },
+    { id: 3, component: 'MarketingGoals', required: true },
+    { id: 4, component: 'TargetAudience', required: true },
+    { id: 5, component: 'Budget', required: true },
+    { id: 6, component: 'Channels', required: true },
+    { id: 7, component: 'Experience', required: true },
+    { id: 8, component: 'Completion', required: true }
+  ];
+
+  const completionPercentage = (currentStep / steps.length) * 100;
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -33,7 +54,10 @@ export const useOnboarding = () => {
         }
 
         // Check if onboarding is marked as completed
-        const onboardingCompleted = profileData?.profile_data?.onboarding_completed === true;
+        let onboardingCompleted = false;
+        if (profileData?.profile_data && typeof profileData.profile_data === 'object') {
+          onboardingCompleted = (profileData.profile_data as any)?.onboarding_completed === true;
+        }
         
         console.log('📊 Onboarding status:', {
           profileExists: !!profileData,
@@ -53,6 +77,19 @@ export const useOnboarding = () => {
 
     checkOnboardingStatus();
   }, [user]);
+
+  const updateStep = async (stepId: number, stepData: any) => {
+    console.log('📝 Updating step:', stepId, stepData);
+    // Here you could save step data to the database if needed
+    setCurrentStep(prev => Math.min(prev + 1, steps.length));
+    return true;
+  };
+
+  const skipStep = async (stepId: number) => {
+    console.log('⏭️ Skipping step:', stepId);
+    setCurrentStep(prev => Math.min(prev + 1, steps.length));
+    return true;
+  };
 
   const markComplete = async () => {
     if (!user) return false;
@@ -100,6 +137,11 @@ export const useOnboarding = () => {
   return {
     isComplete,
     loading,
-    markComplete
+    markComplete,
+    steps,
+    currentStep,
+    completionPercentage,
+    updateStep,
+    skipStep
   };
 };
