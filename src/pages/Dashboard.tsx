@@ -12,7 +12,7 @@ import { useState } from "react";
 const Dashboard = () => {
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
-  const { isComplete, loading: onboardingLoading } = useOnboarding();
+  const { isComplete, loading: onboardingLoading, markComplete } = useOnboarding();
   const { updateState } = useJourneyState();
   const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test'>('hero');
 
@@ -52,12 +52,23 @@ const Dashboard = () => {
   };
 
   const handleOnboardingComplete = async () => {
-    await updateState('dashboard', { onboarding_completed: true });
-    // The component will re-render and show the main dashboard
+    console.log('🎉 Onboarding completion requested');
+    
+    // Mark as complete in the database
+    const success = await markComplete();
+    
+    if (success) {
+      console.log('✅ Onboarding marked as complete');
+      // Update journey state
+      await updateState('dashboard', { onboarding_completed: true });
+    } else {
+      console.error('❌ Failed to mark onboarding as complete');
+    }
   };
 
   // Show onboarding if not completed
   if (!onboardingLoading && !isComplete) {
+    console.log('🚀 Showing onboarding wizard');
     return (
       <SimpleAuthWrapper>
         <OnboardingWizard onComplete={handleOnboardingComplete} />
@@ -66,6 +77,7 @@ const Dashboard = () => {
   }
 
   // Show main dashboard for completed users
+  console.log('📊 Showing main dashboard');
   return (
     <SimpleAuthWrapper>
       <div 

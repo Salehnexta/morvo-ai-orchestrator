@@ -63,14 +63,34 @@ export const useSmartChat = () => {
     }
   }, []);
 
-  const saveMarketingPreferences = useCallback(async (userId: string, preferences: any) => {
+  const saveMarketingPreferences = useCallback(async (userId: string, preferences: any, clientId?: string) => {
     try {
       setIsLoading(true);
+
+      // Get client_id if not provided
+      let targetClientId = clientId;
+      if (!targetClientId) {
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        
+        if (clientData) {
+          targetClientId = clientData.id;
+        }
+      }
+
+      if (!targetClientId) {
+        console.error('No client_id found for user');
+        return false;
+      }
 
       const { error } = await supabase
         .from('customer_profiles')
         .upsert({
           customer_id: userId,
+          client_id: targetClientId,
           preferences: preferences,
           updated_at: new Date().toISOString()
         });

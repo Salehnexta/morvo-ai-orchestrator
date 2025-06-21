@@ -1,8 +1,11 @@
 
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface CompletionStepProps {
   onComplete?: () => void;
@@ -12,6 +15,8 @@ interface CompletionStepProps {
 
 export const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete, onDataChange }) => {
   const { language, isRTL } = useLanguage();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const content = {
     ar: {
@@ -44,10 +49,98 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete, onDa
 
   const t = content[language];
 
-  const handleComplete = () => {
-    onDataChange({ completed: true, completedAt: new Date().toISOString() });
-    if (onComplete) {
-      onComplete();
+  const handleComplete = async () => {
+    if (!user) {
+      console.error('No user found for onboarding completion');
+      return;
+    }
+
+    try {
+      console.log('🎯 Completing onboarding for user:', user.id);
+      
+      // First, get the client record
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (clientError || !clientData) {
+        console.error('Error finding client record:', clientError);
+        toast({
+          title: "خطأ",
+          description: "حدث خطأ في إتمام عملية الإعداد",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update customer profile to mark onboarding as completed
+      const { error: profileError } = await supabase
+        .from('customer_profiles')
+        .upsert({
+          customer_id: user.id,
+          client_id: clientData.id,
+          profile_data: {
+            onboarding_completed: true,
+            completed_at: new Date().toISOString(),
+            ...data
+          },
+          status: 'active',
+          updated_at: new Date().toISOString()
+        });
+
+      if (profileError) {
+        console.error('Error updating customer profile:', profileError);
+        toast({
+          title: "خطأ",
+          description: "حدث خطأ في حفظ البيانات",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Also update any onboarding journey record if it exists
+      const { error: journeyError } = await supabase
+        .from('onboarding_journeys')
+        .upsert({
+          client_id: clientData.id,
+          is_completed: true,
+          profile_progress: 100,
+          analysis_completed_at: new Date().toISOString()
+        });
+
+      if (journeyError) {
+        console.log('Note: Could not update onboarding journey:', journeyError);
+        // Don't block completion for this error
+      }
+
+      console.log('✅ Onboarding completed successfully');
+      
+      // Update local state
+      onDataChange({ 
+        ...data, 
+        completed: true, 
+        completedAt: new Date().toISOString() 
+      });
+
+      // Call the completion callback
+      if (onComplete) {
+        onComplete();
+      }
+
+      toast({
+        title: "مبروك!",
+        description: "تم إكمال عملية الإعداد بنجاح",
+      });
+      
+    } catch (error) {
+      console.error('Error in handleComplete:', error);
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ غير متوقع",
+        variant: "destructive",
+      });
     }
   };
 

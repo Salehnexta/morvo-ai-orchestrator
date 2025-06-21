@@ -1214,7 +1214,7 @@ export type Database = {
       clients: {
         Row: {
           active: boolean
-          api_key: string
+          api_key: string | null
           business_type: string | null
           company_name: string | null
           created_at: string
@@ -1230,7 +1230,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
-          api_key?: string
+          api_key?: string | null
           business_type?: string | null
           company_name?: string | null
           created_at?: string
@@ -1246,7 +1246,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
-          api_key?: string
+          api_key?: string | null
           business_type?: string | null
           company_name?: string | null
           created_at?: string
@@ -1650,7 +1650,7 @@ export type Database = {
       }
       customer_profiles: {
         Row: {
-          client_id: string
+          client_id: string | null
           created_at: string | null
           customer_id: string | null
           demographics: Json | null
@@ -1663,7 +1663,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          client_id: string
+          client_id?: string | null
           created_at?: string | null
           customer_id?: string | null
           demographics?: Json | null
@@ -1676,7 +1676,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          client_id?: string
+          client_id?: string | null
           created_at?: string | null
           customer_id?: string | null
           demographics?: Json | null
