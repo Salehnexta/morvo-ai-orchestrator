@@ -2,118 +2,163 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { ConversationalOnboarding } from '@/services/conversationalOnboarding';
+
+interface OnboardingData {
+  [key: string]: any;
+}
 
 export const useSmartChat = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [onboardingData, setOnboardingData] = useState<OnboardingData>({});
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const getCustomerProfile = useCallback(async (userId: string) => {
+  const processOnboardingMessage = useCallback(async (message: string) => {
+    if (!user?.id) return null;
+
     try {
-      setIsLoading(true);
+      // Get current onboarding state
+      const nextQuestion = ConversationalOnboarding.getNextQuestion(onboardingData);
       
-      const { data, error } = await supabase
-        .from('customer_profiles')
-        .select('*')
-        .eq('customer_id', userId)
-        .maybeSingle();
+      if (!nextQuestion) return null;
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error getting customer profile:', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error in getCustomerProfile:', error);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const saveMarketingPreferences = useCallback(async (userId: string, preferences: any, clientId?: string) => {
-    try {
-      setIsLoading(true);
-
-      // Get client_id if not provided
-      let targetClientId = clientId;
-      if (!targetClientId) {
-        const { data: clientData } = await supabase
-          .from('clients')
-          .select('id')
-          .eq('user_id', userId)
-          .single();
+      // Extract answer from message
+      const answer = ConversationalOnboarding.extractAnswerFromText(message, nextQuestion);
+      
+      if (answer) {
+        const updatedData = {
+          ...onboardingData,
+          [nextQuestion.field]: answer
+        };
         
-        if (clientData) {
-          targetClientId = clientData.id;
+        setOnboardingData(updatedData);
+
+        // Save to database incrementally
+        await saveOnboardingProgress(updatedData);
+
+        // Check if onboarding is complete
+        if (ConversationalOnboarding.isOnboardingComplete(updatedData)) {
+          await completeOnboarding(updatedData);
+          return {
+            isComplete: true,
+            response: nextQuestion.field === 'completed' ? nextQuestion.question : 
+              'ممتاز! تم حفظ إجابتك. ' + ConversationalOnboarding.getNextQuestion(updatedData)?.question
+          };
         }
+
+        // Get next question
+        const nextQ = ConversationalOnboarding.getNextQuestion(updatedData);
+        return {
+          isComplete: false,
+          response: nextQ ? `ممتاز! تم حفظ إجابتك. ${nextQ.question}` : 
+            'شكراً لك! دعني أراجع معلوماتك وسأعود إليك قريباً.'
+        };
       }
 
-      if (!targetClientId) {
-        console.error('No client_id found for user');
-        return false;
-      }
+      return null;
+    } catch (error) {
+      console.error('Error processing onboarding message:', error);
+      return null;
+    }
+  }, [onboardingData, user?.id]);
+
+  const saveOnboardingProgress = useCallback(async (data: OnboardingData) => {
+    if (!user?.id) return false;
+
+    try {
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!clientData) return false;
 
       const { error } = await supabase
         .from('customer_profiles')
         .upsert({
-          customer_id: userId,
-          client_id: targetClientId,
-          preferences: preferences,
+          customer_id: user.id,
+          client_id: clientData.id,
+          profile_data: {
+            ...data,
+            onboarding_started: true,
+            last_updated: new Date().toISOString()
+          },
+          status: 'active',
           updated_at: new Date().toISOString()
         });
 
-      if (error) {
-        console.error('Error saving marketing preferences:', error);
-        toast({
-          title: "Error Saving Preferences",
-          description: "There was an error saving your marketing preferences.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      toast({
-        title: "Preferences Saved",
-        description: "Your marketing preferences have been successfully saved.",
-      });
-      return true;
+      return !error;
     } catch (error) {
-      console.error('Error in saveMarketingPreferences:', error);
+      console.error('Error saving onboarding progress:', error);
       return false;
-    } finally {
-      setIsLoading(false);
     }
-  }, [toast]);
+  }, [user?.id]);
 
-  const getMarketingPreferences = useCallback(async (userId: string) => {
+  const completeOnboarding = useCallback(async (data: OnboardingData) => {
+    if (!user?.id) return false;
+
     try {
-      setIsLoading(true);
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
 
-      const { data, error } = await supabase
+      if (!clientData) return false;
+
+      const profileData = ConversationalOnboarding.formatProfileData(data);
+      
+      const { error } = await supabase
         .from('customer_profiles')
-        .select('preferences')
-        .eq('customer_id', userId)
-        .maybeSingle();
+        .upsert({
+          customer_id: user.id,
+          client_id: clientData.id,
+          profile_data: profileData,
+          status: 'active',
+          updated_at: new Date().toISOString()
+        });
 
-      if (error) {
-        console.error('Error getting marketing preferences:', error);
-        return null;
+      if (!error) {
+        toast({
+          title: "مبروك!",
+          description: "تم إكمال إعداد ملفك الشخصي بنجاح",
+        });
       }
 
-      return data?.preferences || {};
+      return !error;
     } catch (error) {
-      console.error('Error in getMarketingPreferences:', error);
-      return null;
-    } finally {
-      setIsLoading(false);
+      console.error('Error completing onboarding:', error);
+      return false;
     }
+  }, [user?.id, toast]);
+
+  const getOnboardingProgress = useCallback(() => {
+    const totalQuestions = 7; // Excluding welcome and completion
+    const answeredQuestions = Object.keys(onboardingData).length;
+    return Math.round((answeredQuestions / totalQuestions) * 100);
+  }, [onboardingData]);
+
+  const isOnboardingMessage = useCallback((message: string) => {
+    // Simple heuristics to detect onboarding-related messages
+    const onboardingKeywords = [
+      'شركت', 'مشروع', 'قطاع', 'موظف', 'ميزانية', 'هدف', 'جمهور', 'خبرة',
+      'company', 'business', 'industry', 'budget', 'goal', 'audience', 'experience'
+    ];
+    
+    return onboardingKeywords.some(keyword => 
+      message.toLowerCase().includes(keyword.toLowerCase())
+    );
   }, []);
 
   return {
     isLoading,
-    getCustomerProfile,
-    saveMarketingPreferences,
-    getMarketingPreferences,
+    processOnboardingMessage,
+    getOnboardingProgress,
+    isOnboardingMessage,
+    onboardingData,
+    setOnboardingData
   };
 };

@@ -2,23 +2,20 @@
 import { ChatInterface } from "@/components/ChatInterface";
 import { DynamicContentPanel } from "@/components/DynamicContentPanel";
 import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
-import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useOnboarding } from "@/hooks/useOnboarding";
-import { useJourneyState } from "@/hooks/useJourneyState";
+import { useSmartOnboarding } from "@/hooks/useSmartOnboarding";
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
-  const { isComplete, loading: onboardingLoading, markComplete } = useOnboarding();
-  const { updateState } = useJourneyState();
+  const { status, loading } = useSmartOnboarding();
   const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test'>('hero');
 
   const handleContentTypeChange = (type: string) => {
     console.log('🎯 Content type change:', type);
-    // Handle intent-based content switching from chat
     switch (type) {
       case 'analytics':
       case 'view-analytics':
@@ -51,33 +48,22 @@ const Dashboard = () => {
     handleContentTypeChange(action);
   };
 
-  const handleOnboardingComplete = async () => {
-    console.log('🎉 Onboarding completion requested');
-    
-    // Mark as complete in the database
-    const success = await markComplete();
-    
-    if (success) {
-      console.log('✅ Onboarding marked as complete');
-      // Update journey state
-      await updateState('dashboard', { onboarding_completed: true });
-    } else {
-      console.error('❌ Failed to mark onboarding as complete');
-    }
-  };
-
-  // Show onboarding if not completed
-  if (!onboardingLoading && !isComplete) {
-    console.log('🚀 Showing onboarding wizard');
+  // Show loading while checking onboarding status
+  if (loading) {
     return (
       <SimpleAuthWrapper>
-        <OnboardingWizard onComplete={handleOnboardingComplete} />
+        <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-400" />
+            <p className="text-white">جاري التحقق من حالة حسابك...</p>
+          </div>
+        </div>
       </SimpleAuthWrapper>
     );
   }
 
-  // Show main dashboard for completed users
-  console.log('📊 Showing main dashboard');
+  // Always show the dashboard with chat - onboarding will happen within the chat
+  console.log('📊 Showing dashboard with chat-based onboarding');
   return (
     <SimpleAuthWrapper>
       <div 
@@ -97,17 +83,18 @@ const Dashboard = () => {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
         </div>
 
-        {/* Chat Panel - Left side with enhanced styling */}
+        {/* Chat Panel - Left side with onboarding integrated */}
         <div className="w-1/2 bg-black/30 backdrop-blur-xl border-r border-white/10 relative z-10 shadow-2xl">
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
           <div className="relative z-10 h-full">
             <ChatInterface 
               onContentTypeChange={handleContentTypeChange}
+              onboardingStatus={status}
             />
           </div>
         </div>
 
-        {/* Dynamic Content Panel - Right side with enhanced styling */}
+        {/* Dynamic Content Panel - Right side */}
         <div className="w-1/2 relative z-10">
           <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent"></div>
           <div className="relative z-10 h-full bg-white/5 backdrop-blur-sm">

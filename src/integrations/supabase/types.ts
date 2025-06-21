@@ -3876,6 +3876,7 @@ export type Database = {
       }
       check_usage_limit: {
         Args:
+          | Record<PropertyKey, never>
           | {
               p_client_id: string
               p_feature_name: string

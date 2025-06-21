@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSmartChat } from '@/hooks/useSmartChat';
+import { ConversationalOnboarding } from '@/services/conversationalOnboarding';
 import { MorvoAIService } from '@/services/morvoAIService';
 import { AgentResponse } from '@/services/agent';
 
@@ -26,13 +28,18 @@ interface MessageData {
     estimated_impact: string;
   }>;
   personality_traits?: any;
+  isOnboarding?: boolean;
 }
 
 interface ChatInterfaceProps {
   onContentTypeChange?: (type: string) => void;
+  onboardingStatus?: any;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChange }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
+  onContentTypeChange, 
+  onboardingStatus 
+}) => {
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +53,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
   const { toast } = useToast();
+  const { processOnboardingMessage, isOnboardingMessage } = useSmartChat();
 
   const content = {
     ar: {
@@ -82,21 +90,33 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
     scrollToBottom();
   }, [messages]);
 
-  // Check connection and initialize welcome message
+  // Initialize chat with appropriate welcome message
   useEffect(() => {
-    const checkConnection = async () => {
+    const initializeChat = async () => {
       try {
         const isHealthy = await MorvoAIService.testConnection();
         setIsConnected(isHealthy);
         
-        // Add welcome message for completed onboarding users
         if (isHealthy && user && messages.length === 0) {
+          let welcomeContent = '';
+          
+          // Determine welcome message based on onboarding status
+          if (!onboardingStatus || onboardingStatus.needs_setup) {
+            welcomeContent = ConversationalOnboarding.getWelcomeMessage();
+          } else if (!onboardingStatus.onboarding_completed) {
+            welcomeContent = 'مرحباً بك مرة أخرى! دعنا نكمل إعداد ملفك الشخصي. من أين توقفنا؟';
+          } else {
+            welcomeContent = 'مرحباً بك في مورفو! أنا مساعدك الذكي للتسويق الرقمي. كيف يمكنني مساعدتك اليوم؟';
+          }
+
           const welcomeMessage: MessageData = {
             id: Date.now().toString(),
-            content: 'مرحباً بك في مورفو! أنا مساعدك الذكي للتسويق الرقمي. كيف يمكنني مساعدتك اليوم؟',
+            content: welcomeContent,
             sender: 'agent',
             timestamp: new Date(),
+            isOnboarding: !onboardingStatus?.onboarding_completed
           };
+          
           setMessages([welcomeMessage]);
         }
       } catch (error) {
@@ -108,9 +128,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
     };
 
     if (user) {
-      checkConnection();
+      initializeChat();
     }
-  }, [user, messages.length]);
+  }, [user, onboardingStatus, messages.length]);
 
   const handleTokensUpdated = (remaining: number, limit: number) => {
     setHasTokens(remaining > 0);
@@ -134,37 +154,50 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
     setIsLoading(true);
 
     try {
-      const context = {
-        current_phase: 'chat',
-        conversation_history: messages.slice(-3).map(m => ({
-          role: m.sender === 'user' ? 'user' : 'assistant',
-          content: m.content
-        }))
-      };
+      let botResponse = '';
+      let isOnboardingResponse = false;
 
-      const response = await MorvoAIService.sendMessageWithRetry(messageText, context);
+      // Check if user needs onboarding and if message is onboarding-related
+      if (!onboardingStatus?.onboarding_completed && isOnboardingMessage(messageText)) {
+        const onboardingResult = await processOnboardingMessage(messageText);
+        
+        if (onboardingResult) {
+          botResponse = onboardingResult.response;
+          isOnboardingResponse = true;
+          
+          // If onboarding is complete, refresh the page or update status
+          if (onboardingResult.isComplete) {
+            setTimeout(() => {
+              window.location.reload(); // Refresh to update onboarding status
+            }, 2000);
+          }
+        }
+      }
+
+      // If not an onboarding response, get AI response
+      if (!botResponse) {
+        const context = {
+          current_phase: onboardingStatus?.onboarding_completed ? 'chat' : 'onboarding',
+          conversation_history: messages.slice(-3).map(m => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.content
+          })),
+          user_profile: onboardingStatus
+        };
+
+        const response = await MorvoAIService.sendMessageWithRetry(messageText, context);
+        botResponse = response.response;
+      }
       
       const botMessage: MessageData = {
         id: (Date.now() + 1).toString(),
-        content: response.response,
+        content: botResponse,
         sender: 'agent',
         timestamp: new Date(),
-        processing_time: response.processing_time,
-        tokens_used: response.tokens_used,
-        suggested_actions: response.suggested_actions,
-        personality_traits: response.personality_traits,
+        isOnboarding: isOnboardingResponse
       };
 
       setMessages(prev => [...prev, botMessage]);
-
-      if (onContentTypeChange && response.suggested_actions && response.suggested_actions.length > 0) {
-        const firstAction = response.suggested_actions[0];
-        if (firstAction.action.includes('حملة') || firstAction.action.includes('campaign')) {
-          onContentTypeChange('campaign');
-        } else if (firstAction.action.includes('تحليل') || firstAction.action.includes('analysis')) {
-          onContentTypeChange('analysis');
-        }
-      }
 
     } catch (error) {
       console.error('Chat error:', error);
