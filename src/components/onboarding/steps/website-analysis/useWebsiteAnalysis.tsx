@@ -6,28 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 
 type AnalysisState = 'input' | 'analyzing' | 'completed' | 'error';
 
-interface MockAnalysisResult {
-  business_overview: {
-    business_type: string;
-    main_products: string[];
-    target_audience: string;
-    unique_value: string;
-  };
-  digital_presence: {
-    website_health: {
-      seo_score: number;
-      speed_score: number;
-      mobile_friendly: boolean;
-      ssl_secure: boolean;
-    };
-    social_media: Record<string, any>;
-  };
-  opportunities: {
-    quick_wins: string[];
-    strategic: string[];
-  };
-}
-
 export const useWebsiteAnalysis = () => {
   const { journey } = useJourney();
   const { toast } = useToast();
@@ -36,8 +14,6 @@ export const useWebsiteAnalysis = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [error, setError] = useState('');
   const [analysisResults, setAnalysisResults] = useState<any>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 2;
 
   const isValidUrl = (url: string) => {
     try {
@@ -59,51 +35,6 @@ export const useWebsiteAnalysis = () => {
     });
   };
 
-  const generateMockAnalysis = (url: string): MockAnalysisResult => {
-    const domain = url.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-    
-    // Generate realistic mock data based on URL
-    const mockData: MockAnalysisResult = {
-      business_overview: {
-        business_type: 'Technology Services',
-        main_products: ['Web Development', 'Digital Solutions', 'Consulting'],
-        target_audience: 'Small to Medium Businesses',
-        unique_value: 'Innovative solutions with modern technology stack'
-      },
-      digital_presence: {
-        website_health: {
-          seo_score: Math.floor(Math.random() * 40) + 60, // 60-100
-          speed_score: Math.floor(Math.random() * 2) + 2, // 2-4 seconds
-          mobile_friendly: Math.random() > 0.3, // 70% chance
-          ssl_secure: url.startsWith('https')
-        },
-        social_media: {}
-      },
-      opportunities: {
-        quick_wins: [
-          'Optimize page loading speed',
-          'Improve mobile responsiveness',
-          'Add social media integration'
-        ],
-        strategic: [
-          'Implement SEO best practices',
-          'Develop content marketing strategy',
-          'Enhance user experience design'
-        ]
-      }
-    };
-
-    // Customize based on domain
-    if (domain.includes('nexta')) {
-      mockData.business_overview.business_type = 'Artificial Intelligence Solutions';
-      mockData.business_overview.main_products = ['AI Agents', 'Digital Twin', 'Computer Vision', 'Machine Learning'];
-      mockData.business_overview.target_audience = 'Enterprise clients in retail, manufacturing, and supply chain';
-      mockData.business_overview.unique_value = '92% accuracy in predictive analytics with seamless integration';
-    }
-
-    return mockData;
-  };
-
   const startAnalysis = async (invalidUrlMessage: string) => {
     if (!websiteUrl.trim()) {
       setError(invalidUrlMessage);
@@ -122,13 +53,13 @@ export const useWebsiteAnalysis = () => {
       console.log('🔧 Generated new UUID for journey:', journeyId);
     }
 
-    console.log('🔍 Starting website analysis with clean UUID:', journeyId);
+    console.log('🔍 Starting website analysis with journey ID:', journeyId);
 
     setError('');
     setAnalysisState('analyzing');
     setAnalysisProgress(0);
 
-    // Simulate progress
+    // Simulate progress while waiting for analysis
     const progressInterval = setInterval(() => {
       setAnalysisProgress(prev => {
         if (prev >= 90) {
@@ -149,65 +80,27 @@ export const useWebsiteAnalysis = () => {
       });
 
       clearInterval(progressInterval);
-      setAnalysisProgress(100);
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Website analysis failed:', response.status, errorText);
-        
-        // If this is our first retry attempt, try once more
-        if (retryCount < maxRetries) {
-          console.log(`🔄 Retrying analysis (attempt ${retryCount + 1}/${maxRetries})`);
-          setRetryCount(prev => prev + 1);
-          setTimeout(() => startAnalysis(invalidUrlMessage), 2000);
-          return;
-        }
-
-        // After retries failed, use mock data
-        console.log('🎭 Using mock data due to API failure');
-        const mockResults = generateMockAnalysis(websiteUrl);
-        setAnalysisResults(mockResults);
-        setAnalysisState('completed');
-        
-        toast({
-          title: "تحليل تجريبي",
-          description: "تم استخدام بيانات تجريبية لإكمال العملية. يمكنك تعديل المعلومات حسب الحاجة.",
-          variant: "default"
-        });
-        
+        setAnalysisState('error');
+        setError(`Analysis failed: ${errorText}`);
         return;
       }
 
       const data = await response.json();
       console.log('✅ Website analysis completed:', data);
-      setAnalysisResults(data.analysis_results || generateMockAnalysis(websiteUrl));
+      
+      setAnalysisProgress(100);
+      setAnalysisResults(data.analysis_results);
       setAnalysisState('completed');
-      setRetryCount(0); // Reset retry count on success
       
     } catch (error) {
       clearInterval(progressInterval);
       console.error('❌ Website analysis error:', error);
-      
-      // If this is our first retry attempt, try once more
-      if (retryCount < maxRetries) {
-        console.log(`🔄 Retrying analysis due to error (attempt ${retryCount + 1}/${maxRetries})`);
-        setRetryCount(prev => prev + 1);
-        setTimeout(() => startAnalysis(invalidUrlMessage), 2000);
-        return;
-      }
-
-      // After retries failed, use mock data
-      console.log('🎭 Using mock data due to error');
-      const mockResults = generateMockAnalysis(websiteUrl);
-      setAnalysisResults(mockResults);
-      setAnalysisState('completed');
-      setRetryCount(0);
-      
-      toast({
-        title: "تحليل تجريبي",
-        description: "تم استخدام بيانات تجريبية بسبب مشكلة في الاتصال. يمكنك تعديل المعلومات حسب الحاجة.",
-        variant: "default"
-      });
+      setAnalysisState('error');
+      setError(error instanceof Error ? error.message : 'Analysis failed');
     }
   };
 
@@ -215,7 +108,6 @@ export const useWebsiteAnalysis = () => {
     setAnalysisState('input');
     setError('');
     setAnalysisProgress(0);
-    setRetryCount(0);
   };
 
   return {
