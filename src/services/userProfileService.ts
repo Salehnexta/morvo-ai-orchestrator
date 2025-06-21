@@ -1,9 +1,14 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface UserProfile {
   id?: string;
   user_id: string;
+  
+  // Personal Information
+  first_name?: string;
+  last_name?: string;
+  job_title?: string;
+  preferred_title?: string;
   
   // Basic Information
   company_name?: string;
@@ -15,7 +20,6 @@ export interface UserProfile {
   // Location & Contact
   address_location?: string;
   contact_information?: any;
-  social_media_accounts?: any;
   
   // Business Details
   company_overview?: string;
@@ -47,17 +51,19 @@ export interface UserProfile {
   best_sales_season?: string;
   most_profitable_product?: string;
   
+  // Competitive Intelligence
+  main_competitors?: string[];
+  competitive_advantages?: string[];
+  competitor_analysis?: any;
+  market_positioning?: string;
+  
   // Additional Data
   target_audience?: any;
-  competitive_advantages?: string[];
-  main_competitors?: string[];
   additional_insights?: string;
   blog_updates?: any;
   
   // Preferences & Settings
   preferred_language?: string;
-  communication_preferences?: any;
-  personality_profile?: any;
   
   // Metadata
   analysis_source?: string;
@@ -178,7 +184,7 @@ export class UserProfileService {
     
     const optionalFields = [
       'website_url', 'company_overview', 'core_offerings', 'marketing_budget',
-      'team_size', 'years_in_business', 'competitive_advantage'
+      'team_size', 'years_in_business', 'competitive_advantage', 'main_competitors'
     ];
 
     let score = 0;

@@ -33,10 +33,12 @@ export default function ProfileSetup() {
     primary_marketing_goals: [],
     target_audience: {},
     marketing_budget: '',
+    main_competitors: [],
+    competitive_advantages: [],
     preferred_language: language
   });
 
-  const totalSteps = 9;
+  const totalSteps = 10;
   const progress = (currentStep / totalSteps) * 100;
 
   const content = {
@@ -125,6 +127,11 @@ export default function ProfileSetup() {
           ]
         } as any,
         9: {
+          title: "المنافسون الرئيسيون",
+          description: "من هم منافسوك الرئيسيون في السوق؟",
+          placeholder: "اذكر أسماء الشركات أو العلامات التجارية المنافسة..."
+        } as any,
+        10: {
           title: "اللغة المفضلة",
           description: "ما هي لغة التفاعل المفضلة لك؟",
           options: [
@@ -231,6 +238,11 @@ export default function ProfileSetup() {
           ]
         } as any,
         9: {
+          title: "Main Competitors",
+          description: "Who are your main competitors in the market?",
+          placeholder: "List company names or competitor brands..."
+        } as any,
+        10: {
           title: "Preferred Language",
           description: "What is your preferred interaction language?",
           options: [
@@ -263,6 +275,7 @@ export default function ProfileSetup() {
           primary_marketing_goals: profile.primary_marketing_goals || [],
           target_audience: profile.target_audience || {},
           marketing_budget: profile.marketing_budget || '',
+          main_competitors: profile.main_competitors || [],
           preferred_language: profile.preferred_language || language
         });
       }
@@ -368,13 +381,13 @@ export default function ProfileSetup() {
       case 3:
       case 4:
       case 8:
-      case 9:
+      case 10:
         const fieldMap = {
           2: 'industry',
           3: 'company_size', 
           4: 'marketing_experience',
           8: 'marketing_budget',
-          9: 'preferred_language'
+          10: 'preferred_language'
         };
         const field = fieldMap[currentStep as keyof typeof fieldMap] as keyof UserProfile;
         
@@ -435,6 +448,27 @@ export default function ProfileSetup() {
               rows={4}
               className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
             />
+          </div>
+        );
+
+      case 9:
+        return (
+          <div className="space-y-4">
+            <Label htmlFor="main_competitors">{stepData.title}</Label>
+            <Textarea
+              id="main_competitors"
+              value={profileData.main_competitors?.join(', ') || ''}
+              onChange={(e) => {
+                const competitors = e.target.value.split(',').map(c => c.trim()).filter(c => c);
+                handleInputChange('main_competitors', competitors);
+              }}
+              placeholder={hasPlaceholder(stepData) ? stepData.placeholder : ''}
+              rows={3}
+              className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
+            />
+            <p className="text-sm text-gray-500">
+              {language === 'ar' ? 'افصل بين الأسماء بفاصلة' : 'Separate names with commas'}
+            </p>
           </div>
         );
       
