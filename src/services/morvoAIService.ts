@@ -83,6 +83,14 @@ export class MorvoAIService {
     return session.access_token;
   }
 
+  private static async getClientId(): Promise<string> {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      throw new Error('User not authenticated');
+    }
+    return session.user.id;
+  }
+
   private static async checkHealth(): Promise<ConnectionHealth> {
     const startTime = Date.now();
     
