@@ -22,6 +22,15 @@ export const useWebsiteAnalysis = () => {
     }
   };
 
+  // Generate a proper UUID v4 format
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
   const startAnalysis = async (invalidUrlMessage: string) => {
     if (!websiteUrl.trim()) {
       setError(invalidUrlMessage);
@@ -33,8 +42,10 @@ export const useWebsiteAnalysis = () => {
       return;
     }
 
-    // Get journey ID from context or generate one if not available
-    const journeyId = journey?.journey_id || `journey_${Date.now()}`;
+    // Get journey ID from context or generate a proper UUID
+    const journeyId = journey?.journey_id || generateUUID();
+
+    console.log('🔍 Starting website analysis with journey ID:', journeyId);
 
     setError('');
     setAnalysisState('analyzing');
@@ -64,16 +75,19 @@ export const useWebsiteAnalysis = () => {
       setAnalysisProgress(100);
 
       if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ Website analysis failed:', response.status, errorText);
+        throw new Error(`Analysis failed: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('✅ Website analysis completed:', data);
       setAnalysisResults(data.analysis_results);
       setAnalysisState('completed');
     } catch (error) {
       clearInterval(progressInterval);
-      console.error('Website analysis error:', error);
-      setError(error instanceof Error ? error.message : 'Analysis failed');
+      console.error('❌ Website analysis error:', error);
+      setError(error instanceof Error ? error.message : 'Analysis failed - please try again or continue manually');
       setAnalysisState('error');
     }
   };
@@ -81,6 +95,7 @@ export const useWebsiteAnalysis = () => {
   const resetToInput = () => {
     setAnalysisState('input');
     setError('');
+    setAnalysisProgress(0);
   };
 
   return {

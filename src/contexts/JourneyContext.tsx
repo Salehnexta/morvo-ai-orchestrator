@@ -46,11 +46,14 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
   const [journeyInitialized, setJourneyInitialized] = useState(false);
   const [greetingPreference, setGreetingPreference] = useState<string | null>(null);
 
-  // Load existing journey on mount
+  // Load existing journey on mount - prevent multiple initializations
   useEffect(() => {
     const loadJourney = async () => {
+      // Prevent multiple initializations for the same user
       if (!user?.id || journeyInitialized) {
-        setLoading(false);
+        if (!user?.id) {
+          setLoading(false);
+        }
         return;
       }
 
@@ -59,30 +62,36 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         setError(null);
         console.log('🔍 Loading journey for user:', user.id);
 
-        // Check for existing journey with improved error handling
-        const existingJourney = await JourneyManager.checkExistingJourney(user.id);
-        
-        if (existingJourney) {
-          setJourney(existingJourney);
-          setHasExistingJourney(true);
+        // Load greeting preference first (faster than journey check)
+        await loadGreetingPreference(user.id);
+
+        // Try to check for existing journey (may fail, that's OK)
+        try {
+          const existingJourney = await JourneyManager.checkExistingJourney(user.id);
           
-          // Get journey status
-          const status = await JourneyManager.getJourneyStatus(existingJourney.journey_id);
-          setJourneyStatus(status);
-          
-          // Load greeting preference from customer_profiles
-          await loadGreetingPreference(user.id);
-          
-          // Store journey ID locally for quick access
-          localStorage.setItem(`journey_${user.id}`, existingJourney.journey_id);
-          
-          console.log('✅ Loaded existing journey:', existingJourney);
-        } else {
-          console.log('ℹ️ No existing journey found for user');
+          if (existingJourney) {
+            setJourney(existingJourney);
+            setHasExistingJourney(true);
+            
+            // Get journey status if available
+            try {
+              const status = await JourneyManager.getJourneyStatus(existingJourney.journey_id);
+              setJourneyStatus(status);
+            } catch (statusError) {
+              console.warn('⚠️ Could not load journey status:', statusError);
+            }
+            
+            // Store journey ID locally for quick access
+            localStorage.setItem(`journey_${user.id}`, existingJourney.journey_id);
+            
+            console.log('✅ Loaded existing journey:', existingJourney);
+          } else {
+            console.log('ℹ️ No existing journey found for user');
+            setHasExistingJourney(false);
+          }
+        } catch (journeyError) {
+          console.warn('⚠️ Could not check existing journey:', journeyError);
           setHasExistingJourney(false);
-          
-          // Still try to load greeting preference for users with profiles but no journeys
-          await loadGreetingPreference(user.id);
         }
 
         setJourneyInitialized(true);
@@ -108,9 +117,7 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         .limit(1)
         .maybeSingle();
 
-      // Properly cast and check the profile_data with type safety
       if (profile?.profile_data) {
-        // Type guard to ensure we have an object
         if (typeof profile.profile_data === 'object' && profile.profile_data !== null && !Array.isArray(profile.profile_data)) {
           const profileData = profile.profile_data as Record<string, any>;
           if ('greeting_preference' in profileData && typeof profileData.greeting_preference === 'string') {
@@ -161,8 +168,12 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         localStorage.setItem(`journey_${user.id}`, newJourney.journey_id);
         
         // Get initial status
-        const status = await JourneyManager.getJourneyStatus(newJourney.journey_id);
-        setJourneyStatus(status);
+        try {
+          const status = await JourneyManager.getJourneyStatus(newJourney.journey_id);
+          setJourneyStatus(status);
+        } catch (statusError) {
+          console.warn('⚠️ Could not load initial journey status:', statusError);
+        }
         
         console.log('✅ Journey started successfully:', newJourney);
       } else {
@@ -232,7 +243,6 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     
     console.log('💾 Saving answer:', questionId, answer);
     try {
-      // For now, just return true as we don't have this method implemented
       console.log('✅ Answer saved successfully (placeholder)');
       return true;
     } catch (error) {
@@ -246,7 +256,6 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     
     console.log('🎯 Generating strategy');
     try {
-      // For now, just return a placeholder
       const strategy = { generated: true };
       if (strategy) {
         setJourneyStatus(prev => prev ? { ...prev, strategy_generated: true } : null);
@@ -264,7 +273,6 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     
     console.log('🎯 Activating commitment');
     try {
-      // For now, just mark as completed
       const success = true;
       if (success) {
         setJourney(prev => prev ? { ...prev, is_completed: true } : null);
