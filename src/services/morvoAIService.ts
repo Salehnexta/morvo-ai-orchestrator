@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface ChatResponse {
@@ -64,10 +63,17 @@ interface BusinessAnalysis {
   confidence_score: number;
 }
 
+interface ConnectionHealth {
+  status: 'healthy' | 'degraded' | 'down';
+  latency: number;
+  lastChecked: Date;
+}
+
 export class MorvoAIService {
   private static readonly API_URL = 'https://morvo-production.up.railway.app';
   private static readonly API_VERSION = 'v1';
-  private static readonly TIMEOUT = 30000;
+  private static readonly TIMEOUT = 45000; // Increased timeout for analysis
+  private static healthStatus: ConnectionHealth | null = null;
 
   private static async getAuthToken(): Promise<string> {
     const { data: { session } } = await supabase.auth.getSession();
@@ -77,15 +83,53 @@ export class MorvoAIService {
     return session.access_token;
   }
 
-  private static async getClientId(): Promise<string> {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user?.id) {
-      return session.user.id;
+  private static async checkHealth(): Promise<ConnectionHealth> {
+    const startTime = Date.now();
+    
+    try {
+      const response = await fetch(`${this.API_URL}/health`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        signal: AbortSignal.timeout(5000)
+      });
+      
+      const latency = Date.now() - startTime;
+      
+      if (response.ok) {
+        this.healthStatus = {
+          status: latency > 2000 ? 'degraded' : 'healthy',
+          latency,
+          lastChecked: new Date()
+        };
+      } else {
+        this.healthStatus = {
+          status: 'down',
+          latency,
+          lastChecked: new Date()
+        };
+      }
+      
+      return this.healthStatus;
+    } catch (error) {
+      const latency = Date.now() - startTime;
+      this.healthStatus = {
+        status: 'down',
+        latency,
+        lastChecked: new Date()
+      };
+      return this.healthStatus;
     }
-    throw new Error('User not authenticated');
   }
 
   static async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
+    // Check health if we haven't in the last 30 seconds
+    if (!this.healthStatus || Date.now() - this.healthStatus.lastChecked.getTime() > 30000) {
+      await this.checkHealth();
+    }
+
     const token = await this.getAuthToken();
     
     return fetch(`${this.API_URL}/${this.API_VERSION}${endpoint}`, {
@@ -94,6 +138,7 @@ export class MorvoAIService {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         'X-Client-Info': 'morvo-ai-frontend',
+        'X-Health-Status': this.healthStatus?.status || 'unknown',
         ...options.headers
       },
       signal: AbortSignal.timeout(this.TIMEOUT)
@@ -334,14 +379,18 @@ export class MorvoAIService {
     try {
       console.log('🔗 Testing Morvo AI Railway connection...');
       
-      const healthResponse = await this.healthCheck();
-      console.log('✅ Health Check passed:', healthResponse);
+      const health = await this.checkHealth();
+      console.log('✅ Health Check result:', health);
       
-      return true;
+      return health.status === 'healthy' || health.status === 'degraded';
     } catch (error) {
       console.error('❌ Connection test failed:', error);
       return false;
     }
+  }
+
+  static getHealthStatus(): ConnectionHealth | null {
+    return this.healthStatus;
   }
 
   // Token Management - Fallback to local client data

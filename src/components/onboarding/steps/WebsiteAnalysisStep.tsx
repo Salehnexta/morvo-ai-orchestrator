@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -42,7 +43,7 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
       tryAgain: 'حاول مرة أخرى',
       continueManually: 'المتابعة يدوياً',
       successTitle: 'تم التحليل بنجاح!',
-      reviewData: 'مراجعة البيانات',
+      reviewData: 'مراجعة البيانات والمتابعة',
       invalidUrl: 'يرجى إدخال رابط صحيح'
     },
     en: {
@@ -58,7 +59,7 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
       tryAgain: 'Try Again',
       continueManually: 'Continue Manually',
       successTitle: 'Analysis Complete!',
-      reviewData: 'Review Data',
+      reviewData: 'Review Data & Continue',
       invalidUrl: 'Please enter a valid URL'
     }
   };
@@ -109,6 +110,8 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
       case 'completed':
         return (
           <AnalysisSuccess
+            results={analysisResults}
+            websiteUrl={websiteUrl}
             onComplete={handleComplete}
             language={language}
             content={t}
@@ -121,7 +124,7 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <Card>
         <CardContent className="space-y-6">
           {renderContent()}
