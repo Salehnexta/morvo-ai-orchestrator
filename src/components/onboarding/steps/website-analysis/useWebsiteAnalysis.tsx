@@ -1,10 +1,12 @@
 
 import { useState } from 'react';
 import { MorvoAIService } from '@/services/morvoAIService';
+import { useJourney } from '@/contexts/JourneyContext';
 
 type AnalysisState = 'input' | 'analyzing' | 'completed' | 'error';
 
-export const useWebsiteAnalysis = (journeyId: string) => {
+export const useWebsiteAnalysis = () => {
+  const { journey } = useJourney();
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [analysisState, setAnalysisState] = useState<AnalysisState>('input');
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -30,6 +32,9 @@ export const useWebsiteAnalysis = (journeyId: string) => {
       setError(invalidUrlMessage);
       return;
     }
+
+    // Get journey ID from context or generate one if not available
+    const journeyId = journey?.journey_id || `journey_${Date.now()}`;
 
     setError('');
     setAnalysisState('analyzing');

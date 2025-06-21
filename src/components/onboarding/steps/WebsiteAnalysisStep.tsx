@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -11,13 +10,11 @@ import { AnalysisSuccess } from './website-analysis/AnalysisSuccess';
 interface WebsiteAnalysisStepProps {
   onComplete: (data: any) => void;
   onSkip: () => void;
-  journeyId: string;
 }
 
 export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
   onComplete,
-  onSkip,
-  journeyId
+  onSkip
 }) => {
   const { language } = useLanguage();
   const {
@@ -29,7 +26,7 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
     analysisResults,
     startAnalysis,
     resetToInput
-  } = useWebsiteAnalysis(journeyId);
+  } = useWebsiteAnalysis();
 
   const content = {
     ar: {
