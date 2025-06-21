@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
@@ -10,8 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSmartChat } from '@/hooks/useSmartChat';
-import { ConversationalOnboarding } from '@/services/conversationalOnboarding';
+import { useConversationalFlow } from '@/hooks/useConversationalFlow';
+import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
 import { MorvoAIService } from '@/services/morvoAIService';
 import { AgentResponse } from '@/services/agent';
 
@@ -24,8 +23,8 @@ interface MessageData {
   tokens_used?: number;
   suggested_actions?: Array<{
     action: string;
-    urgency: string;
-    estimated_impact: string;
+    label: string;
+    priority: number;
   }>;
   personality_traits?: any;
   isOnboarding?: boolean;
@@ -53,7 +52,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
   const { toast } = useToast();
-  const { processOnboardingMessage, isOnboardingMessage } = useSmartChat();
+  const { conversationState, processMessage, updatePhase, isOnboardingActive } = useConversationalFlow();
 
   const content = {
     ar: {
@@ -90,7 +89,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Initialize chat with appropriate welcome message
+  // Initialize chat with smart welcome message
   useEffect(() => {
     const initializeChat = async () => {
       try {
@@ -98,15 +97,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         setIsConnected(isHealthy);
         
         if (isHealthy && user && messages.length === 0) {
-          let welcomeContent = '';
+          const welcomeContent = SmartResponseGenerator.generateWelcomeMessage(onboardingStatus);
           
-          // Determine welcome message based on onboarding status
-          if (!onboardingStatus || onboardingStatus.needs_setup) {
-            welcomeContent = ConversationalOnboarding.getWelcomeMessage();
-          } else if (!onboardingStatus.onboarding_completed) {
-            welcomeContent = 'مرحباً بك مرة أخرى! دعنا نكمل إعداد ملفك الشخصي. من أين توقفنا؟';
+          // Update conversation phase based on onboarding status
+          if (isOnboardingActive) {
+            updatePhase('onboarding');
           } else {
-            welcomeContent = 'مرحباً بك في مورفو! أنا مساعدك الذكي للتسويق الرقمي. كيف يمكنني مساعدتك اليوم؟';
+            updatePhase('chat');
           }
 
           const welcomeMessage: MessageData = {
@@ -114,7 +111,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             content: welcomeContent,
             sender: 'agent',
             timestamp: new Date(),
-            isOnboarding: !onboardingStatus?.onboarding_completed
+            isOnboarding: isOnboardingActive
           };
           
           setMessages([welcomeMessage]);
@@ -154,30 +151,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsLoading(true);
 
     try {
-      let botResponse = '';
-      let isOnboardingResponse = false;
+      // Use smart conversational flow
+      const flowResponse = await processMessage(messageText);
+      
+      let botResponse = flowResponse.response;
+      let suggestedActions = flowResponse.shouldTriggerAction ? 
+        [{ action: flowResponse.shouldTriggerAction, label: 'عرض', priority: 1 }] : [];
 
-      // Check if user needs onboarding and if message is onboarding-related
-      if (!onboardingStatus?.onboarding_completed && isOnboardingMessage(messageText)) {
-        const onboardingResult = await processOnboardingMessage(messageText);
-        
-        if (onboardingResult) {
-          botResponse = onboardingResult.response;
-          isOnboardingResponse = true;
-          
-          // If onboarding is complete, refresh the page or update status
-          if (onboardingResult.isComplete) {
-            setTimeout(() => {
-              window.location.reload(); // Refresh to update onboarding status
-            }, 2000);
-          }
-        }
-      }
-
-      // If not an onboarding response, get AI response
-      if (!botResponse) {
+      // If no smart response, fallback to AI service
+      if (flowResponse.confidence < 0.6) {
         const context = {
-          current_phase: onboardingStatus?.onboarding_completed ? 'chat' : 'onboarding',
+          current_phase: conversationState.phase,
           conversation_history: messages.slice(-3).map(m => ({
             role: m.sender === 'user' ? 'user' : 'assistant',
             content: m.content
@@ -185,8 +169,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           user_profile: onboardingStatus
         };
 
-        const response = await MorvoAIService.sendMessageWithRetry(messageText, context);
-        botResponse = response.response;
+        const aiResponse = await MorvoAIService.sendMessageWithRetry(messageText, context);
+        botResponse = aiResponse.response;
       }
       
       const botMessage: MessageData = {
@@ -194,10 +178,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         content: botResponse,
         sender: 'agent',
         timestamp: new Date(),
-        isOnboarding: isOnboardingResponse
+        suggested_actions: suggestedActions,
+        isOnboarding: conversationState.phase === 'onboarding'
       };
 
       setMessages(prev => [...prev, botMessage]);
+
+      // Trigger UI actions if needed
+      if (flowResponse.shouldTriggerAction && onContentTypeChange) {
+        onContentTypeChange(flowResponse.shouldTriggerAction);
+      }
 
     } catch (error) {
       console.error('Chat error:', error);

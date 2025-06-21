@@ -1,9 +1,9 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { ConversationalOnboarding } from '@/services/conversationalOnboarding';
+import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
 
 interface OnboardingData {
   [key: string]: any;
@@ -63,6 +63,36 @@ export const useSmartChat = () => {
       return null;
     }
   }, [onboardingData, user?.id]);
+
+  const generateSmartResponse = useCallback(async (
+    message: string,
+    context: {
+      conversationHistory: Array<{ role: string; content: string }>;
+      onboardingStatus: any;
+      currentPhase: string;
+    }
+  ) => {
+    try {
+      setIsLoading(true);
+      
+      const response = await SmartResponseGenerator.generateResponse({
+        userMessage: message,
+        conversationHistory: context.conversationHistory,
+        onboardingStatus: context.onboardingStatus,
+        currentPhase: context.currentPhase
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('Error generating smart response:', error);
+      return {
+        response: 'عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى.',
+        suggestedActions: []
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const saveOnboardingProgress = useCallback(async (data: OnboardingData) => {
     if (!user?.id) return false;
@@ -156,6 +186,7 @@ export const useSmartChat = () => {
   return {
     isLoading,
     processOnboardingMessage,
+    generateSmartResponse,
     getOnboardingProgress,
     isOnboardingMessage,
     onboardingData,
