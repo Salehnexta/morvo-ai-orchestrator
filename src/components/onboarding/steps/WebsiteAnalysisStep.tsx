@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -102,12 +101,8 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
     }, 2000);
 
     try {
-      const response = await fetch('/v1/onboarding/website-analysis', {
+      const response = await MorvoAIService.makeRequest('/onboarding/website-analysis', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await MorvoAIService.getAuthToken()}`
-        },
         body: JSON.stringify({
           journey_id: journeyId,
           website_url: websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`
