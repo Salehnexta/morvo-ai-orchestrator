@@ -3,7 +3,7 @@ import { MorvoAIService } from './morvoAIService';
 
 export interface DetectionResult {
   primary: {
-    type: 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'chart' | 'plan' | 'default';
+    type: 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'chart' | 'plan' | 'seo' | 'default';
     confidence: number;
   };
   contextData?: {
@@ -11,6 +11,7 @@ export interface DetectionResult {
     content?: any[];
     timeframe?: string;
     keywords?: string[];
+    domain?: string;
   };
 }
 
@@ -39,6 +40,12 @@ export class SmartContentDetector {
     plan: [
       /plan/i, /strategy/i, /roadmap/i, /goal/i, /objective/i, /step/i,
       /phase/i, /milestone/i, /action plan/i, /next steps/i
+    ],
+    seo: [
+      /seo/i, /search engine/i, /keyword/i, /ranking/i, /backlink/i, /serp/i,
+      /organic/i, /google/i, /site audit/i, /competitor/i, /domain authority/i,
+      /se ranking/i, /seranking/i, /تحسين محركات البحث/i, /كلمات مفتاحية/i,
+      /ترتيب/i, /جوجل/i, /بحث/i, /منافس/i, /روابط خلفية/i
     ]
   };
 
@@ -100,6 +107,12 @@ export class SmartContentDetector {
     const keywords = context.match(/\b\w{4,}\b/g)?.slice(0, 5) || [];
     data.keywords = keywords;
 
+    // Extract domain if mentioned
+    const domainMatch = context.match(/\b(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})\b/);
+    if (domainMatch) {
+      data.domain = domainMatch[1];
+    }
+
     // Intent-specific context extraction
     switch (intent) {
       case 'analytics':
@@ -117,6 +130,10 @@ export class SmartContentDetector {
       case 'campaign':
         data.campaignType = this.extractCampaignType(context);
         data.budget = this.extractBudget(context);
+        break;
+      case 'seo':
+        data.seoType = this.extractSEOType(context);
+        data.keywords = this.extractSEOKeywords(context);
         break;
     }
 
@@ -172,12 +189,27 @@ export class SmartContentDetector {
     return budgetMatch ? budgetMatch[0] : null;
   }
 
+  private static extractSEOType(context: string): string {
+    if (context.includes('keyword') || context.includes('كلمات مفتاحية')) return 'keywords';
+    if (context.includes('backlink') || context.includes('روابط خلفية')) return 'backlinks';
+    if (context.includes('audit') || context.includes('تدقيق')) return 'audit';
+    if (context.includes('competitor') || context.includes('منافس')) return 'competitors';
+    if (context.includes('ranking') || context.includes('ترتيب')) return 'rankings';
+    return 'general';
+  }
+
+  private static extractSEOKeywords(context: string): string[] {
+    const seoKeywords = ['ranking', 'backlinks', 'audit', 'competitors', 'keywords', 'serp', 'organic'];
+    const arabicSeoKeywords = ['ترتيب', 'روابط', 'تدقيق', 'منافسين', 'كلمات', 'بحث'];
+    return [...seoKeywords, ...arabicSeoKeywords].filter(keyword => context.includes(keyword));
+  }
+
   // Enhanced detection with AI assistance (when available)
   static async detectIntentWithAI(message: string, context: string[] = []): Promise<DetectionResult> {
     try {
       // Try AI-enhanced detection first
       const aiResponse = await MorvoAIService.processMessage(
-        `Analyze this message for intent: "${message}". Return intent type (analytics, content-creator, calendar, campaign, chart, plan, or default) and confidence (0-1).`,
+        `Analyze this message for intent: "${message}". Return intent type (analytics, content-creator, calendar, campaign, chart, plan, seo, or default) and confidence (0-1).`,
         { type: 'intent_detection', conversation_history: context }
       );
 
@@ -199,7 +231,7 @@ export class SmartContentDetector {
   private static parseAIIntentResponse(response: string): DetectionResult | null {
     try {
       // Simple parsing - look for intent keywords in AI response
-      const intentMatch = response.match(/(analytics|content-creator|calendar|campaign|chart|plan|default)/i);
+      const intentMatch = response.match(/(analytics|content-creator|calendar|campaign|chart|plan|seo|default)/i);
       const confidenceMatch = response.match(/confidence[:\s]+([0-9.]+)/i);
 
       if (intentMatch) {

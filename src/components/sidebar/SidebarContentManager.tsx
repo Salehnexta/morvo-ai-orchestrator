@@ -9,6 +9,7 @@ import { CalendarSidebar } from './content/CalendarSidebar';
 import { CampaignSidebar } from './content/CampaignSidebar';
 import { ChartSidebar } from './content/ChartSidebar';
 import { PlanSidebar } from './content/PlanSidebar';
+import { SEORankingSidebar } from './content/SEORankingSidebar';
 import { DefaultSidebar } from './content/DefaultSidebar';
 
 interface SidebarContentManagerProps {
@@ -77,6 +78,8 @@ export const SidebarContentManager: React.FC<SidebarContentManagerProps> = ({
         return <ChartSidebar contextData={contextData} onActionClick={onActionClick} />;
       case 'plan':
         return <PlanSidebar contextData={contextData} onActionClick={onActionClick} />;
+      case 'seo':
+        return <SEORankingSidebar contextData={contextData} onActionClick={onActionClick} />;
       default:
         return <DefaultSidebar onActionClick={onActionClick} />;
     }
