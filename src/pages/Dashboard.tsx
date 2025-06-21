@@ -1,8 +1,10 @@
+
 import { ChatInterface } from "@/components/ChatInterface";
 import { DynamicContentPanel } from "@/components/DynamicContentPanel";
 import { SidebarContentManager } from "@/components/sidebar/SidebarContentManager";
 import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
 import { JourneyPhaseHandler } from "@/components/onboarding/JourneyPhaseHandler";
+import { PerplexityTest } from "@/components/PerplexityTest";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useJourney } from "@/contexts/JourneyContext";
@@ -21,7 +23,7 @@ const Dashboard = () => {
     journey 
   } = useJourney();
   
-  const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test' | 'onboarding'>('hero');
+  const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test' | 'onboarding' | 'perplexity-test'>('hero');
   const [journeyInitialized, setJourneyInitialized] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
@@ -95,6 +97,10 @@ const Dashboard = () => {
         break;
       case 'connection-test':
         setContentType('connection-test');
+        setShowOnboarding(false);
+        break;
+      case 'perplexity-test':
+        setContentType('perplexity-test');
         setShowOnboarding(false);
         break;
       default:
@@ -181,6 +187,10 @@ const Dashboard = () => {
                       onPhaseComplete={handlePhaseComplete}
                       className="max-w-2xl mx-auto"
                     />
+                  </div>
+                ) : contentType === 'perplexity-test' ? (
+                  <div className="h-full p-6 overflow-y-auto">
+                    <PerplexityTest />
                   </div>
                 ) : (
                   <DynamicContentPanel 
