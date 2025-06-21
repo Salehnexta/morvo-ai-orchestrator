@@ -10,18 +10,18 @@ export const RailwayConnectionTest = () => {
   const [isTesting, setIsTesting] = useState(false);
   const [testResults, setTestResults] = useState<{
     health: boolean | null;
-    agents: boolean | null;
+    tokenBalance: boolean | null;
     chat: boolean | null;
   }>({
     health: null,
-    agents: null,
+    tokenBalance: null,
     chat: null
   });
   const { toast } = useToast();
 
   const runConnectionTest = async () => {
     setIsTesting(true);
-    setTestResults({ health: null, agents: null, chat: null });
+    setTestResults({ health: null, tokenBalance: null, chat: null });
 
     try {
       // اختبار Health Check
@@ -29,10 +29,10 @@ export const RailwayConnectionTest = () => {
       await MorvoAIService.healthCheck();
       setTestResults(prev => ({ ...prev, health: true }));
 
-      // اختبار الوكلاء
-      console.log('Testing Railway Agents...');
-      await MorvoAIService.getAgents();
-      setTestResults(prev => ({ ...prev, agents: true }));
+      // اختبار رصيد الطلبات
+      console.log('Testing Token Balance...');
+      await MorvoAIService.getTokenBalance();
+      setTestResults(prev => ({ ...prev, tokenBalance: true }));
 
       // اختبار المحادثة
       console.log('Testing Railway Chat...');
@@ -80,8 +80,8 @@ export const RailwayConnectionTest = () => {
             {getStatusIcon(testResults.health)}
           </div>
           <div className="flex items-center justify-between">
-            <span>جلب الوكلاء</span>
-            {getStatusIcon(testResults.agents)}
+            <span>فحص رصيد الطلبات</span>
+            {getStatusIcon(testResults.tokenBalance)}
           </div>
           <div className="flex items-center justify-between">
             <span>اختبار المحادثة</span>

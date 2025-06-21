@@ -7,11 +7,11 @@ export class AgentCustomerDataService {
     try {
       console.log('حفظ بيانات العميل:', { clientId, data });
 
-      // حفظ في جدول customer_profiles
+      // حفظ في جدول client_profiles
       const { error } = await supabase
-        .from('customer_profiles')
+        .from('client_profiles')
         .upsert({
-          customer_id: clientId,
+          client_id: clientId,
           ...data,
           updated_at: new Date().toISOString()
         });
@@ -32,10 +32,10 @@ export class AgentCustomerDataService {
   static async getCustomerData(clientId: string): Promise<any> {
     try {
       const { data, error } = await supabase
-        .from('customer_profiles')
+        .from('client_profiles')
         .select('*')
-        .eq('customer_id', clientId)
-        .single();
+        .eq('client_id', clientId)
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('خطأ في استعلام بيانات العميل:', error);
@@ -54,17 +54,17 @@ export class AgentCustomerDataService {
     try {
       // جلب بيانات العميل
       const { data: customerProfile } = await supabase
-        .from('customer_profiles')
+        .from('client_profiles')
         .select('*')
-        .eq('customer_id', clientId)
-        .single();
+        .eq('client_id', clientId)
+        .maybeSingle();
 
       // جلب بيانات العميل من جدول clients
       const { data: clientData } = await supabase
         .from('clients')
         .select('*')
         .eq('user_id', clientId)
-        .single();
+        .maybeSingle();
 
       // جلب بيانات الاشتراك
       const { data: subscriptionData } = await supabase
@@ -75,11 +75,11 @@ export class AgentCustomerDataService {
         `)
         .eq('client_id', clientData?.id)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       // جلب تاريخ المحادثات
       const { data: conversationHistory } = await supabase
-        .from('conversation_messages')
+        .from('messages')
         .select('*')
         .eq('client_id', clientId)
         .order('created_at', { ascending: false })
@@ -107,36 +107,25 @@ export class AgentCustomerDataService {
         const context = `
 === ملف العميل الكامل ===
 معلومات الشركة:
-- اسم الشركة: ${completeProfile.customerProfile.company_name || 'غير محدد'}
 - الصناعة: ${completeProfile.customerProfile.industry || 'غير محدد'}
 - حجم الشركة: ${completeProfile.customerProfile.company_size || 'غير محدد'}
-- الموقع الإلكتروني: ${completeProfile.customerProfile.website_url || 'غير محدد'}
 
 الخبرة التسويقية:
-- مستوى الخبرة: ${completeProfile.customerProfile.marketing_experience_level || 'غير محدد'}
-- حجم فريق التسويق: ${completeProfile.customerProfile.marketing_team_size || 'غير محدد'}
-- الأنشطة التسويقية الحالية: ${JSON.stringify(completeProfile.customerProfile.current_marketing_activities || [])}
-- الأدوات المستخدمة: ${JSON.stringify(completeProfile.customerProfile.marketing_tools_used || [])}
+- مستوى الخبرة: ${completeProfile.customerProfile.marketing_experience || 'غير محدد'}
+- حجم فريق التسويق: ${completeProfile.customerProfile.team_size || 'غير محدد'}
+- الأدوات المستخدمة: ${JSON.stringify(completeProfile.customerProfile.current_marketing_tools || [])}
 
 الأهداف والاستراتيجية:
-- الأهداف التسويقية: ${JSON.stringify(completeProfile.customerProfile.marketing_goals || [])}
+- الهدف الأساسي: ${completeProfile.customerProfile.primary_goal || 'غير محدد'}
 - الجمهور المستهدف: ${completeProfile.customerProfile.target_audience || 'غير محدد'}
-- القنوات المفضلة: ${JSON.stringify(completeProfile.customerProfile.preferred_marketing_channels || [])}
-- نقاط الضعف: ${JSON.stringify(completeProfile.customerProfile.marketing_pain_points || [])}
+- المنطقة المستهدفة: ${completeProfile.customerProfile.target_region || 'غير محدد'}
 
 الميزانية:
-- الميزانية الشهرية: ${completeProfile.customerProfile.monthly_marketing_budget || 'غير محدد'}
-- تاريخ الميزانية: ${completeProfile.customerProfile.marketing_budget_history || 'غير محدد'}
+- الميزانية الشهرية: ${completeProfile.customerProfile.marketing_budget || 'غير محدد'}
 
 معلومات الاشتراك:
 - نوع الخطة: ${completeProfile.subscriptionData?.subscription_plans?.plan_name || 'غير محدد'}
 - حالة الاشتراك: ${completeProfile.subscriptionData?.status || 'غير محدد'}
-- تاريخ البداية: ${completeProfile.subscriptionData?.start_date || 'غير محدد'}
-- تاريخ الانتهاء: ${completeProfile.subscriptionData?.end_date || 'غير محدد'}
-
-التفضيلات:
-- اللغة المفضلة: ${completeProfile.customerProfile.preferred_language || 'ar'}
-- تفضيلات التواصل: ${JSON.stringify(completeProfile.customerProfile.communication_preferences || {})}
 
 تاريخ التفاعل:
 - عدد الرسائل السابقة: ${completeProfile.conversationHistory?.length || 0}
@@ -172,7 +161,7 @@ ${message}
         .from('clients')
         .select('id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (!clientData) {
         console.error('لم يتم العثور على العميل');

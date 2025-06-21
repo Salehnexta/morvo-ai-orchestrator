@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layouts/MainLayout";
@@ -293,27 +292,26 @@ export default function ProfileSetup() {
         return;
       }
 
+      // Use client_profiles instead of customer_profiles
       const { data: profile } = await supabase
-        .from('customer_profiles')
+        .from('client_profiles')
         .select('*')
-        .eq('customer_id', session.user.id)
-        .single();
+        .eq('client_id', session.user.id)
+        .maybeSingle();
 
       if (profile) {
         setProfileData({
-          company_name: profile.company_name || '',
+          company_name: profile.industry || '',
           industry: profile.industry || '',
           company_size: profile.company_size || '',
-          marketing_experience_level: profile.marketing_experience_level || '',
-          current_marketing_activities: Array.isArray(profile.current_marketing_activities) 
-            ? profile.current_marketing_activities as string[]
+          marketing_experience_level: profile.marketing_experience || '',
+          current_marketing_activities: Array.isArray(profile.current_marketing_tools) 
+            ? profile.current_marketing_tools as string[]
             : [],
-          marketing_goals: Array.isArray(profile.marketing_goals) 
-            ? profile.marketing_goals as string[]
-            : [],
-          target_audience: profile.target_audience || '',
-          monthly_marketing_budget: profile.monthly_marketing_budget || '',
-          preferred_language: profile.preferred_language || language
+          marketing_goals: [],
+          target_audience: '',
+          monthly_marketing_budget: profile.marketing_budget || '',
+          preferred_language: language
         });
       }
     } catch (error) {
@@ -358,11 +356,17 @@ export default function ProfileSetup() {
         return;
       }
 
+      // Use client_profiles instead of customer_profiles
       const { error } = await supabase
-        .from('customer_profiles')
+        .from('client_profiles')
         .upsert({
-          customer_id: session.user.id,
-          ...profileData,
+          client_id: session.user.id,
+          industry: profileData.industry,
+          company_size: profileData.company_size,
+          marketing_experience: profileData.marketing_experience_level,
+          marketing_budget: profileData.monthly_marketing_budget,
+          target_audience: profileData.target_audience,
+          current_marketing_tools: profileData.current_marketing_activities,
           updated_at: new Date().toISOString()
         });
 
