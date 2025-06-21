@@ -1,7 +1,7 @@
-
 import { ChatInterface } from "@/components/ChatInterface";
 import { DynamicContentPanel } from "@/components/DynamicContentPanel";
 import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
+import { JourneyPhaseHandler } from "@/components/onboarding/JourneyPhaseHandler";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useJourney } from "@/contexts/JourneyContext";
@@ -20,8 +20,9 @@ const Dashboard = () => {
     journey 
   } = useJourney();
   
-  const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test'>('hero');
+  const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test' | 'onboarding'>('hero');
   const [journeyInitialized, setJourneyInitialized] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Auto-start journey for new users (only once)
   useEffect(() => {
@@ -33,53 +34,82 @@ const Dashboard = () => {
       console.log('🔍 Checking journey initialization...', {
         hasExistingJourney,
         isOnboardingComplete,
-        journey: !!journey
+        journey: !!journey,
+        currentPhase
       });
+
+      // Show onboarding if user has a journey but hasn't completed it
+      if (journey && !isOnboardingComplete) {
+        setShowOnboarding(true);
+        setContentType('onboarding');
+      }
 
       // Only start journey if user doesn't have one and hasn't completed onboarding
       if (!hasExistingJourney && !isOnboardingComplete && !journey) {
         console.log('🚀 Auto-starting journey for new user');
         await startJourney();
+        setShowOnboarding(true);
+        setContentType('onboarding');
       }
 
       setJourneyInitialized(true);
     };
 
     initializeJourney();
-  }, [loading, hasExistingJourney, isOnboardingComplete, journey, startJourney, journeyInitialized]);
+  }, [loading, hasExistingJourney, isOnboardingComplete, journey, startJourney, journeyInitialized, currentPhase]);
 
   const handleContentTypeChange = (type: string) => {
     console.log('🎯 Content type change:', type);
     switch (type) {
+      case 'onboarding':
+      case 'start-onboarding':
+        setContentType('onboarding');
+        setShowOnboarding(true);
+        break;
       case 'analytics':
       case 'view-analytics':
         setContentType('analytics');
+        setShowOnboarding(false);
         break;
       case 'content-creator':
       case 'create-content':
         setContentType('content-creator');
+        setShowOnboarding(false);
         break;
       case 'calendar':
       case 'schedule':
       case 'schedule-content':
         setContentType('calendar');
+        setShowOnboarding(false);
         break;
       case 'campaign':
       case 'campaigns':
       case 'create-campaign':
         setContentType('campaign');
+        setShowOnboarding(false);
         break;
       case 'connection-test':
         setContentType('connection-test');
+        setShowOnboarding(false);
         break;
       default:
         setContentType('hero');
+        setShowOnboarding(false);
     }
   };
 
   const handleContentAction = (action: string) => {
     console.log('🔄 Content action clicked:', action);
     handleContentTypeChange(action);
+  };
+
+  const handlePhaseComplete = (phase: string) => {
+    console.log('✅ Phase completed:', phase);
+    // Optionally update content type when certain phases are completed
+    if (phase === 'commitment_activation') {
+      setShowOnboarding(false);
+      setContentType('hero');
+    }
   };
 
   // Show loading while checking journey status
@@ -96,7 +126,8 @@ const Dashboard = () => {
     );
   }
 
-  console.log('📊 Dashboard with Journey Integration - Phase:', currentPhase);
+  console.log('📊 Dashboard with Enhanced Journey - Phase:', currentPhase, 'Show Onboarding:', showOnboarding);
+  
   return (
     <SimpleAuthWrapper>
       <div 
@@ -130,10 +161,19 @@ const Dashboard = () => {
         <div className="w-1/2 relative z-10">
           <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent"></div>
           <div className="relative z-10 h-full bg-white/5 backdrop-blur-sm">
-            <DynamicContentPanel 
-              contentType={contentType}
-              onActionClick={handleContentAction}
-            />
+            {showOnboarding && contentType === 'onboarding' ? (
+              <div className="h-full p-6 overflow-y-auto">
+                <JourneyPhaseHandler 
+                  onPhaseComplete={handlePhaseComplete}
+                  className="max-w-2xl mx-auto"
+                />
+              </div>
+            ) : (
+              <DynamicContentPanel 
+                contentType={contentType}
+                onActionClick={handleContentAction}
+              />
+            )}
           </div>
         </div>
 
