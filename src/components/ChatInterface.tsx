@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
@@ -9,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { MorvoAIService } from '@/services/morvoAIService';
 import { AgentResponse } from '@/services/agent';
 
 interface MessageData {
@@ -18,8 +19,13 @@ interface MessageData {
   sender: 'user' | 'agent';
   timestamp: Date;
   processing_time?: number;
-  cost?: number;
-  agents_involved?: string[];
+  tokens_used?: number;
+  suggested_actions?: Array<{
+    action: string;
+    urgency: string;
+    estimated_impact: string;
+  }>;
+  personality_traits?: any;
 }
 
 interface ChatInterfaceProps {
@@ -33,8 +39,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
   const [isConnected, setIsConnected] = useState(false);
   const [connectionChecked, setConnectionChecked] = useState(false);
   const [clientId, setClientId] = useState<string>('');
+  const [hasTokens, setHasTokens] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
   const { toast } = useToast();
@@ -77,27 +84,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
   // Check connection on mount
   useEffect(() => {
     const checkConnection = async () => {
-      if (!session?.access_token) {
-        setIsConnected(false);
-        setConnectionChecked(true);
-        return;
-      }
-
       try {
-        const response = await fetch('https://morvo-ai-orchestrator-production.up.railway.app/health', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const isHealthy = response.ok;
+        const isHealthy = await MorvoAIService.testConnection();
         setIsConnected(isHealthy);
-        
-        if (!isHealthy) {
-          console.error('Backend connection failed:', response.status);
-        }
       } catch (error) {
         console.error('Connection check failed:', error);
         setIsConnected(false);
@@ -106,11 +95,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
       }
     };
 
-    checkConnection();
-  }, [session]);
+    if (user) {
+      checkConnection();
+    }
+  }, [user]);
+
+  const handleTokensUpdated = (remaining: number, limit: number) => {
+    setHasTokens(remaining > 0);
+  };
 
   const handleSendMessage = async () => {
-    if (!input.trim() || !session?.access_token) {
+    if (!input.trim() || !user) {
       return;
     }
 
@@ -127,40 +122,38 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://morvo-ai-orchestrator-production.up.railway.app/chat', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: messageText,
-          user_id: user?.id,
-          client_id: user?.id,
-        }),
-      });
+      // Get context from current conversation
+      const context = {
+        current_phase: 'chat',
+        conversation_history: messages.slice(-3).map(m => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.content
+        }))
+      };
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const response = await MorvoAIService.sendMessageWithRetry(messageText, context);
       
       const botMessage: MessageData = {
         id: (Date.now() + 1).toString(),
-        content: data.response || 'Sorry, I could not process your request.',
+        content: response.response,
         sender: 'agent',
         timestamp: new Date(),
-        processing_time: data.processing_time,
-        cost: data.cost,
-        agents_involved: data.agents_involved,
+        processing_time: response.processing_time,
+        tokens_used: response.tokens_used,
+        suggested_actions: response.suggested_actions,
+        personality_traits: response.personality_traits,
       };
 
       setMessages(prev => [...prev, botMessage]);
 
-      // Update content panel based on response
-      if (onContentTypeChange && data.content_type) {
-        onContentTypeChange(data.content_type);
+      // Update content panel based on suggested actions
+      if (onContentTypeChange && response.suggested_actions && response.suggested_actions.length > 0) {
+        const firstAction = response.suggested_actions[0];
+        if (firstAction.action.includes('حملة') || firstAction.action.includes('campaign')) {
+          onContentTypeChange('campaign');
+        } else if (firstAction.action.includes('تحليل') || firstAction.action.includes('analysis')) {
+          onContentTypeChange('analysis');
+        }
       }
 
     } catch (error) {
@@ -177,7 +170,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
 
       setMessages(prev => [...prev, errorMessage]);
 
-      // Only show critical errors to user
       toast({
         title: language === 'ar' ? 'خطأ في الاتصال' : 'Connection Error',
         description: language === 'ar' 
@@ -251,11 +243,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
                 <TokenCounter 
                   theme={theme}
                   clientId={clientId}
+                  onTokensUpdated={handleTokensUpdated}
                 />
               )}
             </div>
             
-            {messages.length > 0 && (
+            {messages.length > 0 && messages[messages.length - 1]?.suggested_actions && (
               <ActionButtons 
                 messageContent={messages[messages.length - 1]?.content || ''}
                 language={language}
@@ -273,16 +266,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
               placeholder={
                 !isConnected
                   ? t.connecting
+                  : !hasTokens
+                  ? 'لا يوجد رصيد كافٍ من الطلبات'
                   : t.placeholder
               }
               onInputChange={setInput}
               onSend={handleSendMessage}
               onKeyPress={handleKeyPress}
-              hasTokens={true}
+              hasTokens={hasTokens}
             />
           </div>
         </div>
       </div>
+      <div ref={messagesEndRef} />
     </div>
   );
 };

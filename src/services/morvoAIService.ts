@@ -2,44 +2,104 @@
 import { supabase } from "@/integrations/supabase/client";
 
 interface ChatResponse {
-  message: string;
-  agents_involved: string[];
-  conversation_id: string;
-  message_id?: string;
-  processing_time: number;
-  confidence_score: number;
-  cost_tracking?: {
-    total_cost: number;
+  response: string;
+  personality_traits?: {
+    role: string;
+    communication_style: string;
+    cultural_awareness: string;
+    commitment_level: string;
   };
-  intent_analysis?: any;
+  tokens_used: number;
+  emotion_detected?: string;
+  suggested_actions?: Array<{
+    action: string;
+    urgency: string;
+    estimated_impact: string;
+  }>;
+  processing_time?: number;
+  confidence_score?: number;
 }
 
-interface Agent {
-  id: string;
-  name: string;
-  description: string;
-  status: 'active' | 'busy' | 'offline';
-  capabilities?: string[];
-  avatar?: string;
-  specialization?: string;
+interface TokenBalance {
+  balance: number;
+  package: {
+    name: string;
+    token_amount: number;
+    price_sar: number;
+    bonus_tokens: number;
+  };
 }
 
-interface ChatRequest {
-  message: string;
-  client_id: string;
-  conversation_id?: string;
-  profile_context?: any;
+interface TokenConsumption {
+  success: boolean;
+  balance: number;
+  transaction_id: string;
+  timestamp: string;
+}
+
+interface BusinessAnalysis {
+  analysis: {
+    business_overview: {
+      business_type: string;
+      main_products: string[];
+      target_audience: string;
+      unique_value: string;
+    };
+    digital_presence: {
+      website_health: {
+        seo_score: number;
+        speed_score: number;
+        mobile_friendly: boolean;
+        ssl_secure: boolean;
+      };
+      social_media: Record<string, any>;
+    };
+    competitors: Array<{
+      name: string;
+      market_share: number;
+      strengths: string[];
+      weaknesses: string[];
+    }>;
+    opportunities: {
+      quick_wins: string[];
+      strategic: string[];
+    };
+    roi_prediction: Record<string, any>;
+  };
+  tokens_used: number;
+  analysis_time: number;
+  confidence_score: number;
+}
+
+interface OnboardingProfile {
+  company_name?: string;
+  website_url?: string;
+  business_type?: string;
+  marketing_experience?: string;
+  monthly_budget?: string;
+  main_goal?: string;
+  team_size?: string;
+  marketing_priority?: string;
+  target_region?: string;
+  monthly_sales?: string;
+  customer_sources?: string[];
+  main_challenges?: string[];
+  most_profitable_product?: string;
+  sales_season?: string;
+  competitive_advantage?: string;
 }
 
 export class MorvoAIService {
   private static readonly API_URL = 'https://morvo-production.up.railway.app';
-  private static readonly TIMEOUT = 30000; // 30 seconds
-  private static conversationId: string = '';
+  private static readonly API_VERSION = 'v1';
+  private static readonly TIMEOUT = 30000;
 
-  private static generateId(): string {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
-    return `${timestamp}_${random}`;
+  private static async getAuthToken(): Promise<string> {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
+    return session.access_token;
   }
 
   private static async getClientId(): Promise<string> {
@@ -50,17 +110,23 @@ export class MorvoAIService {
     throw new Error('User not authenticated');
   }
 
-  private static getConversationId(): string {
-    if (!this.conversationId) {
-      this.conversationId = `conv_${this.generateId()}`;
-      console.log('Generated conversation ID:', this.conversationId);
-    }
-    return this.conversationId;
+  private static async makeAuthenticatedRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
+    const token = await this.getAuthToken();
+    
+    return fetch(`${this.API_URL}/${this.API_VERSION}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers
+      },
+      signal: AbortSignal.timeout(this.TIMEOUT)
+    });
   }
 
+  // Health Check
   static async healthCheck(): Promise<any> {
     try {
-      console.log('Checking Railway health at:', `${this.API_URL}/health`);
       const response = await fetch(`${this.API_URL}/health`, {
         method: 'GET',
         headers: {
@@ -70,102 +136,102 @@ export class MorvoAIService {
         signal: AbortSignal.timeout(this.TIMEOUT)
       });
       
-      console.log('Railway health check response status:', response.status);
-      
       if (!response.ok) {
         throw new Error(`Health check failed: ${response.status} ${response.statusText}`);
       }
       
-      const data = await response.json();
-      console.log('Railway health check successful:', data);
-      return data;
+      return response.json();
     } catch (error) {
-      console.error('Railway health check error:', error);
+      console.error('Health check error:', error);
       throw error;
     }
   }
 
-  static async getAgents(): Promise<Agent[]> {
-    // Since /v1/agents is failing, return empty array for now
-    // The backend is working but this endpoint might not be available
-    console.log('Skipping agents fetch - using chat endpoint instead');
-    return [];
+  // Token Management
+  static async getTokenBalance(): Promise<TokenBalance> {
+    try {
+      const response = await this.makeAuthenticatedRequest('/tokens/balance');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get token balance: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Error getting token balance:', error);
+      throw error;
+    }
   }
 
-  static async sendMessage(message: string, profileContext?: any): Promise<ChatResponse> {
+  static async consumeTokens(operationType: string, amount: number, description: string): Promise<TokenConsumption> {
+    try {
+      const response = await this.makeAuthenticatedRequest('/tokens/consume', {
+        method: 'POST',
+        body: JSON.stringify({
+          operation_type: operationType,
+          amount: amount,
+          description: description
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to consume tokens: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Error consuming tokens:', error);
+      throw error;
+    }
+  }
+
+  static async getTokenHistory(limit: number = 10, offset: number = 0): Promise<any> {
+    try {
+      const response = await this.makeAuthenticatedRequest(`/tokens/history?limit=${limit}&offset=${offset}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get token history: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Error getting token history:', error);
+      throw error;
+    }
+  }
+
+  // Enhanced Chat
+  static async sendMessage(message: string, context?: any): Promise<ChatResponse> {
     const clientId = await this.getClientId();
     
-    // Get user profile if not provided
-    if (!profileContext) {
-      try {
-        const { data: profile } = await supabase
-          .from('customer_profiles')
-          .select('*')
-          .eq('customer_id', clientId)
-          .single();
-        profileContext = profile;
-      } catch (error) {
-        console.log('No profile found, continuing without profile context');
-      }
-    }
-
-    const requestBody: ChatRequest = {
-      message: message.trim(),
-      client_id: clientId,
-      conversation_id: this.getConversationId(),
-      profile_context: profileContext
-    };
-
-    console.log('Sending message to Railway:', {
-      url: `${this.API_URL}/v1/chat/test`,
-      body: requestBody
-    });
-
     try {
-      const response = await fetch(`${this.API_URL}/v1/chat/test`, {
+      const response = await this.makeAuthenticatedRequest('/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Origin': window.location.origin
-        },
-        body: JSON.stringify(requestBody),
-        signal: AbortSignal.timeout(this.TIMEOUT)
+        body: JSON.stringify({
+          message: message.trim(),
+          client_id: clientId,
+          context: context || {}
+        })
       });
-
-      console.log('Railway chat response status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Railway chat error response:', errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      const data: any = await response.json();
-      console.log('Railway chat success response:', data);
-
-      // Map the response to our expected format
-      const mappedResponse: ChatResponse = {
-        message: data.message || data.response || 'No response',
-        agents_involved: data.agents_involved || [],
-        conversation_id: data.conversation_id || this.conversationId,
-        processing_time: data.processing_time_ms ? data.processing_time_ms / 1000 : data.processing_time || 0,
-        confidence_score: data.confidence_score || 0.9,
-        cost_tracking: {
-          total_cost: data.cost || 0
-        },
-        intent_analysis: data.intent_analysis
+      const data = await response.json();
+      
+      return {
+        response: data.response || 'No response',
+        personality_traits: data.personality_traits,
+        tokens_used: data.tokens_used || 0,
+        emotion_detected: data.emotion_detected,
+        suggested_actions: data.suggested_actions || [],
+        processing_time: data.processing_time,
+        confidence_score: data.confidence_score || 0.9
       };
-
-      // Update conversation ID if provided in response
-      if (data.conversation_id && data.conversation_id !== this.conversationId) {
-        this.conversationId = data.conversation_id;
-        console.log('Updated conversation ID from Railway:', this.conversationId);
-      }
-
-      return mappedResponse;
     } catch (error) {
-      console.error('Railway service error:', error);
+      console.error('Chat service error:', error);
       
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error('فشل الاتصال بالشبكة. يرجى التحقق من اتصال الإنترنت.');
@@ -175,18 +241,146 @@ export class MorvoAIService {
     }
   }
 
-  static async sendMessageWithRetry(message: string, profileContext?: any, maxRetries = 3): Promise<ChatResponse> {
+  // Business Intelligence
+  static async analyzeWebsite(websiteUrl: string, analysisType: string = 'comprehensive'): Promise<BusinessAnalysis> {
+    try {
+      const response = await this.makeAuthenticatedRequest('/business-intelligence/analyze', {
+        method: 'POST',
+        body: JSON.stringify({
+          website_url: websiteUrl,
+          analysis_type: analysisType,
+          include_competitors: true,
+          market: 'saudi_arabia'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to analyze website: ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Website analysis error:', error);
+      throw error;
+    }
+  }
+
+  // Onboarding APIs
+  static async saveGreetingPreference(greeting: string): Promise<any> {
+    const clientId = await this.getClientId();
+    
+    try {
+      const response = await this.makeAuthenticatedRequest('/onboarding/greeting', {
+        method: 'POST',
+        body: JSON.stringify({
+          greeting_preference: greeting,
+          client_id: clientId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save greeting: ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Error saving greeting preference:', error);
+      throw error;
+    }
+  }
+
+  static async getJourneyStatus(): Promise<any> {
+    const clientId = await this.getClientId();
+    
+    try {
+      const response = await this.makeAuthenticatedRequest(`/onboarding/journey/${clientId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get journey status: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Error getting journey status:', error);
+      throw error;
+    }
+  }
+
+  static async updateJourneyPhase(phase: string, completed: boolean, duration: number): Promise<any> {
+    const clientId = await this.getClientId();
+    
+    try {
+      const response = await this.makeAuthenticatedRequest('/onboarding/journey/phase', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: clientId,
+          phase: phase,
+          completed: completed,
+          duration_seconds: duration
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update journey phase: ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Error updating journey phase:', error);
+      throw error;
+    }
+  }
+
+  static async saveProfileData(profileData: OnboardingProfile): Promise<any> {
+    const clientId = await this.getClientId();
+    
+    try {
+      const response = await this.makeAuthenticatedRequest('/onboarding/profile', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: clientId,
+          profile_data: profileData
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save profile data: ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Error saving profile data:', error);
+      throw error;
+    }
+  }
+
+  static async getOnboardingQuestions(language: string = 'ar'): Promise<any> {
+    try {
+      const response = await this.makeAuthenticatedRequest(`/onboarding/questions?language=${language}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get onboarding questions: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Error getting onboarding questions:', error);
+      throw error;
+    }
+  }
+
+  // Retry mechanism
+  static async sendMessageWithRetry(message: string, context?: any, maxRetries = 3): Promise<ChatResponse> {
     let lastError;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        return await this.sendMessage(message, profileContext);
+        return await this.sendMessage(message, context);
       } catch (error) {
         lastError = error;
         console.warn(`Attempt ${attempt} failed:`, error);
         
         if (attempt < maxRetries) {
-          // Wait before retry (exponential backoff)
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
       }
@@ -195,40 +389,20 @@ export class MorvoAIService {
     throw lastError;
   }
 
-  static async chatWithAgent(agentId: string, message: string): Promise<ChatResponse> {
-    // Use the main chat endpoint since agent-specific endpoints might not be available
-    return this.sendMessage(`[Agent: ${agentId}] ${message}`);
-  }
-
-  static resetConversation(): void {
-    this.conversationId = '';
-    console.log('Conversation reset - new conversation will be created');
-  }
-
-  static getConversationInfo() {
-    return {
-      clientId: this.getClientId(),
-      conversationId: this.conversationId
-    };
-  }
-
-  static async testRailwayConnection(): Promise<boolean> {
+  // Test connection
+  static async testConnection(): Promise<boolean> {
     try {
-      console.log('Testing Railway connection...');
+      console.log('Testing Morvo AI V2 connection...');
       
       const healthResponse = await this.healthCheck();
-      console.log('✅ Railway Health Check passed:', healthResponse);
+      console.log('✅ Health Check passed:', healthResponse);
       
-      // Skip agents test since it's failing
-      console.log('⚠️ Skipping agents test - using direct chat instead');
-      
-      const testMessage = "مرحبا، هذا اختبار اتصال";
-      const chatResponse = await this.sendMessage(testMessage);
-      console.log('✅ Railway Chat test passed:', chatResponse);
+      const balanceResponse = await this.getTokenBalance();
+      console.log('✅ Token balance test passed:', balanceResponse);
       
       return true;
     } catch (error) {
-      console.error('❌ Railway connection test failed:', error);
+      console.error('❌ Connection test failed:', error);
       return false;
     }
   }

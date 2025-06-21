@@ -205,58 +205,46 @@ export type Database = {
           },
         ]
       }
-      agent_memory: {
+      agent_memories: {
         Row: {
+          access_count: number | null
           agent_id: string
           client_id: string
           content: Json
-          conversation_id: string | null
-          created_at: string
-          embedding: string | null
-          expires_at: string | null
+          created_at: string | null
           id: string
-          importance_score: number | null
-          interaction_type: string
+          importance: number | null
+          last_accessed_at: string | null
           memory_type: string
-          metadata: Json | null
-          timestamp: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
+          access_count?: number | null
           agent_id: string
           client_id: string
-          content?: Json
-          conversation_id?: string | null
-          created_at?: string
-          embedding?: string | null
-          expires_at?: string | null
+          content: Json
+          created_at?: string | null
           id?: string
-          importance_score?: number | null
-          interaction_type?: string
-          memory_type?: string
-          metadata?: Json | null
-          timestamp?: string
-          updated_at?: string
+          importance?: number | null
+          last_accessed_at?: string | null
+          memory_type: string
+          updated_at?: string | null
         }
         Update: {
+          access_count?: number | null
           agent_id?: string
           client_id?: string
           content?: Json
-          conversation_id?: string | null
-          created_at?: string
-          embedding?: string | null
-          expires_at?: string | null
+          created_at?: string | null
           id?: string
-          importance_score?: number | null
-          interaction_type?: string
+          importance?: number | null
+          last_accessed_at?: string | null
           memory_type?: string
-          metadata?: Json | null
-          timestamp?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "agent_memory_client_id_fkey"
+            foreignKeyName: "agent_memories_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -722,6 +710,56 @@ export type Database = {
           },
         ]
       }
+      business_impact: {
+        Row: {
+          attribution_confidence: number | null
+          baseline_value: number | null
+          client_id: string
+          created_at: string
+          current_value: number | null
+          id: string
+          impact_data: Json | null
+          impact_type: string
+          improvement_percentage: number | null
+          measured_at: string
+          measurement_period: string
+        }
+        Insert: {
+          attribution_confidence?: number | null
+          baseline_value?: number | null
+          client_id: string
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          impact_data?: Json | null
+          impact_type: string
+          improvement_percentage?: number | null
+          measured_at?: string
+          measurement_period: string
+        }
+        Update: {
+          attribution_confidence?: number | null
+          baseline_value?: number | null
+          client_id?: string
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          impact_data?: Json | null
+          impact_type?: string
+          improvement_percentage?: number | null
+          measured_at?: string
+          measurement_period?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_impact_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_insights: {
         Row: {
           business_profile_id: string
@@ -733,6 +771,7 @@ export type Database = {
           id: string
           impact_score: number | null
           insight_category: string
+          insight_data: Json | null
           insight_type: string
           metrics: Json | null
           priority_score: number | null
@@ -751,6 +790,7 @@ export type Database = {
           id?: string
           impact_score?: number | null
           insight_category: string
+          insight_data?: Json | null
           insight_type: string
           metrics?: Json | null
           priority_score?: number | null
@@ -769,6 +809,7 @@ export type Database = {
           id?: string
           impact_score?: number | null
           insight_category?: string
+          insight_data?: Json | null
           insight_type?: string
           metrics?: Json | null
           priority_score?: number | null
@@ -989,14 +1030,160 @@ export type Database = {
           },
         ]
       }
+      client_experience: {
+        Row: {
+          arabic_first: boolean | null
+          client_id: string
+          communication_style: string | null
+          created_at: string
+          email_frequency: string | null
+          enable_notifications: boolean | null
+          formality_level: string | null
+          greeting_preference: string | null
+          id: string
+          preferred_language: string | null
+          show_detailed_analytics: boolean | null
+          theme_preference: string | null
+          updated_at: string
+        }
+        Insert: {
+          arabic_first?: boolean | null
+          client_id: string
+          communication_style?: string | null
+          created_at?: string
+          email_frequency?: string | null
+          enable_notifications?: boolean | null
+          formality_level?: string | null
+          greeting_preference?: string | null
+          id?: string
+          preferred_language?: string | null
+          show_detailed_analytics?: boolean | null
+          theme_preference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arabic_first?: boolean | null
+          client_id?: string
+          communication_style?: string | null
+          created_at?: string
+          email_frequency?: string | null
+          enable_notifications?: boolean | null
+          formality_level?: string | null
+          greeting_preference?: string | null
+          id?: string
+          preferred_language?: string | null
+          show_detailed_analytics?: boolean | null
+          theme_preference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_experience_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_profiles: {
+        Row: {
+          best_sales_season: string | null
+          biggest_challenge: string | null
+          client_id: string
+          communication_preferences: Json | null
+          company_size: string | null
+          competitive_advantage: string | null
+          completeness_score: number | null
+          created_at: string
+          current_marketing_tools: Json | null
+          current_sales: string | null
+          customer_sources: string | null
+          id: string
+          industry: string | null
+          marketing_budget: string | null
+          marketing_experience: string | null
+          marketing_priority: string | null
+          most_profitable_product: string | null
+          personality_profile: Json | null
+          primary_goal: string | null
+          target_region: string | null
+          team_size: string | null
+          updated_at: string
+          years_in_business: number | null
+        }
+        Insert: {
+          best_sales_season?: string | null
+          biggest_challenge?: string | null
+          client_id: string
+          communication_preferences?: Json | null
+          company_size?: string | null
+          competitive_advantage?: string | null
+          completeness_score?: number | null
+          created_at?: string
+          current_marketing_tools?: Json | null
+          current_sales?: string | null
+          customer_sources?: string | null
+          id?: string
+          industry?: string | null
+          marketing_budget?: string | null
+          marketing_experience?: string | null
+          marketing_priority?: string | null
+          most_profitable_product?: string | null
+          personality_profile?: Json | null
+          primary_goal?: string | null
+          target_region?: string | null
+          team_size?: string | null
+          updated_at?: string
+          years_in_business?: number | null
+        }
+        Update: {
+          best_sales_season?: string | null
+          biggest_challenge?: string | null
+          client_id?: string
+          communication_preferences?: Json | null
+          company_size?: string | null
+          competitive_advantage?: string | null
+          completeness_score?: number | null
+          created_at?: string
+          current_marketing_tools?: Json | null
+          current_sales?: string | null
+          customer_sources?: string | null
+          id?: string
+          industry?: string | null
+          marketing_budget?: string | null
+          marketing_experience?: string | null
+          marketing_priority?: string | null
+          most_profitable_product?: string | null
+          personality_profile?: Json | null
+          primary_goal?: string | null
+          target_region?: string | null
+          team_size?: string | null
+          updated_at?: string
+          years_in_business?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           active: boolean
           api_key: string
           business_type: string | null
+          company_name: string | null
           created_at: string
+          email: string | null
           id: string
-          name: string
+          industry: string | null
+          metadata: Json | null
+          name: string | null
           quota_limit: number
           quota_used: number
           updated_at: string
@@ -1006,9 +1193,13 @@ export type Database = {
           active?: boolean
           api_key?: string
           business_type?: string | null
+          company_name?: string | null
           created_at?: string
+          email?: string | null
           id?: string
-          name: string
+          industry?: string | null
+          metadata?: Json | null
+          name?: string | null
           quota_limit?: number
           quota_used?: number
           updated_at?: string
@@ -1018,9 +1209,13 @@ export type Database = {
           active?: boolean
           api_key?: string
           business_type?: string | null
+          company_name?: string | null
           created_at?: string
+          email?: string | null
           id?: string
-          name?: string
+          industry?: string | null
+          metadata?: Json | null
+          name?: string | null
           quota_limit?: number
           quota_used?: number
           updated_at?: string
@@ -1070,6 +1265,53 @@ export type Database = {
         }
         Relationships: []
       }
+      competitive_intelligence: {
+        Row: {
+          client_id: string
+          competitive_advantages: Json | null
+          competitor_name: string
+          competitor_url: string | null
+          created_at: string
+          id: string
+          intelligence_data: Json
+          last_analyzed: string
+          opportunity_gaps: Json | null
+          threat_level: string | null
+        }
+        Insert: {
+          client_id: string
+          competitive_advantages?: Json | null
+          competitor_name: string
+          competitor_url?: string | null
+          created_at?: string
+          id?: string
+          intelligence_data?: Json
+          last_analyzed?: string
+          opportunity_gaps?: Json | null
+          threat_level?: string | null
+        }
+        Update: {
+          client_id?: string
+          competitive_advantages?: Json | null
+          competitor_name?: string
+          competitor_url?: string | null
+          created_at?: string
+          id?: string
+          intelligence_data?: Json
+          last_analyzed?: string
+          opportunity_gaps?: Json | null
+          threat_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitive_intelligence_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_sources_data: {
         Row: {
           client_id: string | null
@@ -1112,46 +1354,49 @@ export type Database = {
           },
         ]
       }
-      conversation_messages: {
+      content_strategies: {
         Row: {
           client_id: string
-          content: string
-          conversation_id: string | null
+          content_calendar: Json | null
+          content_types: Json
           created_at: string
-          emotion_analysis: Json | null
+          cultural_adaptations: Json | null
           id: string
-          metadata: Json | null
-          sender_id: string
-          sender_type: string
-          timestamp: string
+          performance_metrics: Json | null
+          status: string | null
+          strategy_name: string
+          target_audience: Json | null
+          updated_at: string
         }
         Insert: {
           client_id: string
-          content: string
-          conversation_id?: string | null
+          content_calendar?: Json | null
+          content_types?: Json
           created_at?: string
-          emotion_analysis?: Json | null
+          cultural_adaptations?: Json | null
           id?: string
-          metadata?: Json | null
-          sender_id: string
-          sender_type: string
-          timestamp?: string
+          performance_metrics?: Json | null
+          status?: string | null
+          strategy_name: string
+          target_audience?: Json | null
+          updated_at?: string
         }
         Update: {
           client_id?: string
-          content?: string
-          conversation_id?: string | null
+          content_calendar?: Json | null
+          content_types?: Json
           created_at?: string
-          emotion_analysis?: Json | null
+          cultural_adaptations?: Json | null
           id?: string
-          metadata?: Json | null
-          sender_id?: string
-          sender_type?: string
-          timestamp?: string
+          performance_metrics?: Json | null
+          status?: string | null
+          strategy_name?: string
+          target_audience?: Json | null
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "conversation_messages_client_id_fkey"
+            foreignKeyName: "content_strategies_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -1162,27 +1407,36 @@ export type Database = {
       conversations: {
         Row: {
           client_id: string
-          created_at: string | null
+          companion_name: string | null
+          created_at: string
           id: string
+          last_message_at: string | null
+          metadata: Json | null
           status: string | null
           title: string | null
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           client_id: string
-          created_at?: string | null
+          companion_name?: string | null
+          created_at?: string
           id?: string
+          last_message_at?: string | null
+          metadata?: Json | null
           status?: string | null
           title?: string | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           client_id?: string
-          created_at?: string | null
+          companion_name?: string | null
+          created_at?: string
           id?: string
+          last_message_at?: string | null
+          metadata?: Json | null
           status?: string | null
           title?: string | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1194,110 +1448,133 @@ export type Database = {
           },
         ]
       }
-      customer_profiles: {
+      cross_agent_context: {
         Row: {
-          budget_range: string | null
-          communication_preferences: Json | null
-          company_name: string | null
-          company_size: string | null
+          context_data: Json
+          context_key: string
+          context_type: string
           created_at: string | null
-          current_marketing_activities: Json | null
-          customer_id: string
-          has_marketing_strategy: boolean | null
+          expires_at: string | null
           id: string
-          industry: string | null
-          marketing_budget_history: string | null
-          marketing_experience_level: string | null
-          marketing_goals: Json | null
-          marketing_knowledge_gaps: Json | null
-          marketing_measurement_experience: string | null
-          marketing_pain_points: Json | null
-          marketing_team_size: string | null
-          marketing_tools_used: Json | null
-          monthly_marketing_budget: string | null
-          personality_profile: Json | null
-          preferred_language: string | null
-          preferred_marketing_channels: Json | null
-          previous_marketing_results: Json | null
-          primary_goal: string | null
-          session_id: string | null
-          social_accounts: Json | null
-          status: string | null
-          target_audience: string | null
-          target_customers: string | null
-          team_experience: string | null
+          shared_with: Json | null
+          source_agent_id: string | null
           updated_at: string | null
-          website_url: string | null
         }
         Insert: {
-          budget_range?: string | null
-          communication_preferences?: Json | null
-          company_name?: string | null
-          company_size?: string | null
+          context_data: Json
+          context_key: string
+          context_type: string
           created_at?: string | null
-          current_marketing_activities?: Json | null
-          customer_id: string
-          has_marketing_strategy?: boolean | null
+          expires_at?: string | null
           id?: string
-          industry?: string | null
-          marketing_budget_history?: string | null
-          marketing_experience_level?: string | null
-          marketing_goals?: Json | null
-          marketing_knowledge_gaps?: Json | null
-          marketing_measurement_experience?: string | null
-          marketing_pain_points?: Json | null
-          marketing_team_size?: string | null
-          marketing_tools_used?: Json | null
-          monthly_marketing_budget?: string | null
-          personality_profile?: Json | null
-          preferred_language?: string | null
-          preferred_marketing_channels?: Json | null
-          previous_marketing_results?: Json | null
-          primary_goal?: string | null
-          session_id?: string | null
-          social_accounts?: Json | null
-          status?: string | null
-          target_audience?: string | null
-          target_customers?: string | null
-          team_experience?: string | null
+          shared_with?: Json | null
+          source_agent_id?: string | null
           updated_at?: string | null
-          website_url?: string | null
         }
         Update: {
-          budget_range?: string | null
-          communication_preferences?: Json | null
-          company_name?: string | null
-          company_size?: string | null
+          context_data?: Json
+          context_key?: string
+          context_type?: string
           created_at?: string | null
-          current_marketing_activities?: Json | null
-          customer_id?: string
-          has_marketing_strategy?: boolean | null
+          expires_at?: string | null
           id?: string
-          industry?: string | null
-          marketing_budget_history?: string | null
-          marketing_experience_level?: string | null
-          marketing_goals?: Json | null
-          marketing_knowledge_gaps?: Json | null
-          marketing_measurement_experience?: string | null
-          marketing_pain_points?: Json | null
-          marketing_team_size?: string | null
-          marketing_tools_used?: Json | null
-          monthly_marketing_budget?: string | null
-          personality_profile?: Json | null
-          preferred_language?: string | null
-          preferred_marketing_channels?: Json | null
-          previous_marketing_results?: Json | null
-          primary_goal?: string | null
-          session_id?: string | null
-          social_accounts?: Json | null
-          status?: string | null
-          target_audience?: string | null
-          target_customers?: string | null
-          team_experience?: string | null
+          shared_with?: Json | null
+          source_agent_id?: string | null
           updated_at?: string | null
-          website_url?: string | null
         }
         Relationships: []
+      }
+      cultural_calendar: {
+        Row: {
+          business_impact: Json | null
+          created_at: string
+          end_date: string | null
+          event_name: string
+          event_type: string
+          id: string
+          impact_level: string | null
+          marketing_adaptations: Json | null
+          start_date: string
+        }
+        Insert: {
+          business_impact?: Json | null
+          created_at?: string
+          end_date?: string | null
+          event_name: string
+          event_type: string
+          id?: string
+          impact_level?: string | null
+          marketing_adaptations?: Json | null
+          start_date: string
+        }
+        Update: {
+          business_impact?: Json | null
+          created_at?: string
+          end_date?: string | null
+          event_name?: string
+          event_type?: string
+          id?: string
+          impact_level?: string | null
+          marketing_adaptations?: Json | null
+          start_date?: string
+        }
+        Relationships: []
+      }
+      cultural_contexts: {
+        Row: {
+          adaptation_rules: Json | null
+          business_culture: string | null
+          client_id: string
+          communication_style: string | null
+          created_at: string
+          cultural_events: Json | null
+          cultural_profile: string | null
+          id: string
+          language_preference: string | null
+          location: string
+          religious_context: Json | null
+          time_preferences: Json | null
+          updated_at: string
+        }
+        Insert: {
+          adaptation_rules?: Json | null
+          business_culture?: string | null
+          client_id: string
+          communication_style?: string | null
+          created_at?: string
+          cultural_events?: Json | null
+          cultural_profile?: string | null
+          id?: string
+          language_preference?: string | null
+          location?: string
+          religious_context?: Json | null
+          time_preferences?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          adaptation_rules?: Json | null
+          business_culture?: string | null
+          client_id?: string
+          communication_style?: string | null
+          created_at?: string
+          cultural_events?: Json | null
+          cultural_profile?: string | null
+          id?: string
+          language_preference?: string | null
+          location?: string
+          religious_context?: Json | null
+          time_preferences?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cultural_contexts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dashboard_contexts: {
         Row: {
@@ -1414,6 +1691,62 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emotional_contexts: {
+        Row: {
+          active: boolean | null
+          adaptation_strategy: string | null
+          client_id: string
+          confidence: number
+          context_data: Json | null
+          conversation_id: string | null
+          created_at: string
+          detected_triggers: string[] | null
+          emotional_intensity: number | null
+          id: string
+          primary_emotion: string
+          timestamp: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          adaptation_strategy?: string | null
+          client_id: string
+          confidence: number
+          context_data?: Json | null
+          conversation_id?: string | null
+          created_at?: string
+          detected_triggers?: string[] | null
+          emotional_intensity?: number | null
+          id?: string
+          primary_emotion: string
+          timestamp?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          adaptation_strategy?: string | null
+          client_id?: string
+          confidence?: number
+          context_data?: Json | null
+          conversation_id?: string | null
+          created_at?: string
+          detected_triggers?: string[] | null
+          emotional_intensity?: number | null
+          id?: string
+          primary_emotion?: string
+          timestamp?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emotional_contexts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -1653,6 +1986,65 @@ export type Database = {
           },
         ]
       }
+      generated_content: {
+        Row: {
+          client_id: string
+          content: string
+          content_type: string
+          created_at: string
+          created_by_agent: string | null
+          cultural_compliance_score: number | null
+          cultural_version: string | null
+          id: string
+          performance_prediction: Json | null
+          seo_keywords: string[] | null
+          status: string | null
+          target_platform: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          content_type: string
+          created_at?: string
+          created_by_agent?: string | null
+          cultural_compliance_score?: number | null
+          cultural_version?: string | null
+          id?: string
+          performance_prediction?: Json | null
+          seo_keywords?: string[] | null
+          status?: string | null
+          target_platform?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          content_type?: string
+          created_at?: string
+          created_by_agent?: string | null
+          cultural_compliance_score?: number | null
+          cultural_version?: string | null
+          id?: string
+          performance_prediction?: Json | null
+          seo_keywords?: string[] | null
+          status?: string | null
+          target_platform?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_content_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integrated_analytics: {
         Row: {
           analysis_type: string
@@ -1688,6 +2080,50 @@ export type Database = {
           {
             foreignKeyName: "integrated_analytics_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_phase_transitions: {
+        Row: {
+          client_id: string
+          created_at: string
+          duration_seconds: number | null
+          from_phase: string | null
+          id: string
+          journey_id: string
+          metadata: Json | null
+          to_phase: string
+          transition_time: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          from_phase?: string | null
+          id?: string
+          journey_id: string
+          metadata?: Json | null
+          to_phase: string
+          transition_time?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          from_phase?: string | null
+          id?: string
+          journey_id?: string
+          metadata?: Json | null
+          to_phase?: string
+          transition_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_phase_transitions_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
@@ -1749,27 +2185,36 @@ export type Database = {
       }
       messages: {
         Row: {
-          client_id: string
+          agent_id: string | null
+          client_id: string | null
           content: string
-          conversation_id: string | null
+          conversation_id: string
+          created_at: string
+          emotion_analysis: Json | null
           id: string
           metadata: Json | null
           role: string
           timestamp: string | null
         }
         Insert: {
-          client_id: string
+          agent_id?: string | null
+          client_id?: string | null
           content: string
-          conversation_id?: string | null
+          conversation_id: string
+          created_at?: string
+          emotion_analysis?: Json | null
           id?: string
           metadata?: Json | null
           role: string
           timestamp?: string | null
         }
         Update: {
-          client_id?: string
+          agent_id?: string | null
+          client_id?: string | null
           content?: string
-          conversation_id?: string | null
+          conversation_id?: string
+          created_at?: string
+          emotion_analysis?: Json | null
           id?: string
           metadata?: Json | null
           role?: string
@@ -1836,6 +2281,125 @@ export type Database = {
           },
         ]
       }
+      onboarding_journeys: {
+        Row: {
+          analysis_completed_at: string | null
+          analysis_error: string | null
+          analysis_results: Json | null
+          answer_best_season: string | null
+          answer_biggest_challenge: string | null
+          answer_competitive_advantage: string | null
+          answer_customer_sources: string | null
+          answer_experience_level: string | null
+          answer_marketing_priority: string | null
+          answer_monthly_budget: string | null
+          answer_monthly_sales: string | null
+          answer_most_profitable: string | null
+          answer_primary_goal: string | null
+          answer_target_region: string | null
+          answer_team_size: string | null
+          business_type: string | null
+          client_id: string
+          client_name: string | null
+          completed_at: string | null
+          created_at: string
+          current_phase: string
+          greeting_preference: string | null
+          id: string
+          journey_id: string | null
+          phase_status: string | null
+          phase_updated_at: string | null
+          professional_analysis: Json | null
+          profile_progress: number | null
+          progress_percentage: number | null
+          start_time: string
+          strategy_90_days: Json | null
+          total_tokens_consumed: number | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          analysis_completed_at?: string | null
+          analysis_error?: string | null
+          analysis_results?: Json | null
+          answer_best_season?: string | null
+          answer_biggest_challenge?: string | null
+          answer_competitive_advantage?: string | null
+          answer_customer_sources?: string | null
+          answer_experience_level?: string | null
+          answer_marketing_priority?: string | null
+          answer_monthly_budget?: string | null
+          answer_monthly_sales?: string | null
+          answer_most_profitable?: string | null
+          answer_primary_goal?: string | null
+          answer_target_region?: string | null
+          answer_team_size?: string | null
+          business_type?: string | null
+          client_id: string
+          client_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_phase?: string
+          greeting_preference?: string | null
+          id?: string
+          journey_id?: string | null
+          phase_status?: string | null
+          phase_updated_at?: string | null
+          professional_analysis?: Json | null
+          profile_progress?: number | null
+          progress_percentage?: number | null
+          start_time?: string
+          strategy_90_days?: Json | null
+          total_tokens_consumed?: number | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          analysis_completed_at?: string | null
+          analysis_error?: string | null
+          analysis_results?: Json | null
+          answer_best_season?: string | null
+          answer_biggest_challenge?: string | null
+          answer_competitive_advantage?: string | null
+          answer_customer_sources?: string | null
+          answer_experience_level?: string | null
+          answer_marketing_priority?: string | null
+          answer_monthly_budget?: string | null
+          answer_monthly_sales?: string | null
+          answer_most_profitable?: string | null
+          answer_primary_goal?: string | null
+          answer_target_region?: string | null
+          answer_team_size?: string | null
+          business_type?: string | null
+          client_id?: string
+          client_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_phase?: string
+          greeting_preference?: string | null
+          id?: string
+          journey_id?: string | null
+          phase_status?: string | null
+          phase_updated_at?: string | null
+          professional_analysis?: Json | null
+          profile_progress?: number | null
+          progress_percentage?: number | null
+          start_time?: string
+          strategy_90_days?: Json | null
+          total_tokens_consumed?: number | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_journeys_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_progress: {
         Row: {
           client_id: string
@@ -1882,72 +2446,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "onboarding_progress_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      onboarding_sessions: {
-        Row: {
-          business_profile_id: string | null
-          client_id: string
-          completed_at: string | null
-          completed_steps: number | null
-          created_at: string | null
-          current_step: string
-          id: string
-          last_activity: string | null
-          session_data: Json | null
-          session_type: string
-          started_at: string | null
-          status: string | null
-          total_steps: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          business_profile_id?: string | null
-          client_id: string
-          completed_at?: string | null
-          completed_steps?: number | null
-          created_at?: string | null
-          current_step: string
-          id?: string
-          last_activity?: string | null
-          session_data?: Json | null
-          session_type: string
-          started_at?: string | null
-          status?: string | null
-          total_steps?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          business_profile_id?: string | null
-          client_id?: string
-          completed_at?: string | null
-          completed_steps?: number | null
-          created_at?: string | null
-          current_step?: string
-          id?: string
-          last_activity?: string | null
-          session_data?: Json | null
-          session_type?: string
-          started_at?: string | null
-          status?: string | null
-          total_steps?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "onboarding_sessions_business_profile_id_fkey"
-            columns: ["business_profile_id"]
-            isOneToOne: false
-            referencedRelation: "business_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "onboarding_sessions_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -2211,6 +2709,56 @@ export type Database = {
           },
         ]
       }
+      roi_predictions: {
+        Row: {
+          accuracy_score: number | null
+          actual_results: Json | null
+          baseline_metrics: Json
+          client_id: string
+          created_at: string
+          id: string
+          predicted_metrics: Json
+          prediction_confidence: number | null
+          prediction_type: string
+          time_horizon: string
+          updated_at: string
+        }
+        Insert: {
+          accuracy_score?: number | null
+          actual_results?: Json | null
+          baseline_metrics?: Json
+          client_id: string
+          created_at?: string
+          id?: string
+          predicted_metrics?: Json
+          prediction_confidence?: number | null
+          prediction_type: string
+          time_horizon: string
+          updated_at?: string
+        }
+        Update: {
+          accuracy_score?: number | null
+          actual_results?: Json | null
+          baseline_metrics?: Json
+          client_id?: string
+          created_at?: string
+          id?: string
+          predicted_metrics?: Json
+          prediction_confidence?: number | null
+          prediction_type?: string
+          time_horizon?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roi_predictions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       semrush_data: {
         Row: {
           backlink_data: Json | null
@@ -2258,40 +2806,103 @@ export type Database = {
           },
         ]
       }
-      seo_data: {
+      seo_analysis: {
         Row: {
+          action_plan: Json | null
+          analysis_date: string | null
+          analysis_tool: string
           client_id: string
+          competitor_analysis: Json | null
+          content_gaps: number | null
           created_at: string | null
-          data: Json
-          data_type: string
-          domain: string
+          domain_authority: number | null
+          expected_improvements: Json | null
+          google_my_business_status: string | null
           id: string
-          source: string | null
+          immediate_actions: Json | null
+          keyword_gaps: number | null
+          keyword_opportunities: number | null
+          keywords_top_10: number | null
+          local_citations: number | null
+          local_seo_score: number | null
+          mobile_score: number | null
+          overall_score: number | null
+          page_speed_score: number | null
+          referring_domains: number | null
+          target_keywords: Json | null
+          technical_issues: Json | null
+          technical_score: number | null
+          total_backlinks: number | null
+          total_keywords: number | null
+          trust_score: number | null
           updated_at: string | null
+          website_url: string
         }
         Insert: {
+          action_plan?: Json | null
+          analysis_date?: string | null
+          analysis_tool?: string
           client_id: string
+          competitor_analysis?: Json | null
+          content_gaps?: number | null
           created_at?: string | null
-          data: Json
-          data_type: string
-          domain: string
+          domain_authority?: number | null
+          expected_improvements?: Json | null
+          google_my_business_status?: string | null
           id?: string
-          source?: string | null
+          immediate_actions?: Json | null
+          keyword_gaps?: number | null
+          keyword_opportunities?: number | null
+          keywords_top_10?: number | null
+          local_citations?: number | null
+          local_seo_score?: number | null
+          mobile_score?: number | null
+          overall_score?: number | null
+          page_speed_score?: number | null
+          referring_domains?: number | null
+          target_keywords?: Json | null
+          technical_issues?: Json | null
+          technical_score?: number | null
+          total_backlinks?: number | null
+          total_keywords?: number | null
+          trust_score?: number | null
           updated_at?: string | null
+          website_url: string
         }
         Update: {
+          action_plan?: Json | null
+          analysis_date?: string | null
+          analysis_tool?: string
           client_id?: string
+          competitor_analysis?: Json | null
+          content_gaps?: number | null
           created_at?: string | null
-          data?: Json
-          data_type?: string
-          domain?: string
+          domain_authority?: number | null
+          expected_improvements?: Json | null
+          google_my_business_status?: string | null
           id?: string
-          source?: string | null
+          immediate_actions?: Json | null
+          keyword_gaps?: number | null
+          keyword_opportunities?: number | null
+          keywords_top_10?: number | null
+          local_citations?: number | null
+          local_seo_score?: number | null
+          mobile_score?: number | null
+          overall_score?: number | null
+          page_speed_score?: number | null
+          referring_domains?: number | null
+          target_keywords?: Json | null
+          technical_issues?: Json | null
+          technical_score?: number | null
+          total_backlinks?: number | null
+          total_keywords?: number | null
+          trust_score?: number | null
           updated_at?: string | null
+          website_url?: string
         }
         Relationships: [
           {
-            foreignKeyName: "fk_seo_data_client"
+            foreignKeyName: "seo_analysis_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -2641,6 +3252,80 @@ export type Database = {
           },
         ]
       }
+      token_packages: {
+        Row: {
+          bonus_tokens: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          package_name: string
+          price_sar: number
+          token_amount: number
+        }
+        Insert: {
+          bonus_tokens?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          package_name: string
+          price_sar: number
+          token_amount: number
+        }
+        Update: {
+          bonus_tokens?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          package_name?: string
+          price_sar?: number
+          token_amount?: number
+        }
+        Relationships: []
+      }
+      token_usage: {
+        Row: {
+          client_id: string
+          cost_sar: number | null
+          id: string
+          operation_description: string | null
+          operation_type: string
+          timestamp: string
+          tokens_remaining: number
+          tokens_used: number
+          value_delivered: string | null
+        }
+        Insert: {
+          client_id: string
+          cost_sar?: number | null
+          id?: string
+          operation_description?: string | null
+          operation_type: string
+          timestamp?: string
+          tokens_remaining: number
+          tokens_used: number
+          value_delivered?: string | null
+        }
+        Update: {
+          client_id?: string
+          cost_sar?: number | null
+          id?: string
+          operation_description?: string | null
+          operation_type?: string
+          timestamp?: string
+          tokens_remaining?: number
+          tokens_used?: number
+          value_delivered?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_usage_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_contexts: {
         Row: {
           context_data: Json
@@ -2670,6 +3355,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_engagement_metrics: {
+        Row: {
+          addiction_score: number | null
+          client_id: string
+          context_data: Json | null
+          created_at: string
+          engagement_duration: number | null
+          engagement_type: string
+          engagement_value: number | null
+          id: string
+          session_id: string | null
+          timestamp: string
+        }
+        Insert: {
+          addiction_score?: number | null
+          client_id: string
+          context_data?: Json | null
+          created_at?: string
+          engagement_duration?: number | null
+          engagement_type: string
+          engagement_value?: number | null
+          id?: string
+          session_id?: string | null
+          timestamp?: string
+        }
+        Update: {
+          addiction_score?: number | null
+          client_id?: string
+          context_data?: Json | null
+          created_at?: string
+          engagement_duration?: number | null
+          engagement_type?: string
+          engagement_value?: number | null
+          id?: string
+          session_id?: string | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_engagement_metrics_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_interactions: {
         Row: {
@@ -2849,6 +3581,53 @@ export type Database = {
           },
         ]
       }
+      web_intelligence: {
+        Row: {
+          client_id: string
+          confidence_score: number | null
+          created_at: string
+          id: string
+          intelligence_type: string
+          last_updated: string
+          processed_insights: Json | null
+          query_used: string
+          raw_data: Json
+          website_url: string
+        }
+        Insert: {
+          client_id: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          intelligence_type: string
+          last_updated?: string
+          processed_insights?: Json | null
+          query_used: string
+          raw_data: Json
+          website_url: string
+        }
+        Update: {
+          client_id?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          intelligence_type?: string
+          last_updated?: string
+          processed_insights?: Json | null
+          query_used?: string
+          raw_data?: Json
+          website_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_intelligence_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_events: {
         Row: {
           created_at: string | null
@@ -2920,25 +3699,7 @@ export type Database = {
       }
     }
     Views: {
-      seo_data_summary: {
-        Row: {
-          available_data_types: string[] | null
-          client_id: string | null
-          domain: string | null
-          last_updated: string | null
-          source: string | null
-          total_data_types: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_seo_data_client"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       check_feature_access: {

@@ -1,8 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Sparkles, Target, BarChart3, Users } from 'lucide-react';
+import { useEnhancedOnboarding } from '@/hooks/useEnhancedOnboarding';
 
 interface WelcomeStepProps {
   onNext: () => void;
@@ -10,13 +13,18 @@ interface WelcomeStepProps {
   onDataChange: (data: any) => void;
 }
 
-export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, onDataChange }) => {
+export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, data, onDataChange }) => {
   const { language } = useLanguage();
+  const { saveGreeting, updatePhase } = useEnhancedOnboarding();
+  const [greeting, setGreeting] = useState(data?.greeting_preference || '');
+  const [isLoading, setIsLoading] = useState(false);
 
   const content = {
     ar: {
       title: 'مرحباً بك في مورفو AI! 🚀',
       subtitle: 'نحن متحمسون لمساعدتك في بناء استراتيجية تسويقية ناجحة',
+      greetingLabel: 'كيف تفضل أن نناديك؟',
+      greetingPlaceholder: 'مثال: أستاذ أحمد، دكتور سارة، أو اسمك الأول',
       features: [
         {
           icon: Target,
@@ -40,6 +48,8 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, onDataChange }
     en: {
       title: 'Welcome to Morvo AI! 🚀',
       subtitle: 'We\'re excited to help you build a successful marketing strategy',
+      greetingLabel: 'How would you like us to address you?',
+      greetingPlaceholder: 'Example: Mr. Ahmed, Dr. Sarah, or your first name',
       features: [
         {
           icon: Target,
@@ -64,9 +74,38 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, onDataChange }
 
   const t = content[language];
 
-  const handleGetStarted = () => {
-    onDataChange({ welcomed: true, timestamp: new Date().toISOString() });
-    onNext();
+  const handleGetStarted = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Save greeting preference if provided
+      if (greeting.trim()) {
+        await saveGreeting(greeting.trim());
+      }
+
+      // Update phase completion
+      await updatePhase('welcome', true, 120); // 2 minutes average
+
+      // Update local data
+      onDataChange({ 
+        welcomed: true, 
+        greeting_preference: greeting.trim(),
+        timestamp: new Date().toISOString() 
+      });
+
+      onNext();
+    } catch (error) {
+      console.error('Error in welcome step:', error);
+      // Continue anyway to avoid blocking user
+      onDataChange({ 
+        welcomed: true, 
+        greeting_preference: greeting.trim(),
+        timestamp: new Date().toISOString() 
+      });
+      onNext();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -86,14 +125,30 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, onDataChange }
         ))}
       </div>
 
-      <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-6 border border-blue-400/30">
+      <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-6 border border-blue-400/30 space-y-4">
+        <div className="text-left max-w-md mx-auto space-y-3">
+          <Label htmlFor="greeting" className="text-blue-100 text-sm font-medium">
+            {t.greetingLabel}
+          </Label>
+          <Input
+            id="greeting"
+            value={greeting}
+            onChange={(e) => setGreeting(e.target.value)}
+            placeholder={t.greetingPlaceholder}
+            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40"
+            dir="rtl"
+          />
+        </div>
+        
         <p className="text-blue-100 mb-6">{t.promise}</p>
+        
         <Button
           onClick={handleGetStarted}
+          disabled={isLoading}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg"
         >
           <Sparkles className="w-5 h-5 mr-2" />
-          {t.getStarted}
+          {isLoading ? 'جاري التحضير...' : t.getStarted}
         </Button>
       </div>
     </div>
