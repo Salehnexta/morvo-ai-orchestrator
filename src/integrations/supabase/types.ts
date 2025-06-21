@@ -3662,6 +3662,162 @@ export type Database = {
           },
         ]
       }
+      user_profiles: {
+        Row: {
+          additional_insights: string | null
+          address_location: string | null
+          analysis_source: string | null
+          best_sales_season: string | null
+          biggest_challenge: string | null
+          blog_updates: Json | null
+          business_focus: string | null
+          business_type: string | null
+          communication_preferences: Json | null
+          company_name: string | null
+          company_overview: string | null
+          company_size: string | null
+          competitive_advantage: string | null
+          competitive_advantages: string[] | null
+          completeness_score: number | null
+          contact_information: Json | null
+          core_offerings: string | null
+          created_at: string | null
+          current_marketing_budget: number | null
+          current_marketing_channels: Json | null
+          current_marketing_tools: Json | null
+          current_sales: string | null
+          customer_sources: string | null
+          data_completeness_score: number | null
+          founded_year: number | null
+          id: string
+          industry: string | null
+          main_competitors: string[] | null
+          marketing_budget: string | null
+          marketing_experience: string | null
+          marketing_priority: string | null
+          monthly_revenue: number | null
+          most_profitable_product: string | null
+          onboarding_completed: boolean | null
+          onboarding_completed_at: string | null
+          personality_profile: Json | null
+          preferred_language: string | null
+          primary_goal: string | null
+          primary_marketing_goals: string[] | null
+          product_descriptions: string | null
+          social_media_accounts: Json | null
+          target_audience: Json | null
+          target_region: string | null
+          team_size: string | null
+          technical_products: string | null
+          updated_at: string | null
+          user_id: string
+          website_url: string | null
+          years_in_business: number | null
+        }
+        Insert: {
+          additional_insights?: string | null
+          address_location?: string | null
+          analysis_source?: string | null
+          best_sales_season?: string | null
+          biggest_challenge?: string | null
+          blog_updates?: Json | null
+          business_focus?: string | null
+          business_type?: string | null
+          communication_preferences?: Json | null
+          company_name?: string | null
+          company_overview?: string | null
+          company_size?: string | null
+          competitive_advantage?: string | null
+          competitive_advantages?: string[] | null
+          completeness_score?: number | null
+          contact_information?: Json | null
+          core_offerings?: string | null
+          created_at?: string | null
+          current_marketing_budget?: number | null
+          current_marketing_channels?: Json | null
+          current_marketing_tools?: Json | null
+          current_sales?: string | null
+          customer_sources?: string | null
+          data_completeness_score?: number | null
+          founded_year?: number | null
+          id?: string
+          industry?: string | null
+          main_competitors?: string[] | null
+          marketing_budget?: string | null
+          marketing_experience?: string | null
+          marketing_priority?: string | null
+          monthly_revenue?: number | null
+          most_profitable_product?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          personality_profile?: Json | null
+          preferred_language?: string | null
+          primary_goal?: string | null
+          primary_marketing_goals?: string[] | null
+          product_descriptions?: string | null
+          social_media_accounts?: Json | null
+          target_audience?: Json | null
+          target_region?: string | null
+          team_size?: string | null
+          technical_products?: string | null
+          updated_at?: string | null
+          user_id: string
+          website_url?: string | null
+          years_in_business?: number | null
+        }
+        Update: {
+          additional_insights?: string | null
+          address_location?: string | null
+          analysis_source?: string | null
+          best_sales_season?: string | null
+          biggest_challenge?: string | null
+          blog_updates?: Json | null
+          business_focus?: string | null
+          business_type?: string | null
+          communication_preferences?: Json | null
+          company_name?: string | null
+          company_overview?: string | null
+          company_size?: string | null
+          competitive_advantage?: string | null
+          competitive_advantages?: string[] | null
+          completeness_score?: number | null
+          contact_information?: Json | null
+          core_offerings?: string | null
+          created_at?: string | null
+          current_marketing_budget?: number | null
+          current_marketing_channels?: Json | null
+          current_marketing_tools?: Json | null
+          current_sales?: string | null
+          customer_sources?: string | null
+          data_completeness_score?: number | null
+          founded_year?: number | null
+          id?: string
+          industry?: string | null
+          main_competitors?: string[] | null
+          marketing_budget?: string | null
+          marketing_experience?: string | null
+          marketing_priority?: string | null
+          monthly_revenue?: number | null
+          most_profitable_product?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          personality_profile?: Json | null
+          preferred_language?: string | null
+          primary_goal?: string | null
+          primary_marketing_goals?: string[] | null
+          product_descriptions?: string | null
+          social_media_accounts?: Json | null
+          target_audience?: Json | null
+          target_region?: string | null
+          team_size?: string | null
+          technical_products?: string | null
+          updated_at?: string | null
+          user_id?: string
+          website_url?: string | null
+          years_in_business?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string | null

@@ -4,8 +4,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { UserProfileService } from '@/services/userProfileService';
 
 interface CompletionStepProps {
   onComplete?: () => void;
@@ -62,15 +62,10 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
     try {
       console.log('🎯 Completing onboarding for user:', user.id);
       
-      // First, get the client record
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (clientError || !clientData) {
-        console.error('Error finding client record:', clientError);
+      // Mark onboarding as completed in user profile
+      const success = await UserProfileService.markOnboardingComplete(user.id);
+      
+      if (!success) {
         toast({
           title: "خطأ",
           description: "حدث خطأ في إتمام عملية الإعداد",
@@ -79,69 +74,8 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
         return;
       }
 
-      // Update customer profile to mark onboarding as completed
-      const { error: profileError } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: user.id,
-          client_id: clientData.id,
-          profile_data: {
-            onboarding_completed: true,
-            completed_at: new Date().toISOString(),
-            ...data
-          },
-          status: 'active',
-          updated_at: new Date().toISOString()
-        });
-
-      if (profileError) {
-        console.error('Error updating customer profile:', profileError);
-        toast({
-          title: "خطأ",
-          description: "حدث خطأ في حفظ البيانات",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Create initial conversation if it doesn't exist
-      const { data: existingConversation } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('client_id', clientData.id)
-        .maybeSingle();
-
-      if (!existingConversation) {
-        const { data: newConversation, error: conversationError } = await supabase
-          .from('conversations')
-          .insert({
-            client_id: clientData.id,
-            title: 'مرحباً بك في مورفو! 🚀',
-            status: 'active'
-          })
-          .select()
-          .single();
-
-        if (conversationError) {
-          console.error('Error creating conversation:', conversationError);
-        } else {
-          console.log('✅ Initial conversation created:', newConversation.id);
-        }
-      }
-
-      // Update onboarding journey record
-      const { error: journeyError } = await supabase
-        .from('onboarding_journeys')
-        .upsert({
-          client_id: clientData.id,
-          is_completed: true,
-          profile_progress: 100,
-          analysis_completed_at: new Date().toISOString()
-        });
-
-      if (journeyError) {
-        console.log('Note: Could not update onboarding journey:', journeyError);
-      }
+      // Update completeness score
+      await UserProfileService.updateCompletenessScore(user.id);
 
       console.log('✅ Onboarding completed successfully');
       

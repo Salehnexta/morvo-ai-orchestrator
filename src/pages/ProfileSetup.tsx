@@ -10,53 +10,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
-
-interface ProfileData {
-  company_name: string;
-  industry: string;
-  company_size: string;
-  marketing_experience_level: string;
-  current_marketing_activities: string[];
-  marketing_goals: string[];
-  target_audience: string;
-  monthly_marketing_budget: string;
-  preferred_language: string;
-}
-
-interface StepWithPlaceholder {
-  title: string;
-  description: string;
-  placeholder: string;
-}
-
-interface StepWithOptions {
-  title: string;
-  description: string;
-  options: Array<{ value: string; label: string }>;
-}
-
-type StepContent = StepWithPlaceholder | StepWithOptions;
+import { UserProfileService, UserProfile } from "@/services/userProfileService";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProfileSetup() {
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileData>({
+  const [profileData, setProfileData] = useState<Partial<UserProfile>>({
     company_name: '',
     industry: '',
     company_size: '',
-    marketing_experience_level: '',
-    current_marketing_activities: [],
-    marketing_goals: [],
-    target_audience: '',
-    monthly_marketing_budget: '',
+    marketing_experience: '',
+    current_marketing_tools: [],
+    primary_marketing_goals: [],
+    target_audience: {},
+    marketing_budget: '',
     preferred_language: language
   });
 
@@ -75,38 +51,26 @@ export default function ProfileSetup() {
       step: "الخطوة",
       of: "من",
       steps: {
-        1: {
-          title: "اسم الشركة",
-          description: "ما هو اسم شركتك أو مشروعك؟",
-          placeholder: "أدخل اسم الشركة"
-        } as StepWithPlaceholder,
-        2: {
-          title: "القطاع",
-          description: "في أي قطاع تعمل شركتك؟",
-          options: [
-            { value: "technology", label: "التقنية والبرمجيات" },
-            { value: "retail", label: "التجارة والبيع بالتجزئة" },
-            { value: "healthcare", label: "الرعاية الصحية" },
-            { value: "education", label: "التعليم" },
-            { value: "finance", label: "المالية والمصرفية" },
-            { value: "real_estate", label: "العقارات" },
-            { value: "food", label: "المأكولات والمشروبات" },
-            { value: "manufacturing", label: "التصنيع" },
-            { value: "services", label: "الخدمات المهنية" },
-            { value: "other", label: "أخرى" }
-          ]
-        } as StepWithOptions,
-        3: {
-          title: "حجم الشركة",
-          description: "كم عدد الموظفين في شركتك؟",
-          options: [
-            { value: "1-10", label: "1-10 موظفين" },
-            { value: "11-50", label: "11-50 موظف" },
-            { value: "51-200", label: "51-200 موظف" },
-            { value: "201-500", label: "201-500 موظف" },
-            { value: "500+", label: "أكثر من 500 موظف" }
-          ]
-        } as StepWithOptions,
+        1: { title: "اسم الشركة", description: "ما هو اسم شركتك أو مشروعك؟", placeholder: "أدخل اسم الشركة" },
+        2: { title: "القطاع", description: "في أي قطاع تعمل شركتك؟", options: [
+          { value: "technology", label: "التقنية والبرمجيات" },
+          { value: "retail", label: "التجارة والبيع بالتجزئة" },
+          { value: "healthcare", label: "الرعاية الصحية" },
+          { value: "education", label: "التعليم" },
+          { value: "finance", label: "المالية والمصرفية" },
+          { value: "real_estate", label: "العقارات" },
+          { value: "food", label: "المأكولات والمشروبات" },
+          { value: "manufacturing", label: "التصنيع" },
+          { value: "services", label: "الخدمات المهنية" },
+          { value: "other", label: "أخرى" }
+        ]},
+        3: { title: "حجم الشركة", description: "كم عدد الموظفين في شركتك؟", options: [
+          { value: "1-10", label: "1-10 موظفين" },
+          { value: "11-50", label: "11-50 موظف" },
+          { value: "51-200", label: "51-200 موظف" },
+          { value: "201-500", label: "201-500 موظف" },
+          { value: "500+", label: "أكثر من 500 موظف" }
+        ]},
         4: {
           title: "مستوى الخبرة التسويقية",
           description: "ما هو مستوى خبرتك في التسويق الرقمي؟",
@@ -116,7 +80,7 @@ export default function ProfileSetup() {
             { value: "advanced", label: "متقدم - لدي خبرة جيدة" },
             { value: "expert", label: "خبير - لدي خبرة واسعة" }
           ]
-        } as StepWithOptions,
+        } as any,
         5: {
           title: "الأنشطة التسويقية الحالية",
           description: "ما هي الأنشطة التسويقية التي تقوم بها حالياً؟ (يمكن اختيار أكثر من واحد)",
@@ -130,7 +94,7 @@ export default function ProfileSetup() {
             { value: "events", label: "الفعاليات والمعارض" },
             { value: "none", label: "لا أقوم بأي أنشطة حالياً" }
           ]
-        } as StepWithOptions,
+        } as any,
         6: {
           title: "الأهداف التسويقية",
           description: "ما هي أهدافك الرئيسية من التسويق؟ (يمكن اختيار أكثر من واحد)",
@@ -143,12 +107,12 @@ export default function ProfileSetup() {
             { value: "cost_optimization", label: "تحسين تكلفة التسويق" },
             { value: "digital_transformation", label: "التحول الرقمي" }
           ]
-        } as StepWithOptions,
+        } as any,
         7: {
           title: "الجمهور المستهدف",
           description: "من هو جمهورك المستهدف؟",
           placeholder: "مثال: الشباب من سن 18-35، أصحاب الأعمال، ربات البيوت..."
-        } as StepWithPlaceholder,
+        } as any,
         8: {
           title: "الميزانية الشهرية",
           description: "ما هي ميزانيتك الشهرية للتسويق الرقمي؟",
@@ -159,7 +123,7 @@ export default function ProfileSetup() {
             { value: "15000_50000", label: "15,000 - 50,000 ريال" },
             { value: "more_than_50000", label: "أكثر من 50,000 ريال" }
           ]
-        } as StepWithOptions,
+        } as any,
         9: {
           title: "اللغة المفضلة",
           description: "ما هي لغة التفاعل المفضلة لك؟",
@@ -167,7 +131,7 @@ export default function ProfileSetup() {
             { value: "ar", label: "العربية" },
             { value: "en", label: "English" }
           ]
-        } as StepWithOptions
+        } as any
       }
     },
     en: {
@@ -185,7 +149,7 @@ export default function ProfileSetup() {
           title: "Company Name",
           description: "What is your company or project name?",
           placeholder: "Enter company name"
-        } as StepWithPlaceholder,
+        } as any,
         2: {
           title: "Industry",
           description: "What industry does your company operate in?",
@@ -201,7 +165,7 @@ export default function ProfileSetup() {
             { value: "services", label: "Professional Services" },
             { value: "other", label: "Other" }
           ]
-        } as StepWithOptions,
+        } as any,
         3: {
           title: "Company Size",
           description: "How many employees does your company have?",
@@ -212,7 +176,7 @@ export default function ProfileSetup() {
             { value: "201-500", label: "201-500 employees" },
             { value: "500+", label: "500+ employees" }
           ]
-        } as StepWithOptions,
+        } as any,
         4: {
           title: "Marketing Experience Level",
           description: "What is your level of experience in digital marketing?",
@@ -222,7 +186,7 @@ export default function ProfileSetup() {
             { value: "advanced", label: "Advanced - Good experience" },
             { value: "expert", label: "Expert - Extensive experience" }
           ]
-        } as StepWithOptions,
+        } as any,
         5: {
           title: "Current Marketing Activities",
           description: "What marketing activities are you currently doing? (Select multiple)",
@@ -236,7 +200,7 @@ export default function ProfileSetup() {
             { value: "events", label: "Events & Trade Shows" },
             { value: "none", label: "None currently" }
           ]
-        } as StepWithOptions,
+        } as any,
         6: {
           title: "Marketing Goals",
           description: "What are your main marketing objectives? (Select multiple)",
@@ -249,12 +213,12 @@ export default function ProfileSetup() {
             { value: "cost_optimization", label: "Cost Optimization" },
             { value: "digital_transformation", label: "Digital Transformation" }
           ]
-        } as StepWithOptions,
+        } as any,
         7: {
           title: "Target Audience",
           description: "Who is your target audience?",
           placeholder: "Example: Young adults 18-35, business owners, homemakers..."
-        } as StepWithPlaceholder,
+        } as any,
         8: {
           title: "Monthly Budget",
           description: "What is your monthly budget for digital marketing?",
@@ -265,7 +229,7 @@ export default function ProfileSetup() {
             { value: "15000_50000", label: "15,000 - 50,000 SAR" },
             { value: "more_than_50000", label: "More than 50,000 SAR" }
           ]
-        } as StepWithOptions,
+        } as any,
         9: {
           title: "Preferred Language",
           description: "What is your preferred interaction language?",
@@ -273,7 +237,7 @@ export default function ProfileSetup() {
             { value: "ar", label: "Arabic" },
             { value: "en", label: "English" }
           ]
-        } as StepWithOptions
+        } as any
       }
     }
   };
@@ -282,36 +246,24 @@ export default function ProfileSetup() {
 
   useEffect(() => {
     checkExistingProfile();
-  }, []);
+  }, [user]);
 
   const checkExistingProfile = async () => {
+    if (!user?.id) return;
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/auth/login');
-        return;
-      }
-
-      // Use client_profiles instead of customer_profiles
-      const { data: profile } = await supabase
-        .from('client_profiles')
-        .select('*')
-        .eq('client_id', session.user.id)
-        .maybeSingle();
-
+      const profile = await UserProfileService.getUserProfile(user.id);
       if (profile) {
         setProfileData({
-          company_name: profile.industry || '',
+          company_name: profile.company_name || '',
           industry: profile.industry || '',
           company_size: profile.company_size || '',
-          marketing_experience_level: profile.marketing_experience || '',
-          current_marketing_activities: Array.isArray(profile.current_marketing_tools) 
-            ? profile.current_marketing_tools as string[]
-            : [],
-          marketing_goals: [],
-          target_audience: '',
-          monthly_marketing_budget: profile.marketing_budget || '',
-          preferred_language: language
+          marketing_experience: profile.marketing_experience || '',
+          current_marketing_tools: profile.current_marketing_tools || [],
+          primary_marketing_goals: profile.primary_marketing_goals || [],
+          target_audience: profile.target_audience || {},
+          marketing_budget: profile.marketing_budget || '',
+          preferred_language: profile.preferred_language || language
         });
       }
     } catch (error) {
@@ -331,15 +283,15 @@ export default function ProfileSetup() {
     }
   };
 
-  const handleInputChange = (field: keyof ProfileData, value: any) => {
+  const handleInputChange = (field: keyof UserProfile, value: any) => {
     setProfileData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleMultiSelectChange = (field: keyof ProfileData, value: string) => {
-    const currentValues = profileData[field] as string[];
+  const handleMultiSelectChange = (field: keyof UserProfile, value: string) => {
+    const currentValues = profileData[field] as string[] || [];
     const newValues = currentValues.includes(value)
       ? currentValues.filter(v => v !== value)
       : [...currentValues, value];
@@ -348,36 +300,32 @@ export default function ProfileSetup() {
   };
 
   const handleFinish = async () => {
+    if (!user?.id) {
+      navigate('/auth/login');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/auth/login');
-        return;
-      }
-
-      // Use client_profiles instead of customer_profiles
-      const { error } = await supabase
-        .from('client_profiles')
-        .upsert({
-          client_id: session.user.id,
-          industry: profileData.industry,
-          company_size: profileData.company_size,
-          marketing_experience: profileData.marketing_experience_level,
-          marketing_budget: profileData.monthly_marketing_budget,
-          target_audience: profileData.target_audience,
-          current_marketing_tools: profileData.current_marketing_activities,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "تم الحفظ بنجاح!",
-        description: "تم حفظ معلومات الملف الشخصي بنجاح",
+      const success = await UserProfileService.saveUserProfile(user.id, {
+        ...profileData,
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString()
       });
 
-      navigate('/dashboard');
+      if (success) {
+        // Update completeness score
+        await UserProfileService.updateCompletenessScore(user.id);
+        
+        toast({
+          title: "تم الحفظ بنجاح!",
+          description: "تم حفظ معلومات الملف الشخصي بنجاح",
+        });
+
+        navigate('/dashboard');
+      } else {
+        throw new Error('Failed to save profile');
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
       toast({
@@ -390,11 +338,11 @@ export default function ProfileSetup() {
     }
   };
 
-  const hasPlaceholder = (step: StepContent): step is StepWithPlaceholder => {
+  const hasPlaceholder = (step: any): step is { placeholder: string } => {
     return 'placeholder' in step;
   };
 
-  const hasOptions = (step: StepContent): step is StepWithOptions => {
+  const hasOptions = (step: any): step is { options: Array<{ value: string; label: string }> } => {
     return 'options' in step;
   };
 
@@ -408,7 +356,7 @@ export default function ProfileSetup() {
             <Label htmlFor="company_name">{stepData.title} *</Label>
             <Input
               id="company_name"
-              value={profileData.company_name}
+              value={profileData.company_name || ''}
               onChange={(e) => handleInputChange('company_name', e.target.value)}
               placeholder={hasPlaceholder(stepData) ? stepData.placeholder : ''}
               className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
@@ -424,16 +372,16 @@ export default function ProfileSetup() {
         const fieldMap = {
           2: 'industry',
           3: 'company_size', 
-          4: 'marketing_experience_level',
-          8: 'monthly_marketing_budget',
+          4: 'marketing_experience',
+          8: 'marketing_budget',
           9: 'preferred_language'
         };
-        const field = fieldMap[currentStep as keyof typeof fieldMap] as keyof ProfileData;
+        const field = fieldMap[currentStep as keyof typeof fieldMap] as keyof UserProfile;
         
         return (
           <div className="space-y-4">
             <Label>{stepData.title} *</Label>
-            <Select onValueChange={(value) => handleInputChange(field, value)} value={profileData[field] as string}>
+            <Select onValueChange={(value) => handleInputChange(field, value)} value={profileData[field] as string || ''}>
               <SelectTrigger className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''}`}>
                 <SelectValue placeholder="اختر..." />
               </SelectTrigger>
@@ -450,7 +398,7 @@ export default function ProfileSetup() {
       
       case 5:
       case 6:
-        const multiField = currentStep === 5 ? 'current_marketing_activities' : 'marketing_goals';
+        const multiField = currentStep === 5 ? 'current_marketing_tools' : 'primary_marketing_goals';
         const currentValues = profileData[multiField] as string[];
         
         return (
@@ -462,7 +410,7 @@ export default function ProfileSetup() {
                   <input
                     type="checkbox"
                     id={option.value}
-                    checked={currentValues.includes(option.value)}
+                    checked={currentValues?.includes(option.value) || false}
                     onChange={() => handleMultiSelectChange(multiField, option.value)}
                     className="rounded border-gray-300"
                   />
@@ -481,7 +429,7 @@ export default function ProfileSetup() {
             <Label htmlFor="target_audience">{stepData.title} *</Label>
             <Textarea
               id="target_audience"
-              value={profileData.target_audience}
+              value={profileData.target_audience as string || ''}
               onChange={(e) => handleInputChange('target_audience', e.target.value)}
               placeholder={hasPlaceholder(stepData) ? stepData.placeholder : ''}
               rows={4}
