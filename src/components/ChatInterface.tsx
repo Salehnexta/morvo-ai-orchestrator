@@ -34,10 +34,12 @@ interface MessageData {
 
 interface ChatInterfaceProps {
   onContentTypeChange?: (type: string) => void;
+  onMessageSent?: (message: string) => void;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
-  onContentTypeChange
+  onContentTypeChange,
+  onMessageSent
 }) => {
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [input, setInput] = useState('');
@@ -212,6 +214,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const messageText = input;
     setInput('');
     setIsLoading(true);
+
+    // Notify parent component about the new message
+    onMessageSent?.(messageText);
 
     // Update sidebar content based on user message
     handleSidebarContentChange(messageText);

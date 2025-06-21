@@ -1,7 +1,6 @@
-
 import { ChatInterface } from "@/components/ChatInterface";
 import { DynamicContentPanel } from "@/components/DynamicContentPanel";
-import { DynamicSidebar } from "@/components/DynamicSidebar";
+import { SidebarContentManager } from "@/components/sidebar/SidebarContentManager";
 import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
 import { JourneyPhaseHandler } from "@/components/onboarding/JourneyPhaseHandler";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -23,9 +22,10 @@ const Dashboard = () => {
   } = useJourney();
   
   const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test' | 'onboarding'>('hero');
-  const [sidebarContentType, setSidebarContentType] = useState<'default' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'chart' | 'plan'>('default');
   const [journeyInitialized, setJourneyInitialized] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [lastUserMessage, setLastUserMessage] = useState<string>('');
+  const [conversationHistory, setConversationHistory] = useState<string[]>([]);
 
   // Auto-start journey for new users (only once)
   useEffect(() => {
@@ -64,43 +64,27 @@ const Dashboard = () => {
   const handleContentTypeChange = (type: string) => {
     console.log('🎯 Content type change:', type);
     
-    // Update sidebar content based on the action
+    // Update content based on the action
     switch (type) {
       case 'analytics':
       case 'view-analytics':
-        setSidebarContentType('analytics');
         setContentType('analytics');
         setShowOnboarding(false);
         break;
       case 'content-creator':
       case 'create-content':
-        setSidebarContentType('content-creator');
         setContentType('content-creator');
         setShowOnboarding(false);
         break;
       case 'calendar':
       case 'schedule':
       case 'schedule-content':
-        setSidebarContentType('calendar');
         setContentType('calendar');
         setShowOnboarding(false);
         break;
       case 'campaign':
       case 'campaigns':
       case 'create-campaign':
-        setSidebarContentType('campaign');
-        setContentType('campaign');
-        setShowOnboarding(false);
-        break;
-      case 'chart':
-      case 'show-chart':
-        setSidebarContentType('chart');
-        setContentType('analytics');
-        setShowOnboarding(false);
-        break;
-      case 'plan':
-      case 'show-plan':
-        setSidebarContentType('plan');
         setContentType('campaign');
         setShowOnboarding(false);
         break;
@@ -108,17 +92,14 @@ const Dashboard = () => {
       case 'start-onboarding':
         setContentType('onboarding');
         setShowOnboarding(true);
-        setSidebarContentType('default');
         break;
       case 'connection-test':
         setContentType('connection-test');
         setShowOnboarding(false);
-        setSidebarContentType('default');
         break;
       default:
         setContentType('hero');
         setShowOnboarding(false);
-        setSidebarContentType('default');
     }
   };
 
@@ -129,12 +110,15 @@ const Dashboard = () => {
 
   const handlePhaseComplete = (phase: string) => {
     console.log('✅ Phase completed:', phase);
-    // Optionally update content type when certain phases are completed
     if (phase === 'commitment_activation') {
       setShowOnboarding(false);
       setContentType('hero');
-      setSidebarContentType('default');
     }
+  };
+
+  const handleChatMessage = (message: string) => {
+    setLastUserMessage(message);
+    setConversationHistory(prev => [...prev.slice(-4), message]);
   };
 
   // Show loading while checking journey status
@@ -151,7 +135,7 @@ const Dashboard = () => {
     );
   }
 
-  console.log('📊 Dashboard with Enhanced Journey - Phase:', currentPhase, 'Show Onboarding:', showOnboarding);
+  console.log('📊 Dashboard with Smart Sidebar - Phase:', currentPhase, 'Show Onboarding:', showOnboarding);
   
   return (
     <SimpleAuthWrapper>
@@ -182,6 +166,7 @@ const Dashboard = () => {
               <div className="relative z-10 h-full">
                 <ChatInterface 
                   onContentTypeChange={handleContentTypeChange}
+                  onMessageSent={handleChatMessage}
                 />
               </div>
             </div>
@@ -207,12 +192,13 @@ const Dashboard = () => {
             </div>
           </>
         ) : (
-          // After Onboarding: Dynamic Sidebar + Chat Layout
+          // After Onboarding: Smart Dynamic Sidebar + Chat Layout
           <>
-            {/* Dynamic Sidebar - Left side */}
-            <div className="relative z-10">
-              <DynamicSidebar 
-                contentType={sidebarContentType}
+            {/* Smart Dynamic Sidebar - Left side */}
+            <div className="w-80 relative z-10 border-r border-gray-200 dark:border-gray-700">
+              <SidebarContentManager 
+                lastMessage={lastUserMessage}
+                conversationHistory={conversationHistory}
                 onActionClick={handleContentAction}
               />
             </div>
@@ -223,6 +209,7 @@ const Dashboard = () => {
               <div className="relative z-10 h-full">
                 <ChatInterface 
                   onContentTypeChange={handleContentTypeChange}
+                  onMessageSent={handleChatMessage}
                 />
               </div>
             </div>
