@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useJourney } from '@/contexts/JourneyContext';
 import { JourneyFlowService, JourneyFlowState } from '@/services/journeyFlowService';
 import { JourneyProgress } from './JourneyProgress';
+import { WebsiteAnalysisStep } from './steps/WebsiteAnalysisStep';
+import { BusinessReviewStep } from './steps/BusinessReviewStep';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +33,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
   const [flowState, setFlowState] = useState<JourneyFlowState | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [websiteAnalysisData, setWebsiteAnalysisData] = useState<any>(null);
 
   // Load journey flow state
   useEffect(() => {
@@ -69,18 +72,38 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
           }
           break;
 
-        case 'analyze_website':
-          success = await analyzeWebsite(data.websiteUrl);
-          if (success) {
-            await JourneyFlowService.recordPhaseTransition(
-              journey.journey_id,
-              journey.client_id,
-              'website_analysis',
-              'analysis_review',
-              { website_url: data.websiteUrl }
-            );
-            updateJourneyPhase('analysis_review');
-          }
+        case 'website_analysis_complete':
+          setWebsiteAnalysisData(data);
+          updateJourneyPhase('business_review');
+          success = true;
+          break;
+
+        case 'skip_website_analysis':
+          updateJourneyPhase('manual_profile_setup');
+          success = true;
+          break;
+
+        case 'business_review_complete':
+          // Save the complete business profile
+          const profileData = {
+            ...data,
+            website_analysis_data: websiteAnalysisData
+          };
+          
+          await JourneyFlowService.recordPhaseTransition(
+            journey.journey_id,
+            journey.client_id,
+            'business_review',
+            'strategy_generation',
+            profileData
+          );
+          updateJourneyPhase('strategy_generation');
+          success = true;
+          break;
+
+        case 'back_to_website_analysis':
+          updateJourneyPhase('website_analysis');
+          success = true;
           break;
 
         case 'complete_phase':
@@ -173,43 +196,21 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       case 'website_analysis':
         return (
-          <Card className="bg-white/10 border-white/20">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                {currentPhaseData.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-blue-200">{currentPhaseData.description}</p>
-              <div className="space-y-3">
-                <Label className="text-white">رابط موقعك الإلكتروني:</Label>
-                <Input
-                  type="url"
-                  placeholder="https://example.com"
-                  value={formData.websiteUrl || ''}
-                  onChange={(e) => setFormData({...formData, websiteUrl: e.target.value})}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handlePhaseAction('analyze_website', formData)}
-                    disabled={loading || !formData.websiteUrl}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  >
-                    تحليل الموقع
-                  </Button>
-                  <Button
-                    onClick={() => handlePhaseAction('complete_phase', { skipped_website: true })}
-                    variant="outline"
-                    className="border-white/30 text-white hover:bg-white/10"
-                  >
-                    تخطي
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <WebsiteAnalysisStep
+            journeyId={journey?.journey_id || ''}
+            onComplete={(data) => handlePhaseAction('website_analysis_complete', data)}
+            onSkip={() => handlePhaseAction('skip_website_analysis')}
+          />
+        );
+
+      case 'business_review':
+        return (
+          <BusinessReviewStep
+            analysisData={websiteAnalysisData?.analysis_results}
+            websiteUrl={websiteAnalysisData?.website_url || ''}
+            onComplete={(data) => handlePhaseAction('business_review_complete', data)}
+            onBack={() => handlePhaseAction('back_to_website_analysis')}
+          />
         );
 
       default:
