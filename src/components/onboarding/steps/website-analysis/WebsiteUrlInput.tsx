@@ -3,7 +3,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Globe, AlertCircle } from 'lucide-react';
+import { Globe, AlertCircle, FileText, ArrowRight } from 'lucide-react';
 
 interface WebsiteUrlInputProps {
   websiteUrl: string;
@@ -19,6 +19,7 @@ interface WebsiteUrlInputProps {
     urlPlaceholder: string;
     analyzeButton: string;
     skipButton: string;
+    skipDescription: string;
     invalidUrl: string;
   };
 }
@@ -69,13 +70,22 @@ export const WebsiteUrlInput: React.FC<WebsiteUrlInputProps> = ({
             {content.analyzeButton}
           </Button>
           
-          <Button
-            onClick={onSkip}
-            variant="outline"
-            className="w-full"
-          >
-            {content.skipButton}
-          </Button>
+          {/* Enhanced Manual Entry Option */}
+          <div className="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-300">
+            <div className="text-center">
+              <FileText className="w-8 h-8 mx-auto mb-2 text-gray-600" />
+              <p className="text-gray-700 text-sm mb-3">{content.skipDescription}</p>
+              <Button
+                onClick={onSkip}
+                variant="outline"
+                className="w-full"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                {content.skipButton}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
