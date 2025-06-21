@@ -26,3 +26,24 @@ export interface CustomerData {
   target_audience?: string;
   preferred_language?: string;
 }
+
+export interface AgentCommand {
+  id: string;
+  type: 'button' | 'form' | 'save_data' | 'info_request';
+  data: {
+    buttons?: Array<{
+      text: string;
+      action: string;
+      variant: string;
+    }>;
+    title?: string;
+    fields?: Array<{
+      name: string;
+      label: string;
+      type: 'text' | 'email' | 'tel' | 'number';
+      required: boolean;
+      placeholder: string;
+    }>;
+    message?: string;
+  };
+}
