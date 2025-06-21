@@ -178,4 +178,4 @@ export const SimpleAuthWrapper: React.FC<SimpleAuthWrapperProps> = ({ children }
   // Render children when everything is ready
   console.log('✅ Rendering protected content for user:', user.id);
   return <>{children}</>;
-);
+};
