@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Globe, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { MorvoAIService } from '@/services/morvoAIService';
+import { useWebsiteAnalysis } from './website-analysis/useWebsiteAnalysis';
+import { WebsiteUrlInput } from './website-analysis/WebsiteUrlInput';
+import { AnalysisProgress } from './website-analysis/AnalysisProgress';
+import { AnalysisError } from './website-analysis/AnalysisError';
+import { AnalysisSuccess } from './website-analysis/AnalysisSuccess';
 
 interface WebsiteAnalysisStepProps {
   onComplete: (data: any) => void;
@@ -14,19 +14,22 @@ interface WebsiteAnalysisStepProps {
   journeyId: string;
 }
 
-type AnalysisState = 'input' | 'analyzing' | 'completed' | 'error' | 'skipped';
-
 export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
   onComplete,
   onSkip,
   journeyId
 }) => {
   const { language } = useLanguage();
-  const [websiteUrl, setWebsiteUrl] = useState('');
-  const [analysisState, setAnalysisState] = useState<AnalysisState>('input');
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [error, setError] = useState('');
-  const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const {
+    websiteUrl,
+    setWebsiteUrl,
+    analysisState,
+    analysisProgress,
+    error,
+    analysisResults,
+    startAnalysis,
+    resetToInput
+  } = useWebsiteAnalysis(journeyId);
 
   const content = {
     ar: {
@@ -65,68 +68,6 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
 
   const t = content[language];
 
-  const isValidUrl = (url: string) => {
-    try {
-      new URL(url.startsWith('http') ? url : `https://${url}`);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const startAnalysis = async () => {
-    if (!websiteUrl.trim()) {
-      setError(t.invalidUrl);
-      return;
-    }
-
-    if (!isValidUrl(websiteUrl)) {
-      setError(t.invalidUrl);
-      return;
-    }
-
-    setError('');
-    setAnalysisState('analyzing');
-    setAnalysisProgress(0);
-
-    // Simulate progress
-    const progressInterval = setInterval(() => {
-      setAnalysisProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return 90;
-        }
-        return prev + Math.random() * 10;
-      });
-    }, 2000);
-
-    try {
-      const response = await MorvoAIService.makeRequest('/onboarding/website-analysis', {
-        method: 'POST',
-        body: JSON.stringify({
-          journey_id: journeyId,
-          website_url: websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`
-        })
-      });
-
-      clearInterval(progressInterval);
-      setAnalysisProgress(100);
-
-      if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setAnalysisResults(data.analysis_results);
-      setAnalysisState('completed');
-    } catch (error) {
-      clearInterval(progressInterval);
-      console.error('Website analysis error:', error);
-      setError(error instanceof Error ? error.message : 'Analysis failed');
-      setAnalysisState('error');
-    }
-  };
-
   const handleComplete = () => {
     onComplete({
       website_url: websiteUrl,
@@ -138,118 +79,43 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
     switch (analysisState) {
       case 'input':
         return (
-          <CardContent className="space-y-6">
-            <div className="text-center">
-              <Globe className="w-16 h-16 mx-auto mb-4 text-blue-600" />
-              <h2 className="text-2xl font-bold mb-2">{t.title}</h2>
-              <p className="text-gray-600">{t.subtitle}</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="website-url">{t.urlLabel}</Label>
-                <Input
-                  id="website-url"
-                  type="url"
-                  placeholder={t.urlPlaceholder}
-                  value={websiteUrl}
-                  onChange={(e) => setWebsiteUrl(e.target.value)}
-                  className="mt-1"
-                />
-                {error && (
-                  <p className="text-red-600 text-sm mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {error}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={startAnalysis}
-                  disabled={!websiteUrl.trim()}
-                  className="w-full"
-                >
-                  <Globe className="w-4 h-4 mr-2" />
-                  {t.analyzeButton}
-                </Button>
-                
-                <Button
-                  onClick={onSkip}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {t.skipButton}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
+          <WebsiteUrlInput
+            websiteUrl={websiteUrl}
+            onUrlChange={setWebsiteUrl}
+            onAnalyze={() => startAnalysis(t.invalidUrl)}
+            onSkip={onSkip}
+            error={error}
+            isAnalyzing={false}
+            content={t}
+          />
         );
 
       case 'analyzing':
         return (
-          <CardContent className="space-y-6">
-            <div className="text-center">
-              <Loader2 className="w-16 h-16 mx-auto mb-4 text-blue-600 animate-spin" />
-              <h2 className="text-2xl font-bold mb-2">{t.analyzingTitle}</h2>
-              <p className="text-gray-600 mb-4">{t.analyzingSubtitle}</p>
-              
-              <div className="max-w-md mx-auto">
-                <Progress value={analysisProgress} className="mb-2" />
-                <p className="text-sm text-gray-500">
-                  {Math.round(analysisProgress)}% {language === 'ar' ? 'مكتمل' : 'complete'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
+          <AnalysisProgress
+            progress={analysisProgress}
+            language={language}
+            content={t}
+          />
         );
 
       case 'error':
         return (
-          <CardContent className="space-y-6">
-            <div className="text-center">
-              <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-600" />
-              <h2 className="text-2xl font-bold mb-2 text-red-600">{t.errorTitle}</h2>
-              <p className="text-gray-600 mb-4">{error}</p>
-              
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={() => setAnalysisState('input')}
-                  variant="outline"
-                >
-                  {t.tryAgain}
-                </Button>
-                
-                <Button onClick={onSkip}>
-                  {t.continueManually}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
+          <AnalysisError
+            error={error}
+            onRetry={resetToInput}
+            onSkip={onSkip}
+            content={t}
+          />
         );
 
       case 'completed':
         return (
-          <CardContent className="space-y-6">
-            <div className="text-center">
-              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-600" />
-              <h2 className="text-2xl font-bold mb-2 text-green-600">{t.successTitle}</h2>
-              <p className="text-gray-600 mb-4">
-                {language === 'ar' 
-                  ? 'تم تحليل موقعك بنجاح. يمكنك الآن مراجعة وتحرير المعلومات.'
-                  : 'Your website has been analyzed successfully. You can now review and edit the information.'
-                }
-              </p>
-              
-              <Button
-                onClick={handleComplete}
-                className="w-full"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                {t.reviewData}
-              </Button>
-            </div>
-          </CardContent>
+          <AnalysisSuccess
+            onComplete={handleComplete}
+            language={language}
+            content={t}
+          />
         );
 
       default:
@@ -260,7 +126,9 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
   return (
     <div className="max-w-2xl mx-auto">
       <Card>
-        {renderContent()}
+        <CardContent className="space-y-6">
+          {renderContent()}
+        </CardContent>
       </Card>
     </div>
   );
