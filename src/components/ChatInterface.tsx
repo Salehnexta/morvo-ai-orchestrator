@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
@@ -7,6 +6,7 @@ import { ActionButtons } from './chat/ActionButtons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useJourney } from '@/contexts/JourneyContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAdvancedConversation } from '@/hooks/useAdvancedConversation';
 import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
@@ -29,16 +29,15 @@ interface MessageData {
   isOnboarding?: boolean;
   contextualInsights?: string[];
   emotionalContext?: any;
+  journeyPhase?: string;
 }
 
 interface ChatInterfaceProps {
   onContentTypeChange?: (type: string) => void;
-  onboardingStatus?: any;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
-  onContentTypeChange, 
-  onboardingStatus 
+  onContentTypeChange
 }) => {
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [input, setInput] = useState('');
@@ -51,6 +50,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
   const { toast } = useToast();
+  const { 
+    journey, 
+    journeyStatus, 
+    isOnboardingComplete, 
+    currentPhase,
+    setGreeting,
+    analyzeWebsite,
+    saveAnswer,
+    generateStrategy
+  } = useJourney();
   const { 
     enhanceConversation, 
     getConversationInsights, 
@@ -85,33 +94,52 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Initialize chat with Railway backend connection
+  // Initialize chat with journey-aware welcome message
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        console.log('🚀 Initializing Railway backend connection...');
+        console.log('🚀 Initializing journey-aware chat...');
         const isHealthy = await MorvoAIService.testConnection();
         setIsConnected(isHealthy);
         
         if (isHealthy && user && messages.length === 0) {
-          const welcomeContent = onboardingStatus?.onboarding_completed 
-            ? 'مرحباً بك مرة أخرى! كيف يمكنني مساعدتك اليوم في تطوير استراتيجيات التسويق الرقمي؟'
-            : 'مرحباً بك في مورفو! 🚀 أنا مساعدك الذكي للتسويق الرقمي. دعني أتعرف عليك أولاً - ما هو اسم شركتك أو مشروعك؟';
+          let welcomeContent: string;
+          
+          if (isOnboardingComplete) {
+            const greeting = journeyStatus?.greeting_preference || 'أستاذ';
+            welcomeContent = `مرحباً بك مرة أخرى ${greeting}! 🎯 أنا مورفو، مساعدك الذكي للتسويق الرقمي. كيف يمكنني مساعدتك اليوم؟`;
+          } else {
+            // Journey-based welcome messages
+            switch (currentPhase) {
+              case 'welcome':
+                welcomeContent = 'مرحباً بك في مورفو! 🚀 أنا مساعدك الذكي للتسويق الرقمي. دعني أتعرف عليك أولاً - كيف تفضل أن أناديك؟ (مثال: أستاذ أحمد، دكتور سارة)';
+                break;
+              case 'website_analysis':
+                welcomeContent = 'ممتاز! الآن أحتاج لتحليل موقعك الإلكتروني لأفهم نشاطك التجاري بشكل أفضل. يرجى مشاركة رابط موقعك معي.';
+                break;
+              case 'profile_completion':
+                welcomeContent = 'رائع! بناءً على تحليل موقعك، لدي فهم أولي عن نشاطك. الآن دعني أجمع بعض المعلومات الإضافية لأبني لك استراتيجية تسويقية مخصصة.';
+                break;
+              default:
+                welcomeContent = 'مرحباً بك مرة أخرى! دعنا نكمل رحلتك التسويقية من حيث توقفنا.';
+            }
+          }
 
           const welcomeMessage: MessageData = {
             id: Date.now().toString(),
             content: welcomeContent,
             sender: 'agent',
             timestamp: new Date(),
-            isOnboarding: !onboardingStatus?.onboarding_completed,
+            isOnboarding: !isOnboardingComplete,
+            journeyPhase: currentPhase,
             emotionalContext: emotionalContext
           };
           
           setMessages([welcomeMessage]);
-          console.log('✅ Chat initialized with Railway backend');
+          console.log('✅ Journey-aware chat initialized - Phase:', currentPhase);
         }
       } catch (error) {
-        console.error('❌ Railway connection failed:', error);
+        console.error('❌ Journey chat initialization failed:', error);
         setIsConnected(false);
         
         // Fallback welcome message
@@ -132,7 +160,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (user) {
       initializeChat();
     }
-  }, [user, onboardingStatus, messages.length, emotionalContext]);
+  }, [user, isOnboardingComplete, currentPhase, journeyStatus, messages.length, emotionalContext]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || !user) {
@@ -144,6 +172,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       content: input,
       sender: 'user',
       timestamp: new Date(),
+      journeyPhase: currentPhase
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -152,70 +181,72 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsLoading(true);
 
     try {
-      console.log('🤖 Processing message with Railway backend...');
+      console.log('🤖 Processing journey-aware message - Phase:', currentPhase);
       
-      // Prepare context for Railway backend
-      const context = {
-        conversation_history: messages.slice(-3).map(m => ({
-          role: m.sender === 'user' ? 'user' : 'assistant',
-          content: m.content
-        })),
-        onboarding_status: onboardingStatus,
-        emotional_context: emotionalContext,
-        conversation_state: conversationState,
-        user_id: user.id
-      };
+      // Handle journey-specific logic
+      let journeyResponse = await handleJourneySpecificMessage(messageText);
+      
+      if (!journeyResponse) {
+        // Prepare context for backend with journey information
+        const context = {
+          conversation_history: messages.slice(-3).map(m => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.content
+          })),
+          journey_context: {
+            journey_id: journey?.journey_id,
+            current_phase: currentPhase,
+            is_onboarding_complete: isOnboardingComplete,
+            profile_progress: journeyStatus?.profile_progress || 0
+          },
+          emotional_context: emotionalContext,
+          conversation_state: conversationState,
+          user_id: user.id
+        };
 
-      let backendResponse;
-      let tokensUsed = 0;
+        let backendResponse;
+        let tokensUsed = 0;
 
-      // Try Railway backend first
-      if (isConnected) {
-        try {
-          const aiResponse = await MorvoAIService.processMessage(messageText, context);
-          backendResponse = aiResponse.response;
-          tokensUsed = aiResponse.tokens_used || 0;
-          console.log('✅ Railway backend response received');
-        } catch (backendError) {
-          console.warn('⚠️ Railway backend failed, using local enhancement:', backendError);
-          backendResponse = null;
+        // Try Railway backend first
+        if (isConnected) {
+          try {
+            const aiResponse = await MorvoAIService.processMessage(messageText, context);
+            backendResponse = aiResponse.response;
+            tokensUsed = aiResponse.tokens_used || 0;
+            console.log('✅ Journey-aware backend response received');
+          } catch (backendError) {
+            console.warn('⚠️ Backend failed, using local processing:', backendError);
+            backendResponse = null;
+          }
         }
-      }
 
-      // Fallback to local processing if backend unavailable
-      if (!backendResponse) {
-        console.log('🔄 Using local smart response generation...');
-        backendResponse = SmartResponseGenerator.generateContextualResponse(
-          messageText, 
-          context.conversation_history, 
-          onboardingStatus
-        );
+        // Fallback to local processing
+        if (!backendResponse) {
+          console.log('🔄 Using local journey-aware response generation...');
+          backendResponse = generateJourneyAwareResponse(messageText);
+        }
+
+        journeyResponse = backendResponse;
       }
 
       // Enhance with conversational intelligence
-      const enhancement = await enhanceConversation(messageText, backendResponse);
+      const enhancement = await enhanceConversation(messageText, journeyResponse);
       
       const botMessage: MessageData = {
         id: (Date.now() + 1).toString(),
         content: enhancement.personalizedResponse,
         sender: 'agent',
         timestamp: new Date(),
-        tokens_used: tokensUsed,
         processing_time: Date.now() - userMessage.timestamp.getTime(),
-        isOnboarding: conversationState.phase === 'onboarding',
+        isOnboarding: !isOnboardingComplete,
+        journeyPhase: currentPhase,
         contextualInsights: enhancement.contextualInsights,
         emotionalContext: emotionalContext
       };
 
       setMessages(prev => [...prev, botMessage]);
 
-      // Check for insights and handle actions
-      const insights = getConversationInsights();
-      if (insights.length > 0) {
-        console.log('💡 Conversation insights:', insights);
-      }
-
-      // Trigger content type changes based on message content
+      // Handle content type changes based on message content
       if (onContentTypeChange) {
         if (messageText.includes('تحليل') || messageText.includes('analytics')) {
           onContentTypeChange('analytics');
@@ -229,7 +260,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
 
     } catch (error) {
-      console.error('❌ Chat error:', error);
+      console.error('❌ Journey chat error:', error);
       
       const errorMessage: MessageData = {
         id: (Date.now() + 1).toString(),
@@ -252,6 +283,100 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle journey-specific message processing
+  const handleJourneySpecificMessage = async (message: string): Promise<string | null> => {
+    if (isOnboardingComplete) return null;
+
+    const lowerMessage = message.toLowerCase();
+
+    switch (currentPhase) {
+      case 'welcome':
+      case 'greeting_preference':
+        if (message.trim()) {
+          const success = await setGreeting(message.trim());
+          if (success) {
+            return `شكراً لك! سأناديك ${message.trim()} من الآن فصاعداً. 
+
+الآن، لأتمكن من تقديم أفضل استراتيجية تسويقية لك، أحتاج لتحليل موقعك الإلكتروني أو نشاطك التجاري.
+
+يرجى مشاركة رابط موقعك الإلكتروني معي.`;
+          }
+        }
+        break;
+
+      case 'website_analysis':
+        if (lowerMessage.includes('http') || lowerMessage.includes('www') || lowerMessage.includes('.com') || lowerMessage.includes('.sa')) {
+          const url = extractUrlFromMessage(message);
+          if (url) {
+            const success = await analyzeWebsite(url);
+            if (success) {
+              return `ممتاز! بدأت في تحليل موقعك ${url} باستخدام الذكاء الاصطناعي المتقدم. 
+
+سأقوم بتحليل:
+• هيكل الموقع والمحتوى
+• الكلمات المفتاحية المستخدمة  
+• نقاط القوة والضعف
+• الفرص التسويقية المتاحة
+
+سيستغرق التحليل بضع دقائق. في غضون ذلك، دعني أسألك بعض الأسئلة الإضافية لأبني لك استراتيجية شاملة.
+
+ما هو هدفك الأساسي من التسويق الرقمي؟
+أ) زيادة الوعي بالعلامة التجارية
+ب) توليد عملاء محتملين جدد
+ج) زيادة المبيعات المباشرة
+د) تحسين خدمة العملاء`;
+            }
+          }
+        }
+        break;
+
+      case 'profile_completion':
+        // Handle profile questions
+        if (message.trim()) {
+          await saveAnswer('primary_goal', message);
+          return `شكراً لك على هذه المعلومة المهمة!
+
+سؤال آخر: ما هي الميزانية الشهرية المخصصة للتسويق الرقمي؟
+أ) أقل من 5,000 ريال
+ب) 5,000 - 15,000 ريال  
+ج) 15,000 - 50,000 ريال
+د) أكثر من 50,000 ريال`;
+        }
+        break;
+    }
+
+    return null;
+  };
+
+  const generateJourneyAwareResponse = (message: string): string => {
+    // Journey-aware local response generation
+    if (!isOnboardingComplete) {
+      switch (currentPhase) {
+        case 'welcome':
+          return 'أهلاً بك! كيف تفضل أن أناديك؟ يمكنك أن تقول لي اسمك أو كيف تحب أن أخاطبك.';
+        case 'website_analysis':
+          return 'لأتمكن من مساعدتك بشكل أفضل، أحتاج لرابط موقعك الإلكتروني لتحليله.';
+        default:
+          return 'دعنا نكمل رحلة الإعداد الخاصة بك لأتمكن من تقديم أفضل خدمة لك.';
+      }
+    }
+
+    return SmartResponseGenerator.generateContextualResponse(message, [], journeyStatus);
+  };
+
+  const extractUrlFromMessage = (message: string): string | null => {
+    const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/g;
+    const matches = message.match(urlRegex);
+    if (matches && matches.length > 0) {
+      let url = matches[0];
+      if (!url.startsWith('http')) {
+        url = 'https://' + url;
+      }
+      return url;
+    }
+    return null;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

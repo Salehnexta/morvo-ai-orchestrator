@@ -4,16 +4,28 @@ import { DynamicContentPanel } from "@/components/DynamicContentPanel";
 import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useSmartOnboarding } from "@/hooks/useSmartOnboarding";
-import { useState } from "react";
+import { useJourney } from "@/contexts/JourneyContext";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
-  const { status, loading } = useSmartOnboarding();
+  const { loading, isOnboardingComplete, currentPhase, startJourney, journey } = useJourney();
   
   const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test'>('hero');
+
+  // Auto-start journey for new users
+  useEffect(() => {
+    const initializeJourney = async () => {
+      if (!loading && !journey && !isOnboardingComplete) {
+        console.log('🚀 Auto-starting journey for new user');
+        await startJourney();
+      }
+    };
+
+    initializeJourney();
+  }, [loading, journey, isOnboardingComplete, startJourney]);
 
   const handleContentTypeChange = (type: string) => {
     console.log('🎯 Content type change:', type);
@@ -49,21 +61,21 @@ const Dashboard = () => {
     handleContentTypeChange(action);
   };
 
-  // Show loading while checking onboarding status
+  // Show loading while checking journey status
   if (loading) {
     return (
       <SimpleAuthWrapper>
         <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-400" />
-            <p className="text-white">جاري التحقق من حالة حسابك...</p>
+            <p className="text-white">جاري تحضير رحلتك التسويقية...</p>
           </div>
         </div>
       </SimpleAuthWrapper>
     );
   }
 
-  console.log('📊 Dashboard Phase 4: Railway backend integrated');
+  console.log('📊 Dashboard with Journey Integration - Phase:', currentPhase);
   return (
     <SimpleAuthWrapper>
       <div 
@@ -83,13 +95,12 @@ const Dashboard = () => {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
         </div>
 
-        {/* Chat Panel - Left side with Railway integration */}
+        {/* Chat Panel - Left side with Journey integration */}
         <div className="w-1/2 bg-black/30 backdrop-blur-xl border-r border-white/10 relative z-10 shadow-2xl">
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
           <div className="relative z-10 h-full">
             <ChatInterface 
               onContentTypeChange={handleContentTypeChange}
-              onboardingStatus={status}
             />
           </div>
         </div>

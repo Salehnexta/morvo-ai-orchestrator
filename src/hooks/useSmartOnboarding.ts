@@ -1,8 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useJourney } from '@/contexts/JourneyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 
 interface OnboardingStatus {
   exists: boolean;
@@ -11,13 +10,23 @@ interface OnboardingStatus {
   client_id?: string;
   needs_setup: boolean;
   profile_exists: boolean;
+  journey_id?: string;
+  current_phase?: string;
+  profile_progress?: number;
 }
 
 export const useSmartOnboarding = () => {
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { 
+    journey, 
+    journeyStatus, 
+    loading: journeyLoading, 
+    isOnboardingComplete,
+    currentPhase,
+    progress 
+  } = useJourney();
 
   const checkOnboardingStatus = useCallback(async () => {
     if (!user?.id) {
@@ -25,171 +34,60 @@ export const useSmartOnboarding = () => {
       return null;
     }
 
-    try {
-      setLoading(true);
-      
-      // Get client record
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id, name, email')
-        .eq('user_id', user.id)
-        .maybeSingle();
+    // Use journey context data instead of direct database queries
+    const onboardingStatus: OnboardingStatus = {
+      exists: !!journey,
+      onboarding_completed: isOnboardingComplete,
+      onboarding_started: !!journey,
+      client_id: user.id,
+      needs_setup: !isOnboardingComplete,
+      profile_exists: !!journeyStatus,
+      journey_id: journey?.journey_id,
+      current_phase: currentPhase,
+      profile_progress: progress
+    };
 
-      if (clientError) {
-        console.error('Error getting client:', clientError);
-        const fallbackStatus = {
-          exists: false,
-          onboarding_completed: false,
-          onboarding_started: false,
-          needs_setup: true,
-          profile_exists: false
-        };
-        setStatus(fallbackStatus);
-        return fallbackStatus;
-      }
-
-      if (!clientData) {
-        const fallbackStatus = {
-          exists: false,
-          onboarding_completed: false,
-          onboarding_started: false,
-          needs_setup: true,
-          profile_exists: false
-        };
-        setStatus(fallbackStatus);
-        return fallbackStatus;
-      }
-
-      // Get profile record
-      const { data: profileData, error: profileError } = await supabase
-        .from('customer_profiles')
-        .select('profile_data, status')
-        .eq('customer_id', user.id)
-        .eq('client_id', clientData.id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Error getting profile:', profileError);
-      }
-
-      // Safely extract profile data
-      const profileJson = profileData?.profile_data as any;
-      const onboardingCompleted = profileJson?.onboarding_completed === true;
-      const onboardingStarted = profileJson?.onboarding_started === true;
-
-      const onboardingStatus: OnboardingStatus = {
-        exists: true,
-        client_id: clientData.id,
-        profile_exists: !!profileData,
-        onboarding_completed: onboardingCompleted,
-        onboarding_started: onboardingStarted,
-        needs_setup: false
-      };
-
-      setStatus(onboardingStatus);
-      return onboardingStatus;
-    } catch (error) {
-      console.error('Error in checkOnboardingStatus:', error);
-      const fallbackStatus = {
-        exists: false,
-        onboarding_completed: false,
-        onboarding_started: false,
-        needs_setup: true,
-        profile_exists: false
-      };
-      setStatus(fallbackStatus);
-      return fallbackStatus;
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
+    setStatus(onboardingStatus);
+    return onboardingStatus;
+  }, [user?.id, journey, journeyStatus, isOnboardingComplete, currentPhase, progress]);
 
   const markOnboardingStarted = useCallback(async () => {
-    if (!user?.id || !status?.client_id) return false;
-
-    try {
-      const { error } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: user.id,
-          client_id: status.client_id,
-          profile_data: {
-            onboarding_completed: false,
-            onboarding_started: true,
-            started_at: new Date().toISOString()
-          },
-          status: 'active',
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      // Update local status
+    // This is now handled by the Journey context
+    if (journey) {
       setStatus(prev => prev ? { ...prev, onboarding_started: true } : null);
       return true;
-    } catch (error) {
-      console.error('Error marking onboarding started:', error);
-      return false;
     }
-  }, [user?.id, status?.client_id]);
+    return false;
+  }, [journey]);
 
   const markOnboardingCompleted = useCallback(async (profileData: any = {}) => {
-    if (!user?.id || !status?.client_id) return false;
-
-    try {
-      const { error } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: user.id,
-          client_id: status.client_id,
-          profile_data: {
-            ...profileData,
-            onboarding_completed: true,
-            onboarding_started: true,
-            completed_at: new Date().toISOString()
-          },
-          status: 'active',
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      // Update local status
+    // This is now handled by the Journey context
+    if (isOnboardingComplete) {
       setStatus(prev => prev ? { 
         ...prev, 
         onboarding_completed: true, 
         onboarding_started: true 
       } : null);
-
-      toast({
-        title: "مبروك!",
-        description: "تم إكمال عملية الإعداد بنجاح",
-      });
-
       return true;
-    } catch (error) {
-      console.error('Error marking onboarding completed:', error);
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ في حفظ البيانات",
-        variant: "destructive",
-      });
-      return false;
     }
-  }, [user?.id, status?.client_id, toast]);
+    return false;
+  }, [isOnboardingComplete]);
 
   useEffect(() => {
-    checkOnboardingStatus();
-  }, [checkOnboardingStatus]);
+    if (!journeyLoading) {
+      checkOnboardingStatus();
+      setLoading(false);
+    }
+  }, [checkOnboardingStatus, journeyLoading]);
 
   return {
     status,
-    loading,
+    loading: loading || journeyLoading,
     checkOnboardingStatus,
     markOnboardingStarted,
     markOnboardingCompleted,
-    isComplete: status?.onboarding_completed || false,
-    needsOnboarding: status?.exists && !status?.onboarding_completed,
-    needsSetup: status?.needs_setup || false
+    isComplete: isOnboardingComplete,
+    needsOnboarding: !isOnboardingComplete && !!journey,
+    needsSetup: !isOnboardingComplete
   };
 };
