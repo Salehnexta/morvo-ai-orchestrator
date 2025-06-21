@@ -110,7 +110,8 @@ export class MorvoAIService {
     throw new Error('User not authenticated');
   }
 
-  private static async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  // Make this method public so JourneyManager can access it
+  static async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const token = await this.getAuthToken();
     
     return fetch(`${this.API_URL}/${this.API_VERSION}${endpoint}`, {
