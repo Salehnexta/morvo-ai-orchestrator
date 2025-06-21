@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { AgentResponse } from "./types";
 
@@ -9,7 +10,6 @@ export class ResponseHandler {
     messageType: 'user' | 'assistant'
   ): Promise<void> {
     try {
-      // Use messages table instead of conversation_messages
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -32,7 +32,7 @@ export class ResponseHandler {
     try {
       const parsedResponse = JSON.parse(response);
       return {
-        response: parsedResponse.response || 'لا توجد استجابة',
+        text: parsedResponse.text || parsedResponse.response || 'لا توجد استجابة',
         suggested_actions: parsedResponse.suggested_actions || [],
         processing_time: parsedResponse.processing_time || 0,
         tokens_used: parsedResponse.tokens_used || 0,
@@ -41,7 +41,7 @@ export class ResponseHandler {
     } catch (error) {
       console.error('Error parsing agent response:', error);
       return {
-        response: response || 'لا توجد استجابة',
+        text: response || 'لا توجد استجابة',
         suggested_actions: [],
         processing_time: 0,
         tokens_used: 0,

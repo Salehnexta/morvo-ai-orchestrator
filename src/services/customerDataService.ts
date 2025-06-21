@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { CustomerData } from "@/services/agent/types";
 
 export class CustomerDataService {
   // Save customer data to client_profiles table
@@ -7,7 +8,6 @@ export class CustomerDataService {
     try {
       console.log('Saving customer data:', { clientId, data });
 
-      // Use client_profiles table instead of customer_profiles
       const { error } = await supabase
         .from('client_profiles')
         .upsert({
@@ -192,9 +192,9 @@ export class CustomerDataService {
     };
 
     await supabase
-      .from('customer_profiles')
+      .from('client_profiles')
       .update(updatedData)
-      .eq('customer_id', clientId);
+      .eq('client_id', clientId);
   }
 
   private static async createCustomerProfile(
@@ -202,9 +202,9 @@ export class CustomerDataService {
     data: CustomerData
   ): Promise<void> {
     await supabase
-      .from('customer_profiles')
+      .from('client_profiles')
       .insert({
-        customer_id: clientId,
+        client_id: clientId,
         company_name: data.company_name || '',
         industry: data.industry || '',
         marketing_goals: data.marketing_goals || [],
@@ -232,11 +232,10 @@ export class CustomerDataService {
       .insert({
         client_id: clientId,
         conversation_id: conversationId,
-        content: message,
-        sender_type: 'user',
-        sender_id: clientId,
+        message_content: message,
+        message_type: 'user',
         metadata: metadata,
-        timestamp: new Date().toISOString()
+        created_at: new Date().toISOString()
       });
   }
 }

@@ -254,8 +254,10 @@ export type Database = {
       }
       agent_memory: {
         Row: {
+          agent_id: string | null
           client_id: string
           content: string
+          conversation_id: string | null
           created_at: string | null
           id: string
           importance_score: number | null
@@ -264,8 +266,10 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          agent_id?: string | null
           client_id: string
           content: string
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
           importance_score?: number | null
@@ -274,8 +278,10 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          agent_id?: string | null
           client_id?: string
           content?: string
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
           importance_score?: number | null
@@ -2281,6 +2287,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketing_preferences: {
+        Row: {
+          channels: Json | null
+          client_id: string
+          created_at: string | null
+          id: string
+          preferences: Json | null
+          targeting: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          channels?: Json | null
+          client_id: string
+          created_at?: string | null
+          id?: string
+          preferences?: Json | null
+          targeting?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          channels?: Json | null
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          preferences?: Json | null
+          targeting?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
