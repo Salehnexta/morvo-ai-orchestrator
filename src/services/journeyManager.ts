@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { MorvoAIService } from "./morvoAIService";
+import { DatabaseCleanupService } from "./databaseCleanupService";
 
 export interface JourneyStatus {
   journey_id: string;
@@ -39,7 +40,10 @@ export class JourneyManager {
     try {
       console.log('🔍 Checking existing journey for client:', clientId);
       
-      // First check backend for journey status
+      // Clean up any duplicate profiles first
+      await DatabaseCleanupService.cleanupDuplicateProfiles(clientId);
+      
+      // First check backend for journey status using correct client-based lookup
       try {
         const backendJourney = await MorvoAIService.checkJourneyStatus(clientId);
         if (backendJourney && backendJourney.status !== 'completed') {
@@ -67,7 +71,7 @@ export class JourneyManager {
           };
         }
       } catch (backendError) {
-        console.warn('⚠️ Backend journey check failed, checking local:', backendError);
+        console.warn('⚠️ Backend journey check failed, using local fallback:', backendError);
       }
       
       // Fallback to local database
@@ -92,24 +96,10 @@ export class JourneyManager {
         };
       }
 
-      // Check if user already has a completed profile (legacy users)
-      const { data: profile } = await supabase
-        .from('customer_profiles')
-        .select('*')
-        .eq('customer_id', clientId)
-        .maybeSingle();
-
-      if (profile?.profile_data && typeof profile.profile_data === 'object' && Object.keys(profile.profile_data).length > 3) {
-        console.log('✅ User has completed profile, marking journey as complete');
-        return {
-          journey_id: `journey_${clientId}`,
-          client_id: clientId,
-          current_phase: 'commitment_activation',
-          profile_progress: 100,
-          is_completed: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
+      // Ensure journey record exists for users with profiles
+      const journeyId = await DatabaseCleanupService.ensureJourneyRecord(clientId);
+      if (journeyId) {
+        return await this.checkExistingJourney(clientId); // Recursive call to get the created journey
       }
 
       return null;
@@ -206,9 +196,13 @@ export class JourneyManager {
       // Extract client ID from journey ID for backend lookup
       const clientId = journeyId.includes('_') ? journeyId.split('_')[1] : journeyId;
       
-      // Try backend first
+      // Try backend first with exponential backoff retry
       try {
-        const backendStatus = await MorvoAIService.checkJourneyStatus(clientId);
+        const backendStatus = await this.retryWithBackoff(
+          () => MorvoAIService.checkJourneyStatus(clientId),
+          3
+        );
+        
         if (backendStatus) {
           return {
             journey_id: backendStatus.journey_id,
@@ -248,13 +242,39 @@ export class JourneyManager {
     }
   }
 
+  private static async retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    maxRetries: number,
+    baseDelay: number = 1000
+  ): Promise<T> {
+    let lastError;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error;
+        if (attempt < maxRetries - 1) {
+          const delay = baseDelay * Math.pow(2, attempt);
+          console.log(`Retry attempt ${attempt + 1} in ${delay}ms`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    throw lastError;
+  }
+
   static async setGreetingPreference(journeyId: string, greeting: string): Promise<boolean> {
     try {
       console.log('🔄 Setting greeting preference:', greeting, 'for journey:', journeyId);
       
-      // Try backend first
+      // Try backend first with retry
       try {
-        const success = await MorvoAIService.setGreetingPreference(journeyId, greeting);
+        const success = await this.retryWithBackoff(
+          () => MorvoAIService.setGreetingPreference(journeyId, greeting),
+          3
+        );
         if (success) {
           console.log('✅ Greeting preference set on backend');
         }
@@ -318,7 +338,11 @@ export class JourneyManager {
     try {
       console.log('🔍 Starting website analysis for:', websiteUrl);
       
-      const success = await MorvoAIService.startWebsiteAnalysis(journeyId, websiteUrl);
+      const success = await this.retryWithBackoff(
+        () => MorvoAIService.startWebsiteAnalysis(journeyId, websiteUrl),
+        3
+      );
+      
       console.log('✅ Website analysis started:', success);
       return success;
     } catch (error) {
