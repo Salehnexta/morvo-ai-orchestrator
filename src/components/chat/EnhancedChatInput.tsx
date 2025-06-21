@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Mic, Plus, Paperclip } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useSmartChat } from '@/hooks/useSmartChat';
 
 interface EnhancedChatInputProps {
   onSendMessage: (message: string) => void;
@@ -18,7 +17,6 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   placeholder
 }) => {
   const { language, isRTL } = useLanguage();
-  const { processMessage, getProfileCompleteness, getMissingFields } = useSmartChat();
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -46,10 +44,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
   const handleSend = async () => {
     if (message.trim()) {
-      // Process the message for data extraction
-      await processMessage(message);
-      
-      // Send the message
+      // Send the message directly without processing
       onSendMessage(message);
       setMessage('');
       
@@ -107,27 +102,21 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     }
   };
 
+  // Simple suggestions based on common marketing topics
   const getSuggestions = () => {
-    const missingFields = getMissingFields();
-    const completeness = getProfileCompleteness();
-    
-    if (completeness < 50) {
-      const suggestions = {
-        ar: [
-          'أخبرني عن شركتك',
-          'ما هي أهدافك التسويقية؟',
-          'من هو جمهورك المستهدف؟'
-        ],
-        en: [
-          'Tell me about your company',
-          'What are your marketing goals?',
-          'Who is your target audience?'
-        ]
-      };
-      return suggestions[language];
-    }
-    
-    return [];
+    const suggestions = {
+      ar: [
+        'أخبرني عن شركتك',
+        'ما هي أهدافك التسويقية؟',
+        'من هو جمهورك المستهدف؟'
+      ],
+      en: [
+        'Tell me about your company',
+        'What are your marketing goals?',
+        'Who is your target audience?'
+      ]
+    };
+    return suggestions[language];
   };
 
   const suggestions = getSuggestions();
