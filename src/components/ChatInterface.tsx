@@ -173,6 +173,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     initializeChat();
   }, [user, isOnboardingComplete, currentPhase, journeyStatus, messages.length, emotionalContext, chatInitialized, journeyLoading, greetingPreference]);
 
+  // Enhanced content type change handler for sidebar integration
+  const handleSidebarContentChange = (message: string) => {
+    if (onContentTypeChange) {
+      // Detect intent from message and trigger appropriate sidebar content
+      const lowerMessage = message.toLowerCase();
+      
+      if (lowerMessage.includes('تحليل') || lowerMessage.includes('analytics') || lowerMessage.includes('إحصائي')) {
+        onContentTypeChange('analytics');
+      } else if (lowerMessage.includes('محتوى') || lowerMessage.includes('content') || lowerMessage.includes('منشور')) {
+        onContentTypeChange('content-creator');
+      } else if (lowerMessage.includes('حملة') || lowerMessage.includes('campaign') || lowerMessage.includes('إعلان')) {
+        onContentTypeChange('campaign');
+      } else if (lowerMessage.includes('جدولة') || lowerMessage.includes('calendar') || lowerMessage.includes('موعد')) {
+        onContentTypeChange('calendar');
+      } else if (lowerMessage.includes('رسم') || lowerMessage.includes('chart') || lowerMessage.includes('بياني')) {
+        onContentTypeChange('chart');
+      } else if (lowerMessage.includes('خطة') || lowerMessage.includes('plan') || lowerMessage.includes('استراتيجية')) {
+        onContentTypeChange('plan');
+      }
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!input.trim() || !user) {
       return;
@@ -190,6 +212,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const messageText = input;
     setInput('');
     setIsLoading(true);
+
+    // Update sidebar content based on user message
+    handleSidebarContentChange(messageText);
 
     try {
       console.log('🤖 Processing journey-aware message - Phase:', currentPhase);

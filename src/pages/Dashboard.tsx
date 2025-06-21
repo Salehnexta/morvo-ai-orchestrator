@@ -1,5 +1,7 @@
+
 import { ChatInterface } from "@/components/ChatInterface";
 import { DynamicContentPanel } from "@/components/DynamicContentPanel";
+import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
 import { JourneyPhaseHandler } from "@/components/onboarding/JourneyPhaseHandler";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -21,6 +23,7 @@ const Dashboard = () => {
   } = useJourney();
   
   const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test' | 'onboarding'>('hero');
+  const [sidebarContentType, setSidebarContentType] = useState<'default' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'chart' | 'plan'>('default');
   const [journeyInitialized, setJourneyInitialized] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -60,41 +63,62 @@ const Dashboard = () => {
 
   const handleContentTypeChange = (type: string) => {
     console.log('🎯 Content type change:', type);
+    
+    // Update sidebar content based on the action
     switch (type) {
-      case 'onboarding':
-      case 'start-onboarding':
-        setContentType('onboarding');
-        setShowOnboarding(true);
-        break;
       case 'analytics':
       case 'view-analytics':
+        setSidebarContentType('analytics');
         setContentType('analytics');
         setShowOnboarding(false);
         break;
       case 'content-creator':
       case 'create-content':
+        setSidebarContentType('content-creator');
         setContentType('content-creator');
         setShowOnboarding(false);
         break;
       case 'calendar':
       case 'schedule':
       case 'schedule-content':
+        setSidebarContentType('calendar');
         setContentType('calendar');
         setShowOnboarding(false);
         break;
       case 'campaign':
       case 'campaigns':
       case 'create-campaign':
+        setSidebarContentType('campaign');
         setContentType('campaign');
         setShowOnboarding(false);
+        break;
+      case 'chart':
+      case 'show-chart':
+        setSidebarContentType('chart');
+        setContentType('analytics');
+        setShowOnboarding(false);
+        break;
+      case 'plan':
+      case 'show-plan':
+        setSidebarContentType('plan');
+        setContentType('campaign');
+        setShowOnboarding(false);
+        break;
+      case 'onboarding':
+      case 'start-onboarding':
+        setContentType('onboarding');
+        setShowOnboarding(true);
+        setSidebarContentType('default');
         break;
       case 'connection-test':
         setContentType('connection-test');
         setShowOnboarding(false);
+        setSidebarContentType('default');
         break;
       default:
         setContentType('hero');
         setShowOnboarding(false);
+        setSidebarContentType('default');
     }
   };
 
@@ -109,6 +133,7 @@ const Dashboard = () => {
     if (phase === 'commitment_activation') {
       setShowOnboarding(false);
       setContentType('hero');
+      setSidebarContentType('default');
     }
   };
 
@@ -147,35 +172,62 @@ const Dashboard = () => {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
         </div>
 
-        {/* Chat Panel - Left side with Journey integration */}
-        <div className="w-1/2 bg-black/30 backdrop-blur-xl border-r border-white/10 relative z-10 shadow-2xl">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
-          <div className="relative z-10 h-full">
-            <ChatInterface 
-              onContentTypeChange={handleContentTypeChange}
-            />
-          </div>
-        </div>
-
-        {/* Dynamic Content Panel - Right side */}
-        <div className="w-1/2 relative z-10">
-          <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent"></div>
-          <div className="relative z-10 h-full bg-white/5 backdrop-blur-sm">
-            {showOnboarding && contentType === 'onboarding' ? (
-              <div className="h-full p-6 overflow-y-auto">
-                <JourneyPhaseHandler 
-                  onPhaseComplete={handlePhaseComplete}
-                  className="max-w-2xl mx-auto"
+        {/* Conditional Layout based on onboarding status */}
+        {!isOnboardingComplete ? (
+          // During Onboarding: Traditional Chat + Content Panel Layout
+          <>
+            {/* Chat Panel - Left side with Journey integration */}
+            <div className="w-1/2 bg-black/30 backdrop-blur-xl border-r border-white/10 relative z-10 shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
+              <div className="relative z-10 h-full">
+                <ChatInterface 
+                  onContentTypeChange={handleContentTypeChange}
                 />
               </div>
-            ) : (
-              <DynamicContentPanel 
-                contentType={contentType}
+            </div>
+
+            {/* Dynamic Content Panel - Right side */}
+            <div className="w-1/2 relative z-10">
+              <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent"></div>
+              <div className="relative z-10 h-full bg-white/5 backdrop-blur-sm">
+                {showOnboarding && contentType === 'onboarding' ? (
+                  <div className="h-full p-6 overflow-y-auto">
+                    <JourneyPhaseHandler 
+                      onPhaseComplete={handlePhaseComplete}
+                      className="max-w-2xl mx-auto"
+                    />
+                  </div>
+                ) : (
+                  <DynamicContentPanel 
+                    contentType={contentType}
+                    onActionClick={handleContentAction}
+                  />
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          // After Onboarding: Dynamic Sidebar + Chat Layout
+          <>
+            {/* Dynamic Sidebar - Left side */}
+            <div className="relative z-10">
+              <DynamicSidebar 
+                contentType={sidebarContentType}
                 onActionClick={handleContentAction}
               />
-            )}
-          </div>
-        </div>
+            </div>
+
+            {/* Chat Interface - Right side (takes remaining space) */}
+            <div className="flex-1 bg-black/30 backdrop-blur-xl border-l border-white/10 relative z-10 shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
+              <div className="relative z-10 h-full">
+                <ChatInterface 
+                  onContentTypeChange={handleContentTypeChange}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Floating Elements for Visual Enhancement */}
         <div className="absolute top-8 right-8 w-4 h-4 bg-blue-400/30 rounded-full animate-ping z-5"></div>
