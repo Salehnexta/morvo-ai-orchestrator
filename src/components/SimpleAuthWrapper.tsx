@@ -67,7 +67,7 @@ export const SimpleAuthWrapper: React.FC<SimpleAuthWrapperProps> = ({ children }
           .from('clients')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (fetchError && fetchError.code !== 'PGRST116') {
           console.error('❌ Error fetching client record:', fetchError);
@@ -178,4 +178,4 @@ export const SimpleAuthWrapper: React.FC<SimpleAuthWrapperProps> = ({ children }
   // Render children when everything is ready
   console.log('✅ Rendering protected content for user:', user.id);
   return <>{children}</>;
-};
+);

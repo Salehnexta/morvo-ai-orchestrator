@@ -12,9 +12,10 @@ export const useSmartChat = () => {
       setIsLoading(true);
       
       const { error } = await supabase
-        .from('client_profiles')
+        .from('customer_profiles')
         .upsert({
-          client_id: userId,
+          customer_id: userId,
+          client_id: profileData.client_id,
           ...profileData,
           updated_at: new Date().toISOString()
         });
@@ -43,9 +44,9 @@ export const useSmartChat = () => {
       setIsLoading(true);
       
       const { data, error } = await supabase
-        .from('client_profiles')
+        .from('customer_profiles')
         .select('*')
-        .eq('client_id', userId)
+        .eq('customer_id', userId)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
@@ -66,12 +67,11 @@ export const useSmartChat = () => {
     try {
       setIsLoading(true);
 
-      // Use client_profiles instead of marketing_preferences since it doesn't exist
       const { error } = await supabase
-        .from('client_profiles')
+        .from('customer_profiles')
         .upsert({
-          client_id: userId,
-          communication_preferences: preferences,
+          customer_id: userId,
+          preferences: preferences,
           updated_at: new Date().toISOString()
         });
 
@@ -103,9 +103,9 @@ export const useSmartChat = () => {
       setIsLoading(true);
 
       const { data, error } = await supabase
-        .from('client_profiles')
-        .select('communication_preferences')
-        .eq('client_id', userId)
+        .from('customer_profiles')
+        .select('preferences')
+        .eq('customer_id', userId)
         .maybeSingle();
 
       if (error) {
@@ -113,7 +113,7 @@ export const useSmartChat = () => {
         return null;
       }
 
-      return data?.communication_preferences || {};
+      return data?.preferences || {};
     } catch (error) {
       console.error('Error in getMarketingPreferences:', error);
       return null;
@@ -122,20 +122,16 @@ export const useSmartChat = () => {
     }
   }, []);
 
-  // Add missing functions for EnhancedChatInput
   const processMessage = useCallback(async (message: string) => {
-    // Extract basic information from message for profile building
     console.log('Processing message for profile extraction:', message);
     return true;
   }, []);
 
   const getProfileCompleteness = useCallback(() => {
-    // Return a simple completeness percentage
     return 60; // Default value
   }, []);
 
   const getMissingFields = useCallback(() => {
-    // Return array of missing profile fields
     return ['company_name', 'industry', 'target_audience'];
   }, []);
 

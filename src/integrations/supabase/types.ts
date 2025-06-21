@@ -1652,30 +1652,39 @@ export type Database = {
         Row: {
           client_id: string
           created_at: string | null
+          customer_id: string | null
           demographics: Json | null
           id: string
           preferences: Json | null
+          preferred_language: string | null
           profile_data: Json | null
+          status: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           client_id: string
           created_at?: string | null
+          customer_id?: string | null
           demographics?: Json | null
           id?: string
           preferences?: Json | null
+          preferred_language?: string | null
           profile_data?: Json | null
+          status?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           client_id?: string
           created_at?: string | null
+          customer_id?: string | null
           demographics?: Json | null
           id?: string
           preferences?: Json | null
+          preferred_language?: string | null
           profile_data?: Json | null
+          status?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -2426,9 +2435,14 @@ export type Database = {
           analysis_results: Json | null
           answer_best_season: string | null
           answer_biggest_challenge: string | null
+          answer_company_size: string | null
           answer_competitive_advantage: string | null
+          answer_current_sales: string | null
           answer_customer_sources: string | null
           answer_experience_level: string | null
+          answer_industry: string | null
+          answer_marketing_budget: string | null
+          answer_marketing_experience: string | null
           answer_marketing_priority: string | null
           answer_monthly_budget: string | null
           answer_monthly_sales: string | null
@@ -2436,6 +2450,7 @@ export type Database = {
           answer_primary_goal: string | null
           answer_target_region: string | null
           answer_team_size: string | null
+          answer_years_in_business: number | null
           business_type: string | null
           client_id: string
           client_name: string | null
@@ -2444,6 +2459,7 @@ export type Database = {
           current_phase: string
           greeting_preference: string | null
           id: string
+          is_completed: boolean | null
           journey_id: string | null
           phase_status: string | null
           phase_updated_at: string | null
@@ -2462,9 +2478,14 @@ export type Database = {
           analysis_results?: Json | null
           answer_best_season?: string | null
           answer_biggest_challenge?: string | null
+          answer_company_size?: string | null
           answer_competitive_advantage?: string | null
+          answer_current_sales?: string | null
           answer_customer_sources?: string | null
           answer_experience_level?: string | null
+          answer_industry?: string | null
+          answer_marketing_budget?: string | null
+          answer_marketing_experience?: string | null
           answer_marketing_priority?: string | null
           answer_monthly_budget?: string | null
           answer_monthly_sales?: string | null
@@ -2472,6 +2493,7 @@ export type Database = {
           answer_primary_goal?: string | null
           answer_target_region?: string | null
           answer_team_size?: string | null
+          answer_years_in_business?: number | null
           business_type?: string | null
           client_id: string
           client_name?: string | null
@@ -2480,6 +2502,7 @@ export type Database = {
           current_phase?: string
           greeting_preference?: string | null
           id?: string
+          is_completed?: boolean | null
           journey_id?: string | null
           phase_status?: string | null
           phase_updated_at?: string | null
@@ -2498,9 +2521,14 @@ export type Database = {
           analysis_results?: Json | null
           answer_best_season?: string | null
           answer_biggest_challenge?: string | null
+          answer_company_size?: string | null
           answer_competitive_advantage?: string | null
+          answer_current_sales?: string | null
           answer_customer_sources?: string | null
           answer_experience_level?: string | null
+          answer_industry?: string | null
+          answer_marketing_budget?: string | null
+          answer_marketing_experience?: string | null
           answer_marketing_priority?: string | null
           answer_monthly_budget?: string | null
           answer_monthly_sales?: string | null
@@ -2508,6 +2536,7 @@ export type Database = {
           answer_primary_goal?: string | null
           answer_target_region?: string | null
           answer_team_size?: string | null
+          answer_years_in_business?: number | null
           business_type?: string | null
           client_id?: string
           client_name?: string | null
@@ -2516,6 +2545,7 @@ export type Database = {
           current_phase?: string
           greeting_preference?: string | null
           id?: string
+          is_completed?: boolean | null
           journey_id?: string | null
           phase_status?: string | null
           phase_updated_at?: string | null

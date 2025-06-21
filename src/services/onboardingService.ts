@@ -48,9 +48,45 @@ export class OnboardingService {
               { value: 'other', label: 'أخرى' }
             ],
             required: true
+          },
+          {
+            id: '3',
+            question: 'ما هو حجم فريق العمل في شركتك؟',
+            type: 'choice',
+            options: [
+              { value: '1-5', label: '1-5 موظفين' },
+              { value: '6-20', label: '6-20 موظف' },
+              { value: '21-50', label: '21-50 موظف' },
+              { value: '50+', label: 'أكثر من 50 موظف' }
+            ],
+            required: true
+          },
+          {
+            id: '4',
+            question: 'ما هي الميزانية الشهرية المخصصة للتسويق؟',
+            type: 'choice',
+            options: [
+              { value: 'under-5000', label: 'أقل من 5,000 ريال' },
+              { value: '5000-15000', label: '5,000 - 15,000 ريال' },
+              { value: '15000-50000', label: '15,000 - 50,000 ريال' },
+              { value: 'over-50000', label: 'أكثر من 50,000 ريال' }
+            ],
+            required: true
+          },
+          {
+            id: '5',
+            question: 'ما هو هدفك الأساسي من التسويق الرقمي؟',
+            type: 'choice',
+            options: [
+              { value: 'brand-awareness', label: 'زيادة الوعي بالعلامة التجارية' },
+              { value: 'lead-generation', label: 'توليد العملاء المحتملين' },
+              { value: 'sales-increase', label: 'زيادة المبيعات' },
+              { value: 'customer-retention', label: 'الاحتفاظ بالعملاء' }
+            ],
+            required: true
           }
         ],
-        total_questions: 2
+        total_questions: 5
       };
     }
   }
