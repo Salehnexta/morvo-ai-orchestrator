@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { UserProfileService, UserProfile } from "@/services/userProfileService";
 import { useAuth } from "@/contexts/AuthContext";
+import { CompetitorAnalysisService } from "@/services/competitorAnalysisService";
 
 export default function ProfileSetup() {
   const { language, isRTL } = useLanguage();
@@ -330,9 +331,16 @@ export default function ProfileSetup() {
         // Update completeness score
         await UserProfileService.updateCompletenessScore(user.id);
         
+        // Save basic competitor information if provided
+        if (profileData.main_competitors && profileData.main_competitors.length > 0) {
+          await CompetitorAnalysisService.saveBasicCompetitors(user.id, profileData.main_competitors);
+        }
+        
         toast({
-          title: "تم الحفظ بنجاح!",
-          description: "تم حفظ معلومات الملف الشخصي بنجاح",
+          title: language === 'ar' ? "تم الحفظ بنجاح!" : "Profile Saved Successfully!",
+          description: language === 'ar' 
+            ? "تم حفظ معلومات الملف الشخصي بنجاح. سيتم تحسين تحليل المنافسين قريباً."
+            : "Profile information saved successfully. Competitor analysis will be enhanced soon.",
         });
 
         navigate('/dashboard');
@@ -342,8 +350,10 @@ export default function ProfileSetup() {
     } catch (error) {
       console.error('Error saving profile:', error);
       toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء حفظ المعلومات",
+        title: language === 'ar' ? "خطأ" : "Error",
+        description: language === 'ar' 
+          ? "حدث خطأ أثناء حفظ المعلومات"
+          : "An error occurred while saving the information",
         variant: "destructive",
       });
     } finally {
