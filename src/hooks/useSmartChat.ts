@@ -7,38 +7,6 @@ export const useSmartChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const saveCustomerProfile = useCallback(async (userId: string, profileData: any) => {
-    try {
-      setIsLoading(true);
-      
-      const { error } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: userId,
-          client_id: profileData.client_id,
-          ...profileData,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Error saving customer profile:', error);
-        toast({
-          title: "خطأ في حفظ البيانات",
-          description: "حدث خطأ أثناء حفظ معلومات العميل",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error in saveCustomerProfile:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
   const getCustomerProfile = useCallback(async (userId: string) => {
     try {
       setIsLoading(true);
@@ -142,27 +110,10 @@ export const useSmartChat = () => {
     }
   }, []);
 
-  const processMessage = useCallback(async (message: string) => {
-    console.log('Processing message for profile extraction:', message);
-    return true;
-  }, []);
-
-  const getProfileCompleteness = useCallback(() => {
-    return 60; // Default value
-  }, []);
-
-  const getMissingFields = useCallback(() => {
-    return ['company_name', 'industry', 'target_audience'];
-  }, []);
-
   return {
     isLoading,
-    saveCustomerProfile,
     getCustomerProfile,
     saveMarketingPreferences,
     getMarketingPreferences,
-    processMessage,
-    getProfileCompleteness,
-    getMissingFields,
   };
 };

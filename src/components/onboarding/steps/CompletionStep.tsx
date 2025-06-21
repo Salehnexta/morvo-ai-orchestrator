@@ -104,7 +104,32 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
         return;
       }
 
-      // Also update any onboarding journey record if it exists
+      // Create initial conversation if it doesn't exist
+      const { data: existingConversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('client_id', clientData.id)
+        .maybeSingle();
+
+      if (!existingConversation) {
+        const { data: newConversation, error: conversationError } = await supabase
+          .from('conversations')
+          .insert({
+            client_id: clientData.id,
+            title: 'مرحباً بك في مورفو! 🚀',
+            status: 'active'
+          })
+          .select()
+          .single();
+
+        if (conversationError) {
+          console.error('Error creating conversation:', conversationError);
+        } else {
+          console.log('✅ Initial conversation created:', newConversation.id);
+        }
+      }
+
+      // Update onboarding journey record
       const { error: journeyError } = await supabase
         .from('onboarding_journeys')
         .upsert({
@@ -116,7 +141,6 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
 
       if (journeyError) {
         console.log('Note: Could not update onboarding journey:', journeyError);
-        // Don't block completion for this error
       }
 
       console.log('✅ Onboarding completed successfully');

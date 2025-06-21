@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sparkles, Target, BarChart3, Users } from 'lucide-react';
-import { useEnhancedOnboarding } from '@/hooks/useEnhancedOnboarding';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface WelcomeStepProps {
   onNext: () => void;
@@ -15,7 +16,7 @@ interface WelcomeStepProps {
 
 export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, data, onDataChange }) => {
   const { language } = useLanguage();
-  const { saveGreeting, updatePhase } = useEnhancedOnboarding();
+  const { user } = useAuth();
   const [greeting, setGreeting] = useState(data?.greeting_preference || '');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -79,12 +80,23 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, data, onDataCh
     
     try {
       // Save greeting preference if provided
-      if (greeting.trim()) {
-        await saveGreeting(greeting.trim());
-      }
+      if (greeting.trim() && user) {
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
 
-      // Update phase completion
-      await updatePhase('welcome', true, 120); // 2 minutes average
+        if (clientData) {
+          await supabase
+            .from('client_experience')
+            .upsert({
+              client_id: clientData.id,
+              greeting_preference: greeting.trim(),
+              updated_at: new Date().toISOString()
+            });
+        }
+      }
 
       // Update local data
       onDataChange({ 

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
@@ -5,12 +6,10 @@ import { ChatHeader } from './chat/ChatHeader';
 import { ConnectionStatus } from './chat/ConnectionStatus';
 import { TokenCounter } from './chat/TokenCounter';
 import { ActionButtons } from './chat/ActionButtons';
-import { OnboardingMessage } from './chat/OnboardingMessage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
-import { useChatOnboarding } from '@/hooks/useChatOnboarding';
 import { MorvoAIService } from '@/services/morvoAIService';
 import { AgentResponse } from '@/services/agent';
 
@@ -47,18 +46,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
   const { toast } = useToast();
-  
-  // Onboarding integration
-  const {
-    currentQuestion,
-    isOnboardingActive,
-    startOnboarding,
-    answerCurrentQuestion,
-    skipCurrentQuestion,
-    getOnboardingProgress,
-    currentQuestionIndex,
-    totalQuestions
-  } = useChatOnboarding();
 
   const content = {
     ar: {
@@ -95,27 +82,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
     scrollToBottom();
   }, [messages]);
 
-  // Check connection on mount
+  // Check connection and initialize welcome message
   useEffect(() => {
     const checkConnection = async () => {
       try {
         const isHealthy = await MorvoAIService.testConnection();
         setIsConnected(isHealthy);
         
-        // Start onboarding for new users after connection check
+        // Add welcome message for completed onboarding users
         if (isHealthy && user && messages.length === 0) {
           const welcomeMessage: MessageData = {
             id: Date.now().toString(),
-            content: 'مرحباً بك في مورفو! أنا مساعدك الذكي للتسويق الرقمي. دعني أتعرف عليك أكثر لأقدم لك أفضل الحلول المخصصة لاحتياجاتك.',
+            content: 'مرحباً بك في مورفو! أنا مساعدك الذكي للتسويق الرقمي. كيف يمكنني مساعدتك اليوم؟',
             sender: 'agent',
             timestamp: new Date(),
           };
           setMessages([welcomeMessage]);
-          
-          // Start onboarding after welcome message
-          setTimeout(() => {
-            startOnboarding();
-          }, 1000);
         }
       } catch (error) {
         console.error('Connection check failed:', error);
@@ -128,50 +110,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
     if (user) {
       checkConnection();
     }
-  }, [user, startOnboarding]);
-
-  const handleOnboardingAnswer = async (answer: string) => {
-    const success = await answerCurrentQuestion(answer);
-    
-    if (success) {
-      // Add user's answer to chat
-      const userMessage: MessageData = {
-        id: Date.now().toString(),
-        content: answer,
-        sender: 'user',
-        timestamp: new Date(),
-      };
-
-      // Add confirmation from agent
-      const agentMessage: MessageData = {
-        id: (Date.now() + 1).toString(),
-        content: 'شكراً لك! تم حفظ إجابتك.',
-        sender: 'agent',
-        timestamp: new Date(),
-      };
-
-      setMessages(prev => [...prev, userMessage, agentMessage]);
-
-      // Check if onboarding is complete
-      if (currentQuestionIndex + 1 >= totalQuestions) {
-        setTimeout(() => {
-          const completionMessage: MessageData = {
-            id: (Date.now() + 2).toString(),
-            content: 'ممتاز! تم إكمال عملية التعرف عليك. الآن يمكنني مساعدتك بشكل أفضل في تطوير استراتيجيتك التسويقية. كيف يمكنني مساعدتك اليوم؟',
-            sender: 'agent',
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, completionMessage]);
-        }, 1000);
-      }
-    } else {
-      toast({
-        title: 'خطأ في حفظ البيانات',
-        description: 'حدث خطأ أثناء حفظ إجابتك. يرجى المحاولة مرة أخرى.',
-        variant: "destructive",
-      });
-    }
-  };
+  }, [user, messages.length]);
 
   const handleTokensUpdated = (remaining: number, limit: number) => {
     setHasTokens(remaining > 0);
@@ -299,22 +238,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
           onActionClick={handleActionClick}
         />
         
-        {/* Onboarding question overlay */}
-        {isOnboardingActive && currentQuestion && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-900/20 to-purple-900/20 backdrop-blur-sm">
-            <OnboardingMessage
-              question={currentQuestion}
-              onAnswer={handleOnboardingAnswer}
-              onSkip={skipCurrentQuestion}
-              theme={theme}
-              isRTL={isRTL}
-              progress={getOnboardingProgress()}
-              currentIndex={currentQuestionIndex}
-              totalQuestions={totalQuestions}
-            />
-          </div>
-        )}
-        
         <div className="border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -347,13 +270,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onContentTypeChang
             
             <ChatInput
               input={input}
-              isLoading={isLoading || isOnboardingActive}
+              isLoading={isLoading}
               theme={theme}
               isRTL={isRTL}
               placeholder={
-                isOnboardingActive
-                  ? 'يرجى الإجابة على السؤال أعلاه أولاً'
-                  : !isConnected
+                !isConnected
                   ? t.connecting
                   : !hasTokens
                   ? 'لا يوجد رصيد كافٍ من الطلبات'
