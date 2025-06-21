@@ -194,6 +194,88 @@ export class MorvoAIService {
     }
   }
 
+  // Add missing methods for Enhanced Onboarding
+  static async getJourneyStatus(): Promise<any> {
+    try {
+      const clientId = await this.getClientId();
+      const { data } = await supabase
+        .from('customer_profiles')
+        .select('*')
+        .eq('customer_id', clientId)
+        .single();
+
+      return {
+        journey: data || null
+      };
+    } catch (error) {
+      console.error('Error getting journey status:', error);
+      return { journey: null };
+    }
+  }
+
+  static async saveGreetingPreference(greeting: string): Promise<boolean> {
+    try {
+      const clientId = await this.getClientId();
+      const { error } = await supabase
+        .from('customer_profiles')
+        .upsert({
+          customer_id: clientId,
+          profile_data: { greeting_preference: greeting },
+          updated_at: new Date().toISOString()
+        });
+
+      return !error;
+    } catch (error) {
+      console.error('Error saving greeting preference:', error);
+      return false;
+    }
+  }
+
+  static async updateJourneyPhase(phase: string, completed: boolean, duration: number = 0): Promise<any> {
+    try {
+      const clientId = await this.getClientId();
+      const { data, error } = await supabase
+        .from('customer_profiles')
+        .upsert({
+          customer_id: clientId,
+          profile_data: { 
+            current_phase: phase,
+            phase_completed: completed,
+            phase_duration: duration
+          },
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      return error ? null : data;
+    } catch (error) {
+      console.error('Error updating journey phase:', error);
+      return null;
+    }
+  }
+
+  static async saveProfileData(profileData: any): Promise<any> {
+    try {
+      const clientId = await this.getClientId();
+      const { data, error } = await supabase
+        .from('customer_profiles')
+        .upsert({
+          customer_id: clientId,
+          profile_data: profileData,
+          status: 'active',
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      return error ? null : data;
+    } catch (error) {
+      console.error('Error saving profile data:', error);
+      return null;
+    }
+  }
+
   // Get Customer Profile
   static async getCustomerProfile(userId: string): Promise<any> {
     try {

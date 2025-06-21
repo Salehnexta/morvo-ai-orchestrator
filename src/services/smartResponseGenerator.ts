@@ -33,6 +33,33 @@ export class SmartResponseGenerator {
     // Handle business assistance
     return this.generateBusinessResponse(context);
   }
+
+  // Add the missing generateContextualResponse method
+  static generateContextualResponse(
+    message: string, 
+    conversationHistory: Array<{ role: string; content: string }>, 
+    onboardingStatus: any
+  ): string {
+    const lowerMessage = message.toLowerCase();
+    
+    // Analytics requests
+    if (lowerMessage.includes('تحليل') || lowerMessage.includes('analytics')) {
+      return 'ممتاز! سأعرض لك تحليلاً شاملاً لأداء حملاتك التسويقية.';
+    }
+    
+    // Content creation requests
+    if (lowerMessage.includes('محتوى') || lowerMessage.includes('content')) {
+      return 'رائع! سأساعدك في إنشاء محتوى تسويقي جذاب ومتميز.';
+    }
+    
+    // Campaign requests
+    if (lowerMessage.includes('حملة') || lowerMessage.includes('campaign')) {
+      return 'ممتاز! دعني أساعدك في إنشاء حملة تسويقية ناجحة.';
+    }
+    
+    // Default helpful response
+    return 'أفهم طلبك. كيف يمكنني مساعدتك بشكل أفضل في تطوير استراتيجيتك التسويقية؟';
+  }
   
   private static generateOnboardingResponse(context: ResponseContext): SmartResponse {
     const { userMessage, onboardingStatus } = context;
