@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
@@ -9,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
-import { useConversationalFlow } from '@/hooks/useConversationalFlow';
+import { useAdvancedConversation } from '@/hooks/useAdvancedConversation';
 import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
 import { MorvoAIService } from '@/services/morvoAIService';
 import { AgentResponse } from '@/services/agent';
@@ -28,6 +29,8 @@ interface MessageData {
   }>;
   personality_traits?: any;
   isOnboarding?: boolean;
+  contextualInsights?: string[];
+  emotionalContext?: any;
 }
 
 interface ChatInterfaceProps {
@@ -52,7 +55,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
   const { toast } = useToast();
-  const { conversationState, processMessage, updatePhase, isOnboardingActive } = useConversationalFlow();
+  const { 
+    enhanceConversation, 
+    getConversationInsights, 
+    emotionalContext,
+    conversationState 
+  } = useAdvancedConversation();
 
   const content = {
     ar: {
@@ -98,20 +106,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         
         if (isHealthy && user && messages.length === 0) {
           const welcomeContent = SmartResponseGenerator.generateWelcomeMessage(onboardingStatus);
-          
-          // Update conversation phase based on onboarding status
-          if (isOnboardingActive) {
-            updatePhase('onboarding');
-          } else {
-            updatePhase('chat');
-          }
 
           const welcomeMessage: MessageData = {
             id: Date.now().toString(),
             content: welcomeContent,
             sender: 'agent',
             timestamp: new Date(),
-            isOnboarding: isOnboardingActive
+            isOnboarding: !onboardingStatus?.onboarding_completed,
+            emotionalContext: emotionalContext
           };
           
           setMessages([welcomeMessage]);
@@ -127,7 +129,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (user) {
       initializeChat();
     }
-  }, [user, onboardingStatus, messages.length]);
+  }, [user, onboardingStatus, messages.length, emotionalContext]);
 
   const handleTokensUpdated = (remaining: number, limit: number) => {
     setHasTokens(remaining > 0);
@@ -151,42 +153,55 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsLoading(true);
 
     try {
-      // Use smart conversational flow
-      const flowResponse = await processMessage(messageText);
+      console.log('🤖 Processing message with advanced conversation system...');
       
-      let botResponse = flowResponse.response;
-      let suggestedActions = flowResponse.shouldTriggerAction ? 
-        [{ action: flowResponse.shouldTriggerAction, label: 'عرض', priority: 1 }] : [];
+      // Get base response first
+      let baseResponse = '';
+      let suggestedActions: Array<{action: string; label: string; priority: number}> = [];
+      
+      // Try to get AI response for complex queries
+      if (messageText.length > 20 || conversationState.conversationDepth > 3) {
+        try {
+          const context = {
+            current_phase: conversationState.phase,
+            conversation_history: messages.slice(-3).map(m => ({
+              role: m.sender === 'user' ? 'user' : 'assistant',
+              content: m.content
+            })),
+            user_profile: onboardingStatus,
+            emotional_context: emotionalContext
+          };
 
-      // If no smart response, fallback to AI service
-      if (flowResponse.confidence < 0.6) {
-        const context = {
-          current_phase: conversationState.phase,
-          conversation_history: messages.slice(-3).map(m => ({
-            role: m.sender === 'user' ? 'user' : 'assistant',
-            content: m.content
-          })),
-          user_profile: onboardingStatus
-        };
-
-        const aiResponse = await MorvoAIService.sendMessageWithRetry(messageText, context);
-        botResponse = aiResponse.response;
+          const aiResponse = await MorvoAIService.sendMessageWithRetry(messageText, context);
+          baseResponse = aiResponse.response;
+        } catch (aiError) {
+          console.log('AI service unavailable, using smart responses');
+          baseResponse = 'أفهم طلبك وأعمل على مساعدتك. كيف يمكنني تقديم المساعدة بشكل أفضل؟';
+        }
+      } else {
+        baseResponse = 'أفهم طلبك. كيف يمكنني مساعدتك؟';
       }
+
+      // Enhance the conversation with memory and emotional intelligence
+      const enhancement = await enhanceConversation(messageText, baseResponse);
       
       const botMessage: MessageData = {
         id: (Date.now() + 1).toString(),
-        content: botResponse,
+        content: enhancement.personalizedResponse,
         sender: 'agent',
         timestamp: new Date(),
         suggested_actions: suggestedActions,
-        isOnboarding: conversationState.phase === 'onboarding'
+        isOnboarding: conversationState.phase === 'onboarding',
+        contextualInsights: enhancement.contextualInsights,
+        emotionalContext: emotionalContext
       };
 
       setMessages(prev => [...prev, botMessage]);
 
-      // Trigger UI actions if needed
-      if (flowResponse.shouldTriggerAction && onContentTypeChange) {
-        onContentTypeChange(flowResponse.shouldTriggerAction);
+      // Check for conversation insights
+      const insights = getConversationInsights();
+      if (insights.length > 0) {
+        console.log('💡 Conversation insights:', insights);
       }
 
     } catch (error) {
@@ -280,6 +295,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 />
               )}
             </div>
+            
+            {/* Show emotional context indicator */}
+            {emotionalContext.currentEmotion !== 'neutral' && (
+              <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-2 py-1">
+                😊 {emotionalContext.currentEmotion} - {emotionalContext.adaptationStrategy}
+              </div>
+            )}
             
             {messages.length > 0 && messages[messages.length - 1]?.suggested_actions && (
               <ActionButtons 
