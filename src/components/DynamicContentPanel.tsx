@@ -94,7 +94,7 @@ const CampaignPanel = ({ language, theme }: { language: string; theme: string })
 );
 
 interface DynamicContentPanelProps {
-  contentType?: 'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test';
+  contentType?: 'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test' | 'onboarding';
   onActionClick?: (action: string) => void;
 }
 
@@ -156,6 +156,9 @@ export const DynamicContentPanel = ({ contentType = 'hero', onActionClick }: Dyn
             <ConnectionTest />
           </div>
         );
+      case 'onboarding':
+        // Return null for onboarding as it's handled separately in Dashboard
+        return null;
       default:
         return null;
     }
