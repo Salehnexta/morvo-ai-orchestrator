@@ -3,8 +3,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
 import { ChatHeader } from './chat/ChatHeader';
-import { ConnectionStatus } from './chat/ConnectionStatus';
-import { TokenCounter } from './chat/TokenCounter';
 import { ActionButtons } from './chat/ActionButtons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -47,8 +45,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionChecked, setConnectionChecked] = useState(false);
-  const [clientId, setClientId] = useState<string>('');
-  const [hasTokens, setHasTokens] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAuth();
@@ -65,7 +61,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const content = {
     ar: {
       masterAgent: 'مورفو الذكي',
-      clientAgent: 'مساعد خدمة العملاء',
       connecting: 'جاري الاتصال...',
       connected: 'متصل',
       thinking: 'مورفو يفكر...',
@@ -73,7 +68,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     },
     en: {
       masterAgent: 'Morvo AI',
-      clientAgent: 'Customer Service Agent',
       connecting: 'Connecting...',
       connected: 'Connected',
       thinking: 'Morvo is thinking...',
@@ -82,12 +76,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const t = content[language];
-
-  useEffect(() => {
-    if (user?.id) {
-      setClientId(user.id);
-    }
-  }, [user]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -145,10 +133,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       initializeChat();
     }
   }, [user, onboardingStatus, messages.length, emotionalContext]);
-
-  const handleTokensUpdated = (remaining: number, limit: number) => {
-    setHasTokens(remaining > 0);
-  };
 
   const handleSendMessage = async () => {
     if (!input.trim() || !user) {
@@ -295,12 +279,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         isRTL={isRTL}
         content={{
           masterAgent: t.masterAgent,
-          clientAgent: t.clientAgent,
-          connecting: connectionChecked ? (isConnected ? t.connected : 'Railway Backend') : t.connecting,
+          clientAgent: '',
+          connecting: t.connecting,
           connected: t.connected
         }}
         isConnecting={!connectionChecked}
-        clientId={clientId}
+        clientId={user?.id || ''}
         onToggleTheme={() => {}}
       />
       
@@ -317,49 +301,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         />
         
         <div className="border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-          <div className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <ConnectionStatus 
-                isConnecting={!connectionChecked}
-                theme={theme}
-                content={{
-                  connecting: t.connecting,
-                  connected: isConnected ? 'متصل بـ Railway' : 'وضع محدود'
-                }}
-              />
-              {clientId && (
-                <TokenCounter 
-                  theme={theme}
-                  clientId={clientId}
-                  onTokensUpdated={handleTokensUpdated}
-                />
-              )}
-            </div>
-            
-            {/* Railway Backend Status Indicator */}
-            <div className={`text-xs px-2 py-1 rounded-lg ${
-              isConnected 
-                ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20' 
-                : 'text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-900/20'
-            }`}>
-              {isConnected ? '🚀 Railway Backend متصل' : '⚠️ وضع محدود - Railway Backend غير متاح'}
-            </div>
-            
-            {/* Show emotional context indicator */}
-            {emotionalContext.currentEmotion !== 'neutral' && (
-              <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-2 py-1">
-                😊 {emotionalContext.currentEmotion} - {emotionalContext.adaptationStrategy}
-              </div>
-            )}
-            
+          <div className="p-4">
             {messages.length > 0 && messages[messages.length - 1]?.suggested_actions && (
-              <ActionButtons 
-                messageContent={messages[messages.length - 1]?.content || ''}
-                language={language}
-                theme={theme}
-                isRTL={isRTL}
-                onActionClick={handleActionClick}
-              />
+              <div className="mb-3">
+                <ActionButtons 
+                  messageContent={messages[messages.length - 1]?.content || ''}
+                  language={language}
+                  theme={theme}
+                  isRTL={isRTL}
+                  onActionClick={handleActionClick}
+                />
+              </div>
             )}
             
             <ChatInput
@@ -367,17 +319,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               isLoading={isLoading}
               theme={theme}
               isRTL={isRTL}
-              placeholder={
-                !connectionChecked
-                  ? t.connecting
-                  : !hasTokens
-                  ? 'لا يوجد رصيد كافٍ من الطلبات'
-                  : t.placeholder
-              }
+              placeholder={t.placeholder}
               onInputChange={setInput}
               onSend={handleSendMessage}
               onKeyPress={handleKeyPress}
-              hasTokens={hasTokens}
+              hasTokens={true}
             />
           </div>
         </div>

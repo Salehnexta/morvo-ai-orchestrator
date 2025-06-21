@@ -5,31 +5,15 @@ import { SimpleAuthWrapper } from "@/components/SimpleAuthWrapper";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSmartOnboarding } from "@/hooks/useSmartOnboarding";
-import { useRailwayIntegration } from "@/hooks/useRailwayIntegration";
-import { useState, useEffect } from "react";
-import { Loader2, Wifi, WifiOff, Activity } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
   const { theme } = useTheme();
   const { language, isRTL } = useLanguage();
   const { status, loading } = useSmartOnboarding();
-  const { 
-    status: railwayStatus, 
-    checkConnection, 
-    runDiagnostics 
-  } = useRailwayIntegration();
   
   const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test'>('hero');
-  const [showRailwayStatus, setShowRailwayStatus] = useState(true);
-
-  useEffect(() => {
-    // Hide Railway status after 10 seconds if connected
-    if (railwayStatus.isConnected) {
-      const timer = setTimeout(() => setShowRailwayStatus(false), 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [railwayStatus.isConnected]);
 
   const handleContentTypeChange = (type: string) => {
     console.log('🎯 Content type change:', type);
@@ -63,10 +47,6 @@ const Dashboard = () => {
   const handleContentAction = (action: string) => {
     console.log('🔄 Content action clicked:', action);
     handleContentTypeChange(action);
-  };
-
-  const handleRunDiagnostics = async () => {
-    await runDiagnostics();
   };
 
   // Show loading while checking onboarding status
@@ -103,38 +83,6 @@ const Dashboard = () => {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
         </div>
 
-        {/* Railway Backend Status Indicator - Phase 4 */}
-        {showRailwayStatus && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
-            <div className={`px-4 py-2 rounded-full backdrop-blur-xl border flex items-center gap-2 ${
-              railwayStatus.isConnected 
-                ? 'bg-green-500/20 border-green-400/30 text-green-200' 
-                : 'bg-red-500/20 border-red-400/30 text-red-200'
-            }`}>
-              {railwayStatus.isConnected ? (
-                <>
-                  <Wifi className="w-4 h-4" />
-                  <span className="text-sm font-medium">Railway Backend متصل</span>
-                  <Activity className="w-4 h-4 animate-pulse" />
-                </>
-              ) : (
-                <>
-                  <WifiOff className="w-4 h-4" />
-                  <span className="text-sm font-medium">Railway Backend غير متصل</span>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="text-xs h-6 px-2 ml-2"
-                    onClick={handleRunDiagnostics}
-                  >
-                    اختبار
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Chat Panel - Left side with Railway integration */}
         <div className="w-1/2 bg-black/30 backdrop-blur-xl border-r border-white/10 relative z-10 shadow-2xl">
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
@@ -155,27 +103,6 @@ const Dashboard = () => {
               onActionClick={handleContentAction}
             />
           </div>
-        </div>
-
-        {/* Phase 4 Status Indicators */}
-        <div className="absolute bottom-4 right-4 z-30 flex flex-col gap-2">
-          {railwayStatus.isConnected && (
-            <div className="px-3 py-1 bg-green-500/20 border border-green-400/30 rounded-lg text-green-200 text-xs">
-              🚀 Phase 4 Active
-            </div>
-          )}
-          
-          {railwayStatus.serverInfo && (
-            <div className="px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded-lg text-blue-200 text-xs">
-              {railwayStatus.serverInfo.version || 'v2.0.0'}
-            </div>
-          )}
-
-          {railwayStatus.error && (
-            <div className="px-3 py-1 bg-red-500/20 border border-red-400/30 rounded-lg text-red-200 text-xs max-w-48 truncate">
-              {railwayStatus.error}
-            </div>
-          )}
         </div>
 
         {/* Floating Elements for Visual Enhancement */}
