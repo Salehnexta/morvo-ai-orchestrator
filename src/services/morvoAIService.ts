@@ -30,13 +30,6 @@ interface TokenBalance {
   };
 }
 
-interface TokenConsumption {
-  success: boolean;
-  balance: number;
-  transaction_id: string;
-  timestamp: string;
-}
-
 interface BusinessAnalysis {
   analysis: {
     business_overview: {
@@ -71,24 +64,6 @@ interface BusinessAnalysis {
   confidence_score: number;
 }
 
-interface OnboardingProfile {
-  company_name?: string;
-  website_url?: string;
-  business_type?: string;
-  marketing_experience?: string;
-  monthly_budget?: string;
-  main_goal?: string;
-  team_size?: string;
-  marketing_priority?: string;
-  target_region?: string;
-  monthly_sales?: string;
-  customer_sources?: string[];
-  main_challenges?: string[];
-  most_profitable_product?: string;
-  sales_season?: string;
-  competitive_advantage?: string;
-}
-
 export class MorvoAIService {
   private static readonly API_URL = 'https://morvo-production.up.railway.app';
   private static readonly API_VERSION = 'v1';
@@ -110,7 +85,6 @@ export class MorvoAIService {
     throw new Error('User not authenticated');
   }
 
-  // Make this method public so JourneyManager can access it
   static async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const token = await this.getAuthToken();
     
@@ -149,26 +123,38 @@ export class MorvoAIService {
     }
   }
 
-  // Process Message - New integrated endpoint
+  // Process Message - Fixed endpoint and payload
   static async processMessage(message: string, context?: any): Promise<ChatResponse> {
-    const clientId = await this.getClientId();
-    
     try {
       console.log('🚀 Sending message to Railway backend:', message);
       
-      const response = await this.makeRequest('/chat/process-message', {
+      const response = await this.makeRequest('/chat/message', {
         method: 'POST',
         body: JSON.stringify({
           message: message.trim(),
-          client_id: clientId,
-          context: context || {},
-          language: 'ar'
+          conversation_id: context?.conversation_id,
+          project_context: context?.project_context || {},
+          metadata: context?.metadata || {},
+          stream: false
         })
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Backend error:', response.status, errorText);
+        
+        if (response.status === 422) {
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { detail: errorText };
+          }
+          
+          const validationError = errorData.errors?.[0]?.msg || errorData.detail || 'Validation error';
+          throw new Error(`Validation error: ${validationError}`);
+        }
+        
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
@@ -176,12 +162,12 @@ export class MorvoAIService {
       console.log('✅ Backend response:', data);
       
       return {
-        response: data.response || data.message || 'No response',
+        response: data.message || data.response || 'No response',
         personality_traits: data.personality_traits,
         tokens_used: data.tokens_used || 0,
         emotion_detected: data.emotion_detected,
         suggested_actions: data.suggested_actions || [],
-        processing_time: data.processing_time,
+        processing_time: data.processing_time_ms,
         confidence_score: data.confidence_score || 0.9
       };
     } catch (error) {
@@ -195,85 +181,111 @@ export class MorvoAIService {
     }
   }
 
-  // Add missing methods for Enhanced Onboarding
-  static async getJourneyStatus(): Promise<any> {
+  // Check Journey Status - New method
+  static async checkJourneyStatus(clientId: string): Promise<any> {
     try {
-      const clientId = await this.getClientId();
-      const { data } = await supabase
-        .from('customer_profiles')
-        .select('*')
-        .eq('customer_id', clientId)
-        .single();
-
-      return {
-        journey: data || null
-      };
+      const response = await this.makeRequest(`/onboarding/journey-status/${clientId}`);
+      
+      if (response.status === 404) {
+        return null; // No journey found
+      }
+      
+      if (!response.ok) {
+        throw new Error(`Failed to check journey status: ${response.status}`);
+      }
+      
+      return response.json();
     } catch (error) {
-      console.error('Error getting journey status:', error);
-      return { journey: null };
+      console.error('Error checking journey status:', error);
+      return null;
     }
   }
 
-  static async saveGreetingPreference(greeting: string): Promise<boolean> {
+  // Start Journey - Fixed payload
+  static async startJourneyWithWebsite(websiteUrl: string): Promise<any> {
     try {
-      const clientId = await this.getClientId();
-      const { error } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: clientId,
-          profile_data: { greeting_preference: greeting },
-          updated_at: new Date().toISOString()
-        });
+      console.log('🚀 Starting journey with website:', websiteUrl);
+      
+      const response = await this.makeRequest('/onboarding/start', {
+        method: 'POST',
+        body: JSON.stringify({
+          website_url: websiteUrl
+        })
+      });
 
-      return !error;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Journey start error:', response.status, errorText);
+        
+        if (response.status === 422) {
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { detail: errorText };
+          }
+          
+          const validationError = errorData.errors?.[0]?.msg || errorData.detail || 'Validation error';
+          throw new Error(`Validation error: ${validationError}`);
+        }
+        
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Journey started:', data);
+      return data;
     } catch (error) {
-      console.error('Error saving greeting preference:', error);
+      console.error('❌ Start journey error:', error);
+      throw error;
+    }
+  }
+
+  // Set Greeting Preference - Fixed endpoint
+  static async setGreetingPreference(journeyId: string, greeting: string): Promise<boolean> {
+    try {
+      console.log('💾 Setting greeting preference:', greeting);
+      
+      const response = await this.makeRequest('/onboarding/greeting-preference', {
+        method: 'POST',
+        body: JSON.stringify({
+          journey_id: journeyId,
+          greeting_preference: greeting
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Greeting preference error:', response.status, errorText);
+        return false;
+      }
+
+      const data = await response.json();
+      console.log('✅ Greeting preference set:', data);
+      return true;
+    } catch (error) {
+      console.error('❌ Set greeting preference error:', error);
       return false;
     }
   }
 
-  static async updateJourneyPhase(phase: string, completed: boolean, duration: number = 0): Promise<any> {
+  // Website Analysis - Fixed endpoint
+  static async startWebsiteAnalysis(journeyId: string, websiteUrl: string): Promise<boolean> {
     try {
-      const clientId = await this.getClientId();
-      const { data, error } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: clientId,
-          profile_data: { 
-            current_phase: phase,
-            phase_completed: completed,
-            phase_duration: duration
-          },
-          updated_at: new Date().toISOString()
+      console.log('🔍 Starting website analysis:', websiteUrl);
+      
+      const response = await this.makeRequest('/onboarding/website-analysis', {
+        method: 'POST',
+        body: JSON.stringify({
+          journey_id: journeyId,
+          website_url: websiteUrl
         })
-        .select()
-        .single();
+      });
 
-      return error ? null : data;
+      return response.ok;
     } catch (error) {
-      console.error('Error updating journey phase:', error);
-      return null;
-    }
-  }
-
-  static async saveProfileData(profileData: any): Promise<any> {
-    try {
-      const clientId = await this.getClientId();
-      const { data, error } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: clientId,
-          profile_data: profileData,
-          status: 'active',
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      return error ? null : data;
-    } catch (error) {
-      console.error('Error saving profile data:', error);
-      return null;
+      console.error('❌ Website analysis error:', error);
+      return false;
     }
   }
 
@@ -289,54 +301,6 @@ export class MorvoAIService {
       return response.json();
     } catch (error) {
       console.error('Error getting customer profile:', error);
-      throw error;
-    }
-  }
-
-  // Get Profile Completeness
-  static async getProfileCompleteness(clientId: string): Promise<any> {
-    try {
-      const response = await this.makeRequest(`/chat/profile-completeness/${clientId}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to get profile completeness: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Error getting profile completeness:', error);
-      throw error;
-    }
-  }
-
-  // Get Onboarding Questions
-  static async getOnboardingQuestions(language: string = 'ar'): Promise<any> {
-    try {
-      const response = await this.makeRequest(`/onboarding/questions?language=${language}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to get onboarding questions: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Error getting onboarding questions:', error);
-      throw error;
-    }
-  }
-
-  // Get Token Packages
-  static async getTokenPackages(): Promise<any> {
-    try {
-      const response = await this.makeRequest('/tokens/packages');
-      
-      if (!response.ok) {
-        throw new Error(`Failed to get token packages: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Error getting token packages:', error);
       throw error;
     }
   }
@@ -373,13 +337,6 @@ export class MorvoAIService {
       const healthResponse = await this.healthCheck();
       console.log('✅ Health Check passed:', healthResponse);
       
-      try {
-        const packagesResponse = await this.getTokenPackages();
-        console.log('✅ Token packages test passed:', packagesResponse);
-      } catch (error) {
-        console.warn('⚠️ Token packages test failed (non-critical):', error);
-      }
-      
       return true;
     } catch (error) {
       console.error('❌ Connection test failed:', error);
@@ -388,7 +345,7 @@ export class MorvoAIService {
   }
 
   // Token Management - Fallback to local client data
-  static async getTokenBalance(): Promise<TokenBalance> {
+  static async getTokenBalance(): Promise<any> {
     try {
       const clientId = await this.getClientId();
       const { data: clientData } = await supabase
@@ -414,10 +371,5 @@ export class MorvoAIService {
       console.error('Error getting token balance:', error);
       throw error;
     }
-  }
-
-  // Business Intelligence - Placeholder for future implementation
-  static async analyzeWebsite(websiteUrl: string, analysisType: string = 'comprehensive'): Promise<BusinessAnalysis> {
-    throw new Error('Website analysis not yet implemented in Railway backend');
   }
 }

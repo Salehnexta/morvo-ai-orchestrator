@@ -61,7 +61,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     saveAnswer,
     generateStrategy,
     loading: journeyLoading,
-    updateJourneyPhase
+    updateJourneyPhase,
+    greetingPreference
   } = useJourney();
   const { 
     enhanceConversation, 
@@ -113,7 +114,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           let welcomeContent: string;
           
           if (isOnboardingComplete) {
-            const greeting = journeyStatus?.greeting_preference || 'أستاذ';
+            const greeting = greetingPreference || journeyStatus?.greeting_preference || 'أستاذ';
             welcomeContent = `مرحباً بك مرة أخرى ${greeting}! 🎯 أنا مورفو، مساعدك الذكي للتسويق الرقمي. كيف يمكنني مساعدتك اليوم؟`;
           } else {
             // Journey-based welcome messages
@@ -125,7 +126,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 welcomeContent = 'أهلاً وسهلاً! كيف تحب أن أناديك؟ يمكنك أن تقول لي مثلاً: أستاذ أحمد، دكتور سارة، مهندس محمد، أو أي طريقة تفضلها.';
                 break;
               case 'website_analysis':
-                welcomeContent = 'ممتاز! الآن أحتاج لتحليل موقعك الإلكتروني لأفهم نشاطك التجاري بشكل أفضل. يرجى مشاركة رابط موقعك معي.';
+                const savedGreeting = greetingPreference || 'أستاذ';
+                welcomeContent = `مرحباً بك ${savedGreeting}! الآن أحتاج لتحليل موقعك الإلكتروني لأفهم نشاطك التجاري بشكل أفضل. يرجى مشاركة رابط موقعك معي.`;
                 break;
               case 'profile_completion':
                 welcomeContent = 'رائع! بناءً على تحليل موقعك، لدي فهم أولي عن نشاطك. الآن دعني أجمع بعض المعلومات الإضافية لأبني لك استراتيجية تسويقية مخصصة.';
@@ -169,7 +171,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     };
 
     initializeChat();
-  }, [user, isOnboardingComplete, currentPhase, journeyStatus, messages.length, emotionalContext, chatInitialized, journeyLoading]);
+  }, [user, isOnboardingComplete, currentPhase, journeyStatus, messages.length, emotionalContext, chatInitialized, journeyLoading, greetingPreference]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || !user) {
@@ -206,7 +208,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             journey_id: journey?.journey_id,
             current_phase: currentPhase,
             is_onboarding_complete: isOnboardingComplete,
-            profile_progress: journeyStatus?.profile_progress || 0
+            profile_progress: journeyStatus?.profile_progress || 0,
+            greeting_preference: greetingPreference
           },
           emotional_context: emotionalContext,
           conversation_state: conversationState,
@@ -214,14 +217,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         };
 
         let backendResponse;
-        let tokensUsed = 0;
 
         // Try Railway backend first
         if (isConnected) {
           try {
             const aiResponse = await MorvoAIService.processMessage(messageText, context);
             backendResponse = aiResponse.response;
-            tokensUsed = aiResponse.tokens_used || 0;
             console.log('✅ Journey-aware backend response received');
           } catch (backendError) {
             console.warn('⚠️ Backend failed, using local processing:', backendError);

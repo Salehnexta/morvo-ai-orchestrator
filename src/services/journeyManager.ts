@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { MorvoAIService } from "./morvoAIService";
 
@@ -39,12 +40,45 @@ export class JourneyManager {
     try {
       console.log('🔍 Checking existing journey for client:', clientId);
       
-      // First check local database
+      // First check backend for journey status
+      try {
+        const backendJourney = await MorvoAIService.checkJourneyStatus(clientId);
+        if (backendJourney && backendJourney.status !== 'completed') {
+          console.log('✅ Found active backend journey:', backendJourney);
+          
+          // Save/update local record
+          await this.saveJourneyLocally({
+            journey_id: backendJourney.journey_id,
+            client_id: clientId,
+            current_phase: backendJourney.current_phase || 'welcome',
+            profile_progress: backendJourney.completion_percentage || 0,
+            is_completed: backendJourney.status === 'completed',
+            created_at: backendJourney.created_at || new Date().toISOString(),
+            updated_at: backendJourney.updated_at || new Date().toISOString()
+          });
+          
+          return {
+            journey_id: backendJourney.journey_id,
+            client_id: clientId,
+            current_phase: backendJourney.current_phase || 'welcome',
+            profile_progress: backendJourney.completion_percentage || 0,
+            is_completed: backendJourney.status === 'completed',
+            created_at: backendJourney.created_at || new Date().toISOString(),
+            updated_at: backendJourney.updated_at || new Date().toISOString()
+          };
+        }
+      } catch (backendError) {
+        console.warn('⚠️ Backend journey check failed, checking local:', backendError);
+      }
+      
+      // Fallback to local database
       const { data: localJourney } = await supabase
         .from('onboarding_journeys')
         .select('*')
         .eq('client_id', clientId)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (localJourney) {
         console.log('✅ Found existing local journey:', localJourney);
@@ -59,12 +93,12 @@ export class JourneyManager {
         };
       }
 
-      // Check if user already has a completed profile
+      // Check if user already has a completed profile (legacy users)
       const { data: profile } = await supabase
         .from('customer_profiles')
         .select('*')
         .eq('customer_id', clientId)
-        .single();
+        .maybeSingle();
 
       if (profile?.profile_data && Object.keys(profile.profile_data).length > 3) {
         console.log('✅ User has completed profile, marking journey as complete');
@@ -86,38 +120,42 @@ export class JourneyManager {
     }
   }
 
-  static async startJourney(clientId: string): Promise<OnboardingJourney | null> {
+  static async startJourney(clientId: string, websiteUrl?: string): Promise<OnboardingJourney | null> {
     try {
       // Check if journey already exists
       const existingJourney = await this.checkExistingJourney(clientId);
-      if (existingJourney) {
+      if (existingJourney && !existingJourney.is_completed) {
         console.log('✅ Using existing journey:', existingJourney);
         return existingJourney;
       }
 
       console.log('🚀 Starting new journey for client:', clientId);
       
-      // Try backend first with proper payload structure
-      try {
-        const response = await MorvoAIService.makeRequest('/onboarding/start-journey', {
-          method: 'POST',
-          body: JSON.stringify({
-            client_id: clientId,
-            language: 'ar',
-            platform: 'web'
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log('✅ Backend journey started:', data);
+      // Try backend first if website URL is provided
+      if (websiteUrl) {
+        try {
+          const backendJourney = await MorvoAIService.startJourneyWithWebsite(websiteUrl);
           
-          // Save to local database
-          await this.saveJourneyLocally(data.journey);
-          return data.journey;
+          if (backendJourney) {
+            console.log('✅ Backend journey started:', backendJourney);
+            
+            const journey = {
+              journey_id: backendJourney.journey_id,
+              client_id: clientId,
+              current_phase: backendJourney.current_phase || 'website_analysis',
+              profile_progress: backendJourney.completion_percentage || 25,
+              is_completed: false,
+              created_at: backendJourney.created_at || new Date().toISOString(),
+              updated_at: backendJourney.updated_at || new Date().toISOString()
+            };
+            
+            // Save to local database
+            await this.saveJourneyLocally(journey);
+            return journey;
+          }
+        } catch (backendError) {
+          console.warn('⚠️ Backend journey creation failed, creating locally:', backendError);
         }
-      } catch (backendError) {
-        console.warn('⚠️ Backend journey creation failed, creating locally:', backendError);
       }
 
       // Fallback: Create journey locally
@@ -166,13 +204,22 @@ export class JourneyManager {
 
   static async getJourneyStatus(journeyId: string): Promise<JourneyStatus | null> {
     try {
+      // Extract client ID from journey ID for backend lookup
+      const clientId = journeyId.includes('_') ? journeyId.split('_')[1] : journeyId;
+      
       // Try backend first
       try {
-        const response = await MorvoAIService.makeRequest(`/onboarding/journey-status/${journeyId}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          return data.status;
+        const backendStatus = await MorvoAIService.checkJourneyStatus(clientId);
+        if (backendStatus) {
+          return {
+            journey_id: backendStatus.journey_id,
+            current_phase: backendStatus.current_phase,
+            completed: backendStatus.status === 'completed',
+            profile_progress: backendStatus.completion_percentage || 0,
+            needs_onboarding: backendStatus.status !== 'completed',
+            greeting_preference: backendStatus.data?.greeting_preference,
+            website_url: backendStatus.data?.website_url
+          };
         }
       } catch (backendError) {
         console.warn('⚠️ Backend status fetch failed, using local data:', backendError);
@@ -183,7 +230,7 @@ export class JourneyManager {
         .from('onboarding_journeys')
         .select('*')
         .eq('journey_id', journeyId)
-        .single();
+        .maybeSingle();
 
       if (localJourney) {
         return {
@@ -204,34 +251,47 @@ export class JourneyManager {
 
   static async setGreetingPreference(journeyId: string, greeting: string): Promise<boolean> {
     try {
+      console.log('🔄 Setting greeting preference:', greeting, 'for journey:', journeyId);
+      
       // Try backend first
       try {
-        const response = await MorvoAIService.makeRequest('/onboarding/set-greeting', {
-          method: 'POST',
-          body: JSON.stringify({
-            journey_id: journeyId,
-            greeting_preference: greeting
-          })
-        });
-
-        if (response.ok) {
+        const success = await MorvoAIService.setGreetingPreference(journeyId, greeting);
+        if (success) {
           console.log('✅ Greeting preference set on backend');
         }
       } catch (backendError) {
         console.warn('⚠️ Backend greeting update failed:', backendError);
       }
 
-      // Always save locally
-      const { error } = await supabase
+      // Extract client ID from journey ID
+      const clientId = journeyId.includes('_') ? journeyId.split('_')[1] : journeyId;
+      
+      // Always save locally - first check if profile exists
+      const { data: existingProfile } = await supabase
         .from('customer_profiles')
-        .update({
-          profile_data: { greeting_preference: greeting },
+        .select('profile_data')
+        .eq('customer_id', clientId)
+        .maybeSingle();
+
+      const existingData = existingProfile?.profile_data || {};
+      
+      const { error: profileError } = await supabase
+        .from('customer_profiles')
+        .upsert({
+          customer_id: clientId,
+          profile_data: { 
+            ...existingData,
+            greeting_preference: greeting 
+          },
           updated_at: new Date().toISOString()
-        })
-        .eq('customer_id', journeyId.replace('journey_', '').split('_')[0]);
+        });
+
+      if (profileError) {
+        console.error('❌ Error saving greeting to profile:', profileError);
+      }
 
       // Update journey phase
-      await supabase
+      const { error: journeyError } = await supabase
         .from('onboarding_journeys')
         .update({
           current_phase: 'website_analysis',
@@ -240,7 +300,12 @@ export class JourneyManager {
         })
         .eq('journey_id', journeyId);
 
-      return !error;
+      if (journeyError) {
+        console.error('❌ Error updating journey phase:', journeyError);
+      }
+
+      console.log('✅ Greeting preference saved locally');
+      return !profileError;
     } catch (error) {
       console.error('❌ Error setting greeting preference:', error);
       return false;
@@ -251,17 +316,9 @@ export class JourneyManager {
     try {
       console.log('🔍 Starting website analysis for:', websiteUrl);
       
-      const response = await MorvoAIService.makeRequest('/onboarding/website-analysis', {
-        method: 'POST',
-        body: JSON.stringify({
-          journey_id: journeyId,
-          website_url: websiteUrl
-        })
-      });
-
-      const result = response.ok;
-      console.log('✅ Website analysis started:', result);
-      return result;
+      const success = await MorvoAIService.startWebsiteAnalysis(journeyId, websiteUrl);
+      console.log('✅ Website analysis started:', success);
+      return success;
     } catch (error) {
       console.error('❌ Error starting website analysis:', error);
       return false;

@@ -2,13 +2,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { JourneyManager, JourneyStatus, OnboardingJourney } from '@/services/journeyManager';
+import { supabase } from '@/integrations/supabase/client';
 
 interface JourneyContextType {
   journey: OnboardingJourney | null;
   journeyStatus: JourneyStatus | null;
   loading: boolean;
   error: string | null;
-  startJourney: () => Promise<void>;
+  startJourney: (websiteUrl?: string) => Promise<void>;
   updateJourneyPhase: (phase: string) => void;
   setGreeting: (greeting: string) => Promise<boolean>;
   analyzeWebsite: (url: string) => Promise<boolean>;
@@ -19,6 +20,7 @@ interface JourneyContextType {
   currentPhase: string;
   progress: number;
   hasExistingJourney: boolean;
+  greetingPreference: string | null;
 }
 
 const JourneyContext = createContext<JourneyContextType | undefined>(undefined);
@@ -43,6 +45,7 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
   const [hasExistingJourney, setHasExistingJourney] = useState(false);
   const [journeyInitialized, setJourneyInitialized] = useState(false);
+  const [greetingPreference, setGreetingPreference] = useState<string | null>(null);
 
   // Load existing journey on mount
   useEffect(() => {
@@ -67,6 +70,9 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
           const status = await JourneyManager.getJourneyStatus(existingJourney.journey_id);
           setJourneyStatus(status);
           
+          // Load greeting preference from customer_profiles
+          await loadGreetingPreference(user.id);
+          
           // Store journey ID locally for quick access
           localStorage.setItem(`journey_${user.id}`, existingJourney.journey_id);
           
@@ -74,6 +80,9 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         } else {
           console.log('ℹ️ No existing journey found for user');
           setHasExistingJourney(false);
+          
+          // Still try to load greeting preference for users with profiles but no journeys
+          await loadGreetingPreference(user.id);
         }
 
         setJourneyInitialized(true);
@@ -89,16 +98,43 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     loadJourney();
   }, [user?.id, journeyInitialized]);
 
-  const startJourney = async () => {
-    if (!user?.id || hasExistingJourney) {
-      console.log('ℹ️ Skipping journey start - user exists or has journey');
+  const loadGreetingPreference = async (userId: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from('customer_profiles')
+        .select('profile_data')
+        .eq('customer_id', userId)
+        .maybeSingle();
+
+      if (profile?.profile_data?.greeting_preference) {
+        setGreetingPreference(profile.profile_data.greeting_preference);
+        console.log('✅ Loaded greeting preference:', profile.profile_data.greeting_preference);
+      } else {
+        console.log('ℹ️ No greeting preference found');
+        setGreetingPreference(null);
+      }
+    } catch (error) {
+      console.error('❌ Error loading greeting preference:', error);
+      setGreetingPreference(null);
+    }
+  };
+
+  const startJourney = async (websiteUrl?: string) => {
+    if (!user?.id) {
+      console.log('ℹ️ No user found for journey start');
+      return;
+    }
+
+    // Prevent multiple journey starts
+    if (hasExistingJourney && journey && !journey.is_completed) {
+      console.log('ℹ️ Skipping journey start - active journey exists');
       return;
     }
 
     setLoading(true);
     try {
-      console.log('🚀 Starting new journey for user:', user.id);
-      const newJourney = await JourneyManager.startJourney(user.id);
+      console.log('🚀 Starting new journey for user:', user.id, 'with website:', websiteUrl);
+      const newJourney = await JourneyManager.startJourney(user.id, websiteUrl);
       
       if (newJourney) {
         setJourney(newJourney);
@@ -142,7 +178,11 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     console.log('💾 Saving greeting preference:', greeting);
     const success = await JourneyManager.setGreetingPreference(journey.journey_id, greeting);
     if (success) {
-      setJourneyStatus(prev => prev ? { ...prev, greeting_preference: greeting } : null);
+      setGreetingPreference(greeting);
+      setJourneyStatus(prev => prev ? { 
+        ...prev, 
+        greeting_preference: greeting 
+      } : null);
       console.log('✅ Greeting preference saved successfully');
       return true;
     } else {
@@ -237,7 +277,8 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
       isOnboardingComplete,
       currentPhase,
       progress,
-      hasExistingJourney
+      hasExistingJourney,
+      greetingPreference
     }}>
       {children}
     </JourneyContext.Provider>
