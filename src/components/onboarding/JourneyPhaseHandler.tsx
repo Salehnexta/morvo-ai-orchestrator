@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useJourney } from '@/contexts/JourneyContext';
 import { JourneyFlowService, JourneyFlowState } from '@/services/journeyFlowService';
@@ -197,7 +196,6 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
       case 'website_analysis':
         return (
           <WebsiteAnalysisStep
-            journeyId={journey?.journey_id || ''}
             onComplete={(data) => handlePhaseAction('website_analysis_complete', data)}
             onSkip={() => handlePhaseAction('skip_website_analysis')}
           />
