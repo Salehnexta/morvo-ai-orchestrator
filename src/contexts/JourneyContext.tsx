@@ -45,6 +45,8 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
   const [hasExistingJourney, setHasExistingJourney] = useState(false);
   const [journeyInitialized, setJourneyInitialized] = useState(false);
   const [greetingPreference, setGreetingPreference] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
   // Load existing journey on mount - prevent multiple initializations
   useEffect(() => {
@@ -65,32 +67,49 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         // Load greeting preference first (faster than journey check)
         await loadGreetingPreference(user.id);
 
-        // Try to check for existing journey (may fail, that's OK)
-        try {
-          const existingJourney = await JourneyManager.checkExistingJourney(user.id);
-          
-          if (existingJourney) {
-            setJourney(existingJourney);
-            setHasExistingJourney(true);
+        // Try to check for existing journey with retry limit
+        if (retryCount < MAX_RETRIES) {
+          try {
+            const existingJourney = await JourneyManager.checkExistingJourney(user.id);
             
-            // Get journey status if available
-            try {
-              const status = await JourneyManager.getJourneyStatus(existingJourney.journey_id);
-              setJourneyStatus(status);
-            } catch (statusError) {
-              console.warn('⚠️ Could not load journey status:', statusError);
+            if (existingJourney) {
+              setJourney(existingJourney);
+              setHasExistingJourney(true);
+              
+              // Only try to get journey status if we have a valid journey
+              if (existingJourney.journey_id && !existingJourney.journey_id.includes('journey_')) {
+                try {
+                  const status = await JourneyManager.getJourneyStatus(existingJourney.journey_id);
+                  setJourneyStatus(status);
+                } catch (statusError) {
+                  console.warn('⚠️ Could not load journey status:', statusError);
+                  // Don't retry status if journey check succeeded
+                }
+              }
+              
+              // Store journey ID locally for quick access
+              localStorage.setItem(`journey_${user.id}`, existingJourney.journey_id);
+              
+              console.log('✅ Loaded existing journey:', existingJourney);
+              setRetryCount(0); // Reset retry count on success
+            } else {
+              console.log('ℹ️ No existing journey found for user');
+              setHasExistingJourney(false);
+              setRetryCount(0); // Reset retry count
             }
-            
-            // Store journey ID locally for quick access
-            localStorage.setItem(`journey_${user.id}`, existingJourney.journey_id);
-            
-            console.log('✅ Loaded existing journey:', existingJourney);
-          } else {
-            console.log('ℹ️ No existing journey found for user');
+          } catch (journeyError) {
+            console.warn('⚠️ Could not check existing journey (attempt', retryCount + 1, '):', journeyError);
             setHasExistingJourney(false);
+            
+            // Only retry if it's a network error, not a 500 server error
+            if (journeyError instanceof Error && !journeyError.message.includes('500')) {
+              setRetryCount(prev => prev + 1);
+            } else {
+              setRetryCount(MAX_RETRIES); // Stop retrying on server errors
+            }
           }
-        } catch (journeyError) {
-          console.warn('⚠️ Could not check existing journey:', journeyError);
+        } else {
+          console.warn('⚠️ Max retries reached, using fallback journey creation');
           setHasExistingJourney(false);
         }
 
@@ -105,7 +124,7 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     };
 
     loadJourney();
-  }, [user?.id, journeyInitialized]);
+  }, [user?.id, journeyInitialized, retryCount]);
 
   const loadGreetingPreference = async (userId: string) => {
     try {
@@ -167,12 +186,14 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         // Store journey ID locally
         localStorage.setItem(`journey_${user.id}`, newJourney.journey_id);
         
-        // Get initial status
-        try {
-          const status = await JourneyManager.getJourneyStatus(newJourney.journey_id);
-          setJourneyStatus(status);
-        } catch (statusError) {
-          console.warn('⚠️ Could not load initial journey status:', statusError);
+        // Only get initial status if we have a clean journey ID
+        if (newJourney.journey_id && !newJourney.journey_id.includes('journey_')) {
+          try {
+            const status = await JourneyManager.getJourneyStatus(newJourney.journey_id);
+            setJourneyStatus(status);
+          } catch (statusError) {
+            console.warn('⚠️ Could not load initial journey status:', statusError);
+          }
         }
         
         console.log('✅ Journey started successfully:', newJourney);

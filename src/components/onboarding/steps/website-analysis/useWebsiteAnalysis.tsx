@@ -22,8 +22,12 @@ export const useWebsiteAnalysis = () => {
     }
   };
 
-  // Generate a proper UUID v4 format
+  // Generate a proper UUID v4 format using crypto.randomUUID if available
   const generateUUID = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback for older browsers
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       const r = Math.random() * 16 | 0;
       const v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -42,10 +46,16 @@ export const useWebsiteAnalysis = () => {
       return;
     }
 
-    // Get journey ID from context or generate a proper UUID
-    const journeyId = journey?.journey_id || generateUUID();
+    // Get journey ID - use proper UUID format only
+    let journeyId = journey?.journey_id;
+    
+    // If no journey ID or it's malformed, generate a proper UUID
+    if (!journeyId || journeyId.includes('journey_') || journeyId.includes('_')) {
+      journeyId = generateUUID();
+      console.log('🔧 Generated new UUID for journey:', journeyId);
+    }
 
-    console.log('🔍 Starting website analysis with journey ID:', journeyId);
+    console.log('🔍 Starting website analysis with clean UUID:', journeyId);
 
     setError('');
     setAnalysisState('analyzing');
@@ -77,7 +87,15 @@ export const useWebsiteAnalysis = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Website analysis failed:', response.status, errorText);
-        throw new Error(`Analysis failed: ${response.status} - ${errorText}`);
+        
+        // Handle different error types
+        if (response.status === 500) {
+          throw new Error('Server error - please try again in a moment');
+        } else if (response.status === 400) {
+          throw new Error('Invalid request - please check the website URL');
+        } else {
+          throw new Error(`Analysis failed (${response.status}) - please try again`);
+        }
       }
 
       const data = await response.json();
@@ -87,7 +105,22 @@ export const useWebsiteAnalysis = () => {
     } catch (error) {
       clearInterval(progressInterval);
       console.error('❌ Website analysis error:', error);
-      setError(error instanceof Error ? error.message : 'Analysis failed - please try again or continue manually');
+      
+      // More user-friendly error messages
+      let errorMessage = 'Analysis failed - please try again';
+      if (error instanceof Error) {
+        if (error.message.includes('Server error')) {
+          errorMessage = 'Server is temporarily unavailable. Please try again in a few minutes.';
+        } else if (error.message.includes('Invalid request')) {
+          errorMessage = 'Please check your website URL and try again.';
+        } else if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
+          errorMessage = 'Network connection issue. Please check your internet and try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setError(errorMessage);
       setAnalysisState('error');
     }
   };
