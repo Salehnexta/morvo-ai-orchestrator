@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useJourney } from '@/contexts/JourneyContext';
@@ -38,21 +37,29 @@ export const SERankingProfileSlide: React.FC<SERankingProfileSlideProps> = ({
   const [websiteDomain, setWebsiteDomain] = useState('');
 
   useEffect(() => {
-    // Try to get website URL from journey data using available properties
+    // Try to get website URL from journey data using safe property access
     let websiteUrl = '';
     
     // Check various possible properties that might contain the website URL
-    if (journey?.company_info) {
-      websiteUrl = (journey.company_info as any)?.website || 
-                   (journey.company_info as any)?.website_url || 
-                   (journey.company_info as any)?.url || '';
+    const journeyData = journey as any;
+    const statusData = journeyStatus as any;
+    
+    if (journeyData?.company_info) {
+      websiteUrl = journeyData.company_info?.website || 
+                   journeyData.company_info?.website_url || 
+                   journeyData.company_info?.url || '';
     }
     
     // Fallback to journeyStatus if available
-    if (!websiteUrl && journeyStatus) {
-      websiteUrl = (journeyStatus as any)?.website || 
-                   (journeyStatus as any)?.website_url || 
-                   (journeyStatus as any)?.company_website || '';
+    if (!websiteUrl && statusData) {
+      websiteUrl = statusData?.website || 
+                   statusData?.website_url || 
+                   statusData?.company_website || '';
+    }
+    
+    // Check direct properties
+    if (!websiteUrl) {
+      websiteUrl = journeyData?.website_url || statusData?.website_url || '';
     }
     
     // For demo purposes, use a placeholder if no URL found
