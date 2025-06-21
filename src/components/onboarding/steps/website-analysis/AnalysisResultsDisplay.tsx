@@ -2,207 +2,127 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { CheckCircle, AlertCircle, Globe, TrendingUp } from 'lucide-react';
+import { Building2, Users, Settings, Target, FileText, Globe, Mail, Share2 } from 'lucide-react';
 
 interface AnalysisResultsDisplayProps {
   results: any;
-  websiteUrl: string;
   language: 'ar' | 'en';
 }
 
+const AnalysisDataStructure = {
+  company_overview: 'Company Overview',
+  core_offerings: 'Core Offerings and Solutions', 
+  technical_products: 'Technical Products and APIs',
+  key_team_members: 'Key Team Members',
+  business_focus: 'Business Focus and Impact',
+  additional_insights: 'Additional Insights',
+  product_descriptions: 'Product/Service Descriptions',
+  api_documentation: 'API Documentation Details',
+  use_cases: 'Use Cases and Case Studies',
+  blog_updates: 'Blog/News Updates',
+  contact_information: 'Contact Information',
+  team_bios: 'Team Bios',
+  social_media: 'Social Media Accounts'
+};
+
 export const AnalysisResultsDisplay: React.FC<AnalysisResultsDisplayProps> = ({
   results,
-  websiteUrl,
   language
 }) => {
   const content = {
     ar: {
-      businessOverview: 'نظرة عامة على النشاط',
-      digitalPresence: 'الحضور الرقمي',
-      opportunities: 'الفرص والتوصيات',
-      businessType: 'نوع النشاط',
-      products: 'المنتجات والخدمات',
-      targetAudience: 'الجمهور المستهدف',
-      uniqueValue: 'القيمة المميزة',
-      seoScore: 'نقاط السيو',
-      speedScore: 'سرعة التحميل',
-      mobileFriendly: 'متوافق مع الجوال',
-      sslSecure: 'الحماية',
-      quickWins: 'انتصارات سريعة',
-      strategic: 'استراتيجية طويلة المدى',
-      seconds: 'ثانية'
+      title: 'البيانات المستخرجة من الموقع',
+      subtitle: 'المعلومات التي تم جمعها لتوفير الوقت عليك',
+      dataStructure: {
+        company_overview: 'نظرة عامة على الشركة',
+        core_offerings: 'العروض والحلول الأساسية',
+        technical_products: 'المنتجات التقنية وواجهات البرمجة',
+        key_team_members: 'أعضاء الفريق الرئيسيون',
+        business_focus: 'التركيز التجاري والتأثير',
+        additional_insights: 'رؤى إضافية',
+        product_descriptions: 'أوصاف المنتجات/الخدمات',
+        api_documentation: 'تفاصيل توثيق واجهات البرمجة',
+        use_cases: 'حالات الاستخدام ودراسات الحالة',
+        blog_updates: 'تحديثات المدونة/الأخبار',
+        contact_information: 'معلومات الاتصال',
+        team_bios: 'السير الذاتية للفريق',
+        social_media: 'حسابات وسائل التواصل الاجتماعي'
+      },
+      noData: 'لم يتم العثور على بيانات',
+      found: 'تم العثور عليها',
+      notFound: 'لم يتم العثور عليها'
     },
     en: {
-      businessOverview: 'Business Overview',
-      digitalPresence: 'Digital Presence',
-      opportunities: 'Opportunities & Recommendations',
-      businessType: 'Business Type',
-      products: 'Products & Services',
-      targetAudience: 'Target Audience',
-      uniqueValue: 'Unique Value',
-      seoScore: 'SEO Score',
-      speedScore: 'Loading Speed',
-      mobileFriendly: 'Mobile Friendly',
-      sslSecure: 'SSL Secure',
-      quickWins: 'Quick Wins',
-      strategic: 'Strategic',
-      seconds: 'seconds'
+      title: 'Data Extracted from Website',
+      subtitle: 'Information gathered to save you time',
+      dataStructure: AnalysisDataStructure,
+      noData: 'No data found',
+      found: 'Found',
+      notFound: 'Not found'
     }
   };
 
   const t = content[language];
 
-  if (!results) return null;
+  const getIcon = (key: string) => {
+    const iconMap: Record<string, React.ReactNode> = {
+      company_overview: <Building2 className="w-4 h-4" />,
+      core_offerings: <Target className="w-4 h-4" />,
+      technical_products: <Settings className="w-4 h-4" />,
+      key_team_members: <Users className="w-4 h-4" />,
+      business_focus: <Target className="w-4 h-4" />,
+      additional_insights: <FileText className="w-4 h-4" />,
+      product_descriptions: <FileText className="w-4 h-4" />,
+      api_documentation: <Settings className="w-4 h-4" />,
+      use_cases: <FileText className="w-4 h-4" />,
+      blog_updates: <Globe className="w-4 h-4" />,
+      contact_information: <Mail className="w-4 h-4" />,
+      team_bios: <Users className="w-4 h-4" />,
+      social_media: <Share2 className="w-4 h-4" />
+    };
+    return iconMap[key] || <FileText className="w-4 h-4" />;
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Website URL */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Globe className="w-4 h-4" />
-            {websiteUrl}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div className="text-center mb-6">
+        <h3 className="text-lg font-semibold mb-2">{t.title}</h3>
+        <p className="text-gray-600 text-sm">{t.subtitle}</p>
+      </div>
 
-      {/* Business Overview */}
-      {results.business_overview && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              {t.businessOverview}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600">{t.businessType}</label>
-              <p className="text-lg">{results.business_overview.business_type}</p>
-            </div>
-            
-            {results.business_overview.main_products && (
-              <div>
-                <label className="text-sm font-medium text-gray-600">{t.products}</label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {results.business_overview.main_products.map((product: string, index: number) => (
-                    <Badge key={index} variant="secondary">{product}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {results.business_overview.target_audience && (
-              <div>
-                <label className="text-sm font-medium text-gray-600">{t.targetAudience}</label>
-                <p>{results.business_overview.target_audience}</p>
-              </div>
-            )}
-
-            {results.business_overview.unique_value && (
-              <div>
-                <label className="text-sm font-medium text-gray-600">{t.uniqueValue}</label>
-                <p>{results.business_overview.unique_value}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Digital Presence */}
-      {results.digital_presence && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              {t.digitalPresence}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {results.digital_presence.website_health?.seo_score && (
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {results.digital_presence.website_health.seo_score}
-                  </div>
-                  <div className="text-sm text-gray-600">{t.seoScore}</div>
-                  <Progress 
-                    value={results.digital_presence.website_health.seo_score} 
-                    className="mt-2 h-2"
-                  />
-                </div>
-              )}
-              
-              {results.digital_presence.website_health?.speed_score && (
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {results.digital_presence.website_health.speed_score}{t.seconds}
-                  </div>
-                  <div className="text-sm text-gray-600">{t.speedScore}</div>
-                </div>
-              )}
-              
-              <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <div className="text-lg font-bold text-purple-600">
-                  {results.digital_presence.website_health?.mobile_friendly ? (
-                    <CheckCircle className="w-6 h-6 mx-auto" />
-                  ) : (
-                    <AlertCircle className="w-6 h-6 mx-auto" />
-                  )}
-                </div>
-                <div className="text-sm text-gray-600">{t.mobileFriendly}</div>
-              </div>
-              
-              <div className="text-center p-3 bg-orange-50 rounded-lg">
-                <div className="text-lg font-bold text-orange-600">
-                  {results.digital_presence.website_health?.ssl_secure ? (
-                    <CheckCircle className="w-6 h-6 mx-auto" />
-                  ) : (
-                    <AlertCircle className="w-6 h-6 mx-auto" />
-                  )}
-                </div>
-                <div className="text-sm text-gray-600">{t.sslSecure}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Opportunities */}
-      {results.opportunities && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              {t.opportunities}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {results.opportunities.quick_wins && results.opportunities.quick_wins.length > 0 && (
-              <div>
-                <label className="text-sm font-medium text-green-600">{t.quickWins}</label>
-                <ul className="list-disc list-inside space-y-1 mt-2">
-                  {results.opportunities.quick_wins.map((item: string, index: number) => (
-                    <li key={index} className="text-sm">{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {results.opportunities.strategic && results.opportunities.strategic.length > 0 && (
-              <div>
-                <label className="text-sm font-medium text-blue-600">{t.strategic}</label>
-                <ul className="list-disc list-inside space-y-1 mt-2">
-                  {results.opportunities.strategic.map((item: string, index: number) => (
-                    <li key={index} className="text-sm">{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {Object.entries(t.dataStructure).map(([key, label]) => {
+          const hasData = results && results[key] && results[key].trim();
+          
+          return (
+            <Card key={key} className={`${hasData ? 'border-green-200 bg-green-50' : 'border-gray-200'}`}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  {getIcon(key)}
+                  {label}
+                  <Badge variant={hasData ? "default" : "secondary"} className="ml-auto text-xs">
+                    {hasData ? t.found : t.notFound}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {hasData ? (
+                  <p className="text-sm text-gray-700 line-clamp-3">
+                    {typeof results[key] === 'string' 
+                      ? results[key] 
+                      : Array.isArray(results[key]) 
+                        ? results[key].join(', ') 
+                        : JSON.stringify(results[key])
+                    }
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 italic">{t.noData}</p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 };

@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Globe, AlertCircle, FileText, ArrowRight } from 'lucide-react';
+import { ManualDataGuide } from './ManualDataGuide';
 
 interface WebsiteUrlInputProps {
   websiteUrl: string;
@@ -33,6 +34,17 @@ export const WebsiteUrlInput: React.FC<WebsiteUrlInputProps> = ({
   isAnalyzing,
   content
 }) => {
+  const [showManualGuide, setShowManualGuide] = useState(false);
+
+  if (showManualGuide) {
+    return (
+      <ManualDataGuide 
+        onContinue={onSkip}
+        language="ar" // This should be passed from parent component
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -76,7 +88,7 @@ export const WebsiteUrlInput: React.FC<WebsiteUrlInputProps> = ({
               <FileText className="w-8 h-8 mx-auto mb-2 text-gray-600" />
               <p className="text-gray-700 text-sm mb-3">{content.skipDescription}</p>
               <Button
-                onClick={onSkip}
+                onClick={() => setShowManualGuide(true)}
                 variant="outline"
                 className="w-full"
               >

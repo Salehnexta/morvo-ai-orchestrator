@@ -75,7 +75,23 @@ export const WebsiteAnalysisStep: React.FC<WebsiteAnalysisStepProps> = ({
   const handleComplete = () => {
     onComplete({
       website_url: websiteUrl,
-      analysis_results: analysisResults
+      analysis_results: analysisResults,
+      // Structure the data according to our defined schema
+      structured_data: {
+        company_overview: analysisResults?.company_overview || '',
+        core_offerings: analysisResults?.core_offerings || '',
+        technical_products: analysisResults?.technical_products || '',
+        key_team_members: analysisResults?.key_team_members || '',
+        business_focus: analysisResults?.business_focus || '',
+        additional_insights: analysisResults?.additional_insights || '',
+        product_descriptions: analysisResults?.product_descriptions || '',
+        api_documentation: analysisResults?.api_documentation || '',
+        use_cases: analysisResults?.use_cases || '',
+        blog_updates: analysisResults?.blog_updates || '',
+        contact_information: analysisResults?.contact_information || '',
+        team_bios: analysisResults?.team_bios || '',
+        social_media: analysisResults?.social_media || ''
+      }
     });
   };
 
