@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SmartContentDetector, DetectionResult } from '@/services/smartContentDetector';
+import { useApiIntegration } from '@/hooks/useApiIntegration';
 import { AnalyticsSidebar } from './content/AnalyticsSidebar';
 import { ContentCreatorSidebar } from './content/ContentCreatorSidebar';
 import { CalendarSidebar } from './content/CalendarSidebar';
@@ -22,24 +23,39 @@ export const SidebarContentManager: React.FC<SidebarContentManagerProps> = ({
   onActionClick
 }) => {
   const { language, isRTL } = useLanguage();
+  const { isHealthy } = useApiIntegration();
   const [currentContent, setCurrentContent] = useState<DetectionResult | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     if (lastMessage) {
-      const detection = SmartContentDetector.detectIntent(lastMessage, conversationHistory);
-      
-      // Only update if there's a significant change
-      if (!currentContent || currentContent.primary.type !== detection.primary.type) {
-        setIsTransitioning(true);
-        
-        setTimeout(() => {
+      const detectIntent = async () => {
+        try {
+          // Use AI-enhanced detection when API is healthy, otherwise fall back to pattern matching
+          const detection = isHealthy 
+            ? await SmartContentDetector.detectIntentWithAI(lastMessage, conversationHistory)
+            : SmartContentDetector.detectIntent(lastMessage, conversationHistory);
+          
+          // Only update if there's a significant change
+          if (!currentContent || currentContent.primary.type !== detection.primary.type) {
+            setIsTransitioning(true);
+            
+            setTimeout(() => {
+              setCurrentContent(detection);
+              setIsTransitioning(false);
+            }, 200);
+          }
+        } catch (error) {
+          console.warn('Intent detection failed:', error);
+          // Fallback to pattern matching
+          const detection = SmartContentDetector.detectIntent(lastMessage, conversationHistory);
           setCurrentContent(detection);
-          setIsTransitioning(false);
-        }, 200);
-      }
+        }
+      };
+
+      detectIntent();
     }
-  }, [lastMessage, conversationHistory, currentContent]);
+  }, [lastMessage, conversationHistory, currentContent, isHealthy]);
 
   const renderContent = () => {
     if (!currentContent) {

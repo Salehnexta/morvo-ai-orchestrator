@@ -1,212 +1,219 @@
 
-export interface ContentIntent {
-  type: 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'chart' | 'plan' | 'default';
-  confidence: number;
-  keywords: string[];
-  suggestedActions?: string[];
-}
+import { MorvoAIService } from './morvoAIService';
 
 export interface DetectionResult {
-  primary: ContentIntent;
-  secondary?: ContentIntent;
-  contextData?: any;
+  primary: {
+    type: 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'chart' | 'plan' | 'default';
+    confidence: number;
+  };
+  contextData?: {
+    metrics?: any[];
+    content?: any[];
+    timeframe?: string;
+    keywords?: string[];
+  };
 }
 
 export class SmartContentDetector {
   private static readonly INTENT_PATTERNS = {
-    analytics: {
-      keywords: ['تحليل', 'إحصائي', 'أداء', 'نتائج', 'مقاييس', 'analytics', 'performance', 'metrics', 'stats', 'data', 'report', 'رقم', 'معدل', 'نسبة'],
-      phrases: ['كيف الأداء', 'عرض النتائج', 'التحليلات', 'show analytics', 'performance report'],
-      weight: 1.0
-    },
-    'content-creator': {
-      keywords: ['محتوى', 'منشور', 'كتابة', 'إنشاء', 'content', 'post', 'create', 'write', 'caption', 'social', 'تصميم', 'نص'],
-      phrases: ['اكتب منشور', 'إنشاء محتوى', 'create content', 'write post', 'social media'],
-      weight: 1.0
-    },
-    calendar: {
-      keywords: ['جدولة', 'موعد', 'تاريخ', 'calendar', 'schedule', 'plan', 'time', 'date', 'appointment', 'متى', 'وقت'],
-      phrases: ['جدولة المنشورات', 'تحديد موعد', 'schedule posts', 'plan content'],
-      weight: 1.0
-    },
-    campaign: {
-      keywords: ['حملة', 'إعلان', 'تسويق', 'campaign', 'advertisement', 'promotion', 'marketing', 'إعلانات', 'ترويج'],
-      phrases: ['إنشاء حملة', 'حملة تسويقية', 'create campaign', 'marketing campaign'],
-      weight: 1.0
-    },
-    chart: {
-      keywords: ['رسم', 'بياني', 'جرافيك', 'chart', 'graph', 'visualization', 'مخطط', 'رسوم'],
-      phrases: ['رسم بياني', 'عرض الرسم', 'show chart', 'create graph'],
-      weight: 1.0
-    },
-    plan: {
-      keywords: ['خطة', 'استراتيجية', 'plan', 'strategy', 'roadmap', 'خارطة', 'مخطط', 'هدف'],
-      phrases: ['وضع خطة', 'استراتيجية تسويقية', 'create plan', 'marketing strategy'],
-      weight: 1.0
-    }
+    analytics: [
+      /analyt/i, /metric/i, /performance/i, /data/i, /stats/i, /report/i,
+      /dashboard/i, /kpi/i, /roi/i, /conversion/i, /traffic/i, /revenue/i
+    ],
+    'content-creator': [
+      /content/i, /post/i, /write/i, /create/i, /publish/i, /social/i,
+      /blog/i, /article/i, /copy/i, /text/i, /draft/i, /generate/i
+    ],
+    calendar: [
+      /schedule/i, /calendar/i, /plan/i, /time/i, /date/i, /event/i,
+      /appointment/i, /meeting/i, /agenda/i, /timeline/i
+    ],
+    campaign: [
+      /campaign/i, /advertis/i, /market/i, /promotion/i, /launch/i,
+      /target/i, /audience/i, /budget/i, /ads/i, /strategy/i
+    ],
+    chart: [
+      /chart/i, /graph/i, /visual/i, /plot/i, /diagram/i, /trend/i,
+      /line chart/i, /bar chart/i, /pie chart/i, /visualization/i
+    ],
+    plan: [
+      /plan/i, /strategy/i, /roadmap/i, /goal/i, /objective/i, /step/i,
+      /phase/i, /milestone/i, /action plan/i, /next steps/i
+    ]
   };
 
   static detectIntent(message: string, conversationHistory: string[] = []): DetectionResult {
-    const normalizedMessage = message.toLowerCase().trim();
-    const scores: { [key: string]: number } = {};
+    const text = message.toLowerCase();
+    const recentContext = conversationHistory.slice(-3).join(' ').toLowerCase();
+    const fullContext = `${recentContext} ${text}`;
 
-    // Initialize scores
-    Object.keys(this.INTENT_PATTERNS).forEach(intent => {
-      scores[intent] = 0;
-    });
-
-    // Keyword matching
-    Object.entries(this.INTENT_PATTERNS).forEach(([intent, pattern]) => {
-      pattern.keywords.forEach(keyword => {
-        if (normalizedMessage.includes(keyword.toLowerCase())) {
-          scores[intent] += pattern.weight * 0.6;
+    // Calculate scores for each intent
+    const scores: Record<string, number> = {};
+    
+    Object.entries(this.INTENT_PATTERNS).forEach(([intent, patterns]) => {
+      let score = 0;
+      
+      patterns.forEach(pattern => {
+        // Direct message matches get higher weight
+        if (pattern.test(text)) {
+          score += 3;
+        }
+        // Context matches get lower weight
+        if (pattern.test(recentContext)) {
+          score += 1;
         }
       });
-
-      pattern.phrases.forEach(phrase => {
-        if (normalizedMessage.includes(phrase.toLowerCase())) {
-          scores[intent] += pattern.weight * 1.2;
-        }
-      });
+      
+      scores[intent] = score;
     });
-
-    // Context from conversation history
-    if (conversationHistory.length > 0) {
-      const recentContext = conversationHistory.slice(-3).join(' ').toLowerCase();
-      Object.entries(this.INTENT_PATTERNS).forEach(([intent, pattern]) => {
-        pattern.keywords.forEach(keyword => {
-          if (recentContext.includes(keyword.toLowerCase())) {
-            scores[intent] += pattern.weight * 0.3;
-          }
-        });
-      });
-    }
 
     // Find the highest scoring intent
-    const sortedIntents = Object.entries(scores)
-      .filter(([, score]) => score > 0)
-      .sort(([, a], [, b]) => b - a);
+    const maxScore = Math.max(...Object.values(scores));
+    const detectedIntent = Object.entries(scores).find(([_, score]) => score === maxScore)?.[0];
 
-    if (sortedIntents.length === 0) {
+    // If no clear intent or score is too low, default to 'default'
+    if (!detectedIntent || maxScore < 2) {
       return {
         primary: {
           type: 'default',
-          confidence: 1.0,
-          keywords: []
+          confidence: 0.3
         }
       };
     }
 
-    const [primaryIntent, primaryScore] = sortedIntents[0];
-    const primary: ContentIntent = {
-      type: primaryIntent as ContentIntent['type'],
-      confidence: Math.min(primaryScore / 2, 1.0),
-      keywords: this.INTENT_PATTERNS[primaryIntent as keyof typeof this.INTENT_PATTERNS].keywords.filter(k => 
-        normalizedMessage.includes(k.toLowerCase())
-      )
-    };
-
-    // Secondary intent if confidence is close
-    let secondary: ContentIntent | undefined;
-    if (sortedIntents.length > 1) {
-      const [secondaryIntent, secondaryScore] = sortedIntents[1];
-      if (secondaryScore >= primaryScore * 0.7) {
-        secondary = {
-          type: secondaryIntent as ContentIntent['type'],
-          confidence: Math.min(secondaryScore / 2, 1.0),
-          keywords: this.INTENT_PATTERNS[secondaryIntent as keyof typeof this.INTENT_PATTERNS].keywords.filter(k => 
-            normalizedMessage.includes(k.toLowerCase())
-          )
-        };
-      }
-    }
+    // Extract context data based on detected intent
+    const contextData = this.extractContextData(detectedIntent, fullContext);
 
     return {
-      primary,
-      secondary,
-      contextData: this.extractContextData(message, primary.type)
+      primary: {
+        type: detectedIntent as DetectionResult['primary']['type'],
+        confidence: Math.min(maxScore / 5, 1) // Normalize to 0-1
+      },
+      contextData
     };
   }
 
-  private static extractContextData(message: string, intentType: ContentIntent['type']): any {
-    const contextData: any = {};
+  private static extractContextData(intent: string, context: string): any {
+    const data: any = {};
 
-    switch (intentType) {
+    // Extract keywords for all intents
+    const keywords = context.match(/\b\w{4,}\b/g)?.slice(0, 5) || [];
+    data.keywords = keywords;
+
+    // Intent-specific context extraction
+    switch (intent) {
       case 'analytics':
-        // Extract time periods, metrics mentioned, etc.
-        if (message.includes('شهر') || message.includes('month')) {
-          contextData.period = 'monthly';
-        } else if (message.includes('أسبوع') || message.includes('week')) {
-          contextData.period = 'weekly';
-        }
+        data.metrics = this.extractMetrics(context);
+        data.timeframe = this.extractTimeframe(context);
         break;
-
       case 'content-creator':
-        // Extract platform mentions
-        if (message.includes('انستغرام') || message.includes('instagram')) {
-          contextData.platform = 'instagram';
-        } else if (message.includes('تويتر') || message.includes('twitter')) {
-          contextData.platform = 'twitter';
-        }
+        data.contentType = this.extractContentType(context);
+        data.platform = this.extractPlatform(context);
         break;
-
+      case 'calendar':
+        data.timeframe = this.extractTimeframe(context);
+        data.eventType = this.extractEventType(context);
+        break;
       case 'campaign':
-        // Extract budget mentions, target audience, etc.
-        const budgetMatch = message.match(/(\d+)\s*(ريال|dollar|$)/i);
-        if (budgetMatch) {
-          contextData.budget = budgetMatch[1];
-        }
+        data.campaignType = this.extractCampaignType(context);
+        data.budget = this.extractBudget(context);
         break;
     }
 
-    return contextData;
+    return data;
   }
 
-  static getSuggestedActions(intent: ContentIntent): string[] {
-    const actionMap = {
-      analytics: [
-        'عرض إحصائيات الأداء',
-        'تحليل البيانات الشهرية',
-        'مقارنة النتائج',
-        'تصدير التقرير'
-      ],
-      'content-creator': [
-        'إنشاء منشور جديد',
-        'كتابة تغريدة',
-        'تصميم قصة',
-        'جدولة المحتوى'
-      ],
-      calendar: [
-        'عرض الجدول الزمني',
-        'إضافة موعد جديد',
-        'تعديل المواعيد',
-        'تذكيرات'
-      ],
-      campaign: [
-        'إنشاء حملة جديدة',
-        'تحسين الإعلانات',
-        'تحليل النتائج',
-        'تعديل الميزانية'
-      ],
-      chart: [
-        'إنشاء رسم بياني',
-        'تحليل الاتجاهات',
-        'مقارنة البيانات',
-        'حفظ الرسم'
-      ],
-      plan: [
-        'وضع استراتيجية',
-        'تحديد الأهداف',
-        'جدولة المهام',
-        'متابعة التقدم'
-      ],
-      default: [
-        'بدء محادثة جديدة',
-        'عرض المساعدة',
-        'الإعدادات'
-      ]
-    };
+  private static extractMetrics(context: string): string[] {
+    const metricKeywords = ['revenue', 'traffic', 'conversion', 'clicks', 'impressions', 'ctr', 'roi'];
+    return metricKeywords.filter(metric => context.includes(metric));
+  }
 
-    return actionMap[intent.type] || actionMap.default;
+  private static extractTimeframe(context: string): string {
+    if (context.includes('today') || context.includes('daily')) return 'today';
+    if (context.includes('week') || context.includes('weekly')) return 'week';
+    if (context.includes('month') || context.includes('monthly')) return 'month';
+    if (context.includes('year') || context.includes('annual')) return 'year';
+    return 'week';
+  }
+
+  private static extractContentType(context: string): string {
+    if (context.includes('blog') || context.includes('article')) return 'blog';
+    if (context.includes('social') || context.includes('post')) return 'social';
+    if (context.includes('email')) return 'email';
+    if (context.includes('ad') || context.includes('advertisement')) return 'ad';
+    return 'general';
+  }
+
+  private static extractPlatform(context: string): string {
+    if (context.includes('linkedin')) return 'linkedin';
+    if (context.includes('twitter') || context.includes('x.com')) return 'twitter';
+    if (context.includes('instagram')) return 'instagram';
+    if (context.includes('facebook')) return 'facebook';
+    return 'general';
+  }
+
+  private static extractEventType(context: string): string {
+    if (context.includes('meeting')) return 'meeting';
+    if (context.includes('post') || context.includes('publish')) return 'content';
+    if (context.includes('campaign') || context.includes('launch')) return 'campaign';
+    return 'general';
+  }
+
+  private static extractCampaignType(context: string): string {
+    if (context.includes('email')) return 'email';
+    if (context.includes('social')) return 'social';
+    if (context.includes('search') || context.includes('google')) return 'search';
+    if (context.includes('display') || context.includes('banner')) return 'display';
+    return 'general';
+  }
+
+  private static extractBudget(context: string): string | null {
+    const budgetMatch = context.match(/\$?(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+    return budgetMatch ? budgetMatch[0] : null;
+  }
+
+  // Enhanced detection with AI assistance (when available)
+  static async detectIntentWithAI(message: string, context: string[] = []): Promise<DetectionResult> {
+    try {
+      // Try AI-enhanced detection first
+      const aiResponse = await MorvoAIService.processMessage(
+        `Analyze this message for intent: "${message}". Return intent type (analytics, content-creator, calendar, campaign, chart, plan, or default) and confidence (0-1).`,
+        { type: 'intent_detection', conversation_history: context }
+      );
+
+      // Parse AI response if available
+      if (aiResponse.response) {
+        const aiResult = this.parseAIIntentResponse(aiResponse.response);
+        if (aiResult) {
+          return aiResult;
+        }
+      }
+    } catch (error) {
+      console.warn('AI intent detection failed, using pattern matching:', error);
+    }
+
+    // Fallback to pattern matching
+    return this.detectIntent(message, context);
+  }
+
+  private static parseAIIntentResponse(response: string): DetectionResult | null {
+    try {
+      // Simple parsing - look for intent keywords in AI response
+      const intentMatch = response.match(/(analytics|content-creator|calendar|campaign|chart|plan|default)/i);
+      const confidenceMatch = response.match(/confidence[:\s]+([0-9.]+)/i);
+
+      if (intentMatch) {
+        return {
+          primary: {
+            type: intentMatch[1].toLowerCase() as DetectionResult['primary']['type'],
+            confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.7
+          }
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to parse AI intent response:', error);
+    }
+    
+    return null;
   }
 }
