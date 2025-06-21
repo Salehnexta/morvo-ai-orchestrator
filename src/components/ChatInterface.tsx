@@ -97,15 +97,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Initialize chat with smart welcome message
+  // Initialize chat with Railway backend connection
   useEffect(() => {
     const initializeChat = async () => {
       try {
+        console.log('🚀 Initializing Railway backend connection...');
         const isHealthy = await MorvoAIService.testConnection();
         setIsConnected(isHealthy);
         
         if (isHealthy && user && messages.length === 0) {
-          const welcomeContent = SmartResponseGenerator.generateWelcomeMessage(onboardingStatus);
+          const welcomeContent = onboardingStatus?.onboarding_completed 
+            ? 'مرحباً بك مرة أخرى! كيف يمكنني مساعدتك اليوم في تطوير استراتيجيات التسويق الرقمي؟'
+            : 'مرحباً بك في مورفو! 🚀 أنا مساعدك الذكي للتسويق الرقمي. دعني أتعرف عليك أولاً - ما هو اسم شركتك أو مشروعك؟';
 
           const welcomeMessage: MessageData = {
             id: Date.now().toString(),
@@ -117,10 +120,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           };
           
           setMessages([welcomeMessage]);
+          console.log('✅ Chat initialized with Railway backend');
         }
       } catch (error) {
-        console.error('Connection check failed:', error);
+        console.error('❌ Railway connection failed:', error);
         setIsConnected(false);
+        
+        // Fallback welcome message
+        if (user && messages.length === 0) {
+          const fallbackMessage: MessageData = {
+            id: Date.now().toString(),
+            content: 'مرحباً بك في مورفو! أعمل حالياً في وضع محدود. سأحاول مساعدتك قدر الإمكان.',
+            sender: 'agent',
+            timestamp: new Date(),
+          };
+          setMessages([fallbackMessage]);
+        }
       } finally {
         setConnectionChecked(true);
       }
@@ -153,44 +168,56 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsLoading(true);
 
     try {
-      console.log('🤖 Processing message with advanced conversation system...');
+      console.log('🤖 Processing message with Railway backend...');
       
-      // Get base response first
-      let baseResponse = '';
-      let suggestedActions: Array<{action: string; label: string; priority: number}> = [];
-      
-      // Try to get AI response for complex queries
-      if (messageText.length > 20 || conversationState.conversationDepth > 3) {
-        try {
-          const context = {
-            current_phase: conversationState.phase,
-            conversation_history: messages.slice(-3).map(m => ({
-              role: m.sender === 'user' ? 'user' : 'assistant',
-              content: m.content
-            })),
-            user_profile: onboardingStatus,
-            emotional_context: emotionalContext
-          };
+      // Prepare context for Railway backend
+      const context = {
+        conversation_history: messages.slice(-3).map(m => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.content
+        })),
+        onboarding_status: onboardingStatus,
+        emotional_context: emotionalContext,
+        conversation_state: conversationState,
+        user_id: user.id
+      };
 
-          const aiResponse = await MorvoAIService.sendMessageWithRetry(messageText, context);
-          baseResponse = aiResponse.response;
-        } catch (aiError) {
-          console.log('AI service unavailable, using smart responses');
-          baseResponse = 'أفهم طلبك وأعمل على مساعدتك. كيف يمكنني تقديم المساعدة بشكل أفضل؟';
+      let backendResponse;
+      let tokensUsed = 0;
+
+      // Try Railway backend first
+      if (isConnected) {
+        try {
+          const aiResponse = await MorvoAIService.processMessage(messageText, context);
+          backendResponse = aiResponse.response;
+          tokensUsed = aiResponse.tokens_used || 0;
+          console.log('✅ Railway backend response received');
+        } catch (backendError) {
+          console.warn('⚠️ Railway backend failed, using local enhancement:', backendError);
+          backendResponse = null;
         }
-      } else {
-        baseResponse = 'أفهم طلبك. كيف يمكنني مساعدتك؟';
       }
 
-      // Enhance the conversation with memory and emotional intelligence
-      const enhancement = await enhanceConversation(messageText, baseResponse);
+      // Fallback to local processing if backend unavailable
+      if (!backendResponse) {
+        console.log('🔄 Using local smart response generation...');
+        backendResponse = SmartResponseGenerator.generateContextualResponse(
+          messageText, 
+          context.conversation_history, 
+          onboardingStatus
+        );
+      }
+
+      // Enhance with conversational intelligence
+      const enhancement = await enhanceConversation(messageText, backendResponse);
       
       const botMessage: MessageData = {
         id: (Date.now() + 1).toString(),
         content: enhancement.personalizedResponse,
         sender: 'agent',
         timestamp: new Date(),
-        suggested_actions: suggestedActions,
+        tokens_used: tokensUsed,
+        processing_time: Date.now() - userMessage.timestamp.getTime(),
         isOnboarding: conversationState.phase === 'onboarding',
         contextualInsights: enhancement.contextualInsights,
         emotionalContext: emotionalContext
@@ -198,20 +225,33 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       setMessages(prev => [...prev, botMessage]);
 
-      // Check for conversation insights
+      // Check for insights and handle actions
       const insights = getConversationInsights();
       if (insights.length > 0) {
         console.log('💡 Conversation insights:', insights);
       }
 
+      // Trigger content type changes based on message content
+      if (onContentTypeChange) {
+        if (messageText.includes('تحليل') || messageText.includes('analytics')) {
+          onContentTypeChange('analytics');
+        } else if (messageText.includes('محتوى') || messageText.includes('content')) {
+          onContentTypeChange('content-creator');
+        } else if (messageText.includes('حملة') || messageText.includes('campaign')) {
+          onContentTypeChange('campaign');
+        } else if (messageText.includes('جدولة') || messageText.includes('calendar')) {
+          onContentTypeChange('calendar');
+        }
+      }
+
     } catch (error) {
-      console.error('Chat error:', error);
+      console.error('❌ Chat error:', error);
       
       const errorMessage: MessageData = {
         id: (Date.now() + 1).toString(),
         content: language === 'ar' 
-          ? 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.'
-          : 'Sorry, there was a connection error. Please try again.',
+          ? 'عذراً، حدث خطأ في معالجة رسالتك. يرجى المحاولة مرة أخرى.'
+          : 'Sorry, there was an error processing your message. Please try again.',
         sender: 'agent',
         timestamp: new Date(),
       };
@@ -219,10 +259,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setMessages(prev => [...prev, errorMessage]);
 
       toast({
-        title: language === 'ar' ? 'خطأ في الاتصال' : 'Connection Error',
+        title: language === 'ar' ? 'خطأ في المعالجة' : 'Processing Error',
         description: language === 'ar' 
-          ? 'تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.'
-          : 'Unable to connect to server. Please check your internet connection.',
+          ? 'تعذر معالجة الرسالة. يرجى المحاولة مرة أخرى.'
+          : 'Unable to process message. Please try again.',
         variant: "destructive",
       });
     } finally {
@@ -256,10 +296,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         content={{
           masterAgent: t.masterAgent,
           clientAgent: t.clientAgent,
-          connecting: connectionChecked ? (isConnected ? t.connected : 'Connection Failed') : t.connecting,
+          connecting: connectionChecked ? (isConnected ? t.connected : 'Railway Backend') : t.connecting,
           connected: t.connected
         }}
-        isConnecting={!connectionChecked || !isConnected}
+        isConnecting={!connectionChecked}
         clientId={clientId}
         onToggleTheme={() => {}}
       />
@@ -280,11 +320,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <ConnectionStatus 
-                isConnecting={!connectionChecked || !isConnected}
+                isConnecting={!connectionChecked}
                 theme={theme}
                 content={{
                   connecting: t.connecting,
-                  connected: t.connected
+                  connected: isConnected ? 'متصل بـ Railway' : 'وضع محدود'
                 }}
               />
               {clientId && (
@@ -294,6 +334,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   onTokensUpdated={handleTokensUpdated}
                 />
               )}
+            </div>
+            
+            {/* Railway Backend Status Indicator */}
+            <div className={`text-xs px-2 py-1 rounded-lg ${
+              isConnected 
+                ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20' 
+                : 'text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-900/20'
+            }`}>
+              {isConnected ? '🚀 Railway Backend متصل' : '⚠️ وضع محدود - Railway Backend غير متاح'}
             </div>
             
             {/* Show emotional context indicator */}
@@ -319,7 +368,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               theme={theme}
               isRTL={isRTL}
               placeholder={
-                !isConnected
+                !connectionChecked
                   ? t.connecting
                   : !hasTokens
                   ? 'لا يوجد رصيد كافٍ من الطلبات'

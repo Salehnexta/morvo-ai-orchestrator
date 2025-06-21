@@ -110,7 +110,7 @@ export class MorvoAIService {
     throw new Error('User not authenticated');
   }
 
-  private static async makeAuthenticatedRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  private static async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const token = await this.getAuthToken();
     
     return fetch(`${this.API_URL}/${this.API_VERSION}${endpoint}`, {
@@ -118,6 +118,7 @@ export class MorvoAIService {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
+        'X-Client-Info': 'morvo-ai-frontend',
         ...options.headers
       },
       signal: AbortSignal.timeout(this.TIMEOUT)
@@ -147,82 +148,34 @@ export class MorvoAIService {
     }
   }
 
-  // Token Management
-  static async getTokenBalance(): Promise<TokenBalance> {
-    try {
-      const response = await this.makeAuthenticatedRequest('/tokens/balance');
-      
-      if (!response.ok) {
-        throw new Error(`Failed to get token balance: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Error getting token balance:', error);
-      throw error;
-    }
-  }
-
-  static async consumeTokens(operationType: string, amount: number, description: string): Promise<TokenConsumption> {
-    try {
-      const response = await this.makeAuthenticatedRequest('/tokens/consume', {
-        method: 'POST',
-        body: JSON.stringify({
-          operation_type: operationType,
-          amount: amount,
-          description: description
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to consume tokens: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Error consuming tokens:', error);
-      throw error;
-    }
-  }
-
-  static async getTokenHistory(limit: number = 10, offset: number = 0): Promise<any> {
-    try {
-      const response = await this.makeAuthenticatedRequest(`/tokens/history?limit=${limit}&offset=${offset}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to get token history: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Error getting token history:', error);
-      throw error;
-    }
-  }
-
-  // Enhanced Chat
-  static async sendMessage(message: string, context?: any): Promise<ChatResponse> {
+  // Process Message - New integrated endpoint
+  static async processMessage(message: string, context?: any): Promise<ChatResponse> {
     const clientId = await this.getClientId();
     
     try {
-      const response = await this.makeAuthenticatedRequest('/chat', {
+      console.log('🚀 Sending message to Railway backend:', message);
+      
+      const response = await this.makeRequest('/chat/process-message', {
         method: 'POST',
         body: JSON.stringify({
           message: message.trim(),
           client_id: clientId,
-          context: context || {}
+          context: context || {},
+          language: 'ar'
         })
       });
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('❌ Backend error:', response.status, errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('✅ Backend response:', data);
       
       return {
-        response: data.response || 'No response',
+        response: data.response || data.message || 'No response',
         personality_traits: data.personality_traits,
         tokens_used: data.tokens_used || 0,
         emotion_detected: data.emotion_detected,
@@ -231,7 +184,7 @@ export class MorvoAIService {
         confidence_score: data.confidence_score || 0.9
       };
     } catch (error) {
-      console.error('Chat service error:', error);
+      console.error('❌ Chat service error:', error);
       
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error('فشل الاتصال بالشبكة. يرجى التحقق من اتصال الإنترنت.');
@@ -241,122 +194,42 @@ export class MorvoAIService {
     }
   }
 
-  // Business Intelligence
-  static async analyzeWebsite(websiteUrl: string, analysisType: string = 'comprehensive'): Promise<BusinessAnalysis> {
+  // Get Customer Profile
+  static async getCustomerProfile(userId: string): Promise<any> {
     try {
-      const response = await this.makeAuthenticatedRequest('/business-intelligence/analyze', {
-        method: 'POST',
-        body: JSON.stringify({
-          website_url: websiteUrl,
-          analysis_type: analysisType,
-          include_competitors: true,
-          market: 'saudi_arabia'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to analyze website: ${response.status}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('Website analysis error:', error);
-      throw error;
-    }
-  }
-
-  // Onboarding APIs
-  static async saveGreetingPreference(greeting: string): Promise<any> {
-    const clientId = await this.getClientId();
-    
-    try {
-      const response = await this.makeAuthenticatedRequest('/onboarding/greeting', {
-        method: 'POST',
-        body: JSON.stringify({
-          greeting_preference: greeting,
-          client_id: clientId
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to save greeting: ${response.status}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('Error saving greeting preference:', error);
-      throw error;
-    }
-  }
-
-  static async getJourneyStatus(): Promise<any> {
-    const clientId = await this.getClientId();
-    
-    try {
-      const response = await this.makeAuthenticatedRequest(`/onboarding/journey/${clientId}`);
+      const response = await this.makeRequest(`/customer/profile/${userId}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to get journey status: ${response.status}`);
+        throw new Error(`Failed to get customer profile: ${response.status}`);
       }
       
       return response.json();
     } catch (error) {
-      console.error('Error getting journey status:', error);
+      console.error('Error getting customer profile:', error);
       throw error;
     }
   }
 
-  static async updateJourneyPhase(phase: string, completed: boolean, duration: number): Promise<any> {
-    const clientId = await this.getClientId();
-    
+  // Get Profile Completeness
+  static async getProfileCompleteness(clientId: string): Promise<any> {
     try {
-      const response = await this.makeAuthenticatedRequest('/onboarding/journey/phase', {
-        method: 'POST',
-        body: JSON.stringify({
-          client_id: clientId,
-          phase: phase,
-          completed: completed,
-          duration_seconds: duration
-        })
-      });
-
+      const response = await this.makeRequest(`/chat/profile-completeness/${clientId}`);
+      
       if (!response.ok) {
-        throw new Error(`Failed to update journey phase: ${response.status}`);
+        throw new Error(`Failed to get profile completeness: ${response.status}`);
       }
-
+      
       return response.json();
     } catch (error) {
-      console.error('Error updating journey phase:', error);
+      console.error('Error getting profile completeness:', error);
       throw error;
     }
   }
 
-  static async saveProfileData(profileData: OnboardingProfile): Promise<any> {
-    const clientId = await this.getClientId();
-    
-    try {
-      const response = await this.makeAuthenticatedRequest('/onboarding/profile', {
-        method: 'POST',
-        body: JSON.stringify({
-          client_id: clientId,
-          profile_data: profileData
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to save profile data: ${response.status}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('Error saving profile data:', error);
-      throw error;
-    }
-  }
-
+  // Get Onboarding Questions
   static async getOnboardingQuestions(language: string = 'ar'): Promise<any> {
     try {
-      const response = await this.makeAuthenticatedRequest(`/onboarding/questions?language=${language}`);
+      const response = await this.makeRequest(`/onboarding/questions?language=${language}`);
       
       if (!response.ok) {
         throw new Error(`Failed to get onboarding questions: ${response.status}`);
@@ -369,13 +242,33 @@ export class MorvoAIService {
     }
   }
 
-  // Retry mechanism
+  // Get Token Packages
+  static async getTokenPackages(): Promise<any> {
+    try {
+      const response = await this.makeRequest('/tokens/packages');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get token packages: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Error getting token packages:', error);
+      throw error;
+    }
+  }
+
+  // Legacy methods for backward compatibility
+  static async sendMessage(message: string, context?: any): Promise<ChatResponse> {
+    return this.processMessage(message, context);
+  }
+
   static async sendMessageWithRetry(message: string, context?: any, maxRetries = 3): Promise<ChatResponse> {
     let lastError;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        return await this.sendMessage(message, context);
+        return await this.processMessage(message, context);
       } catch (error) {
         lastError = error;
         console.warn(`Attempt ${attempt} failed:`, error);
@@ -392,18 +285,56 @@ export class MorvoAIService {
   // Test connection
   static async testConnection(): Promise<boolean> {
     try {
-      console.log('Testing Morvo AI V2 connection...');
+      console.log('🔗 Testing Morvo AI Railway connection...');
       
       const healthResponse = await this.healthCheck();
       console.log('✅ Health Check passed:', healthResponse);
       
-      const balanceResponse = await this.getTokenBalance();
-      console.log('✅ Token balance test passed:', balanceResponse);
+      try {
+        const packagesResponse = await this.getTokenPackages();
+        console.log('✅ Token packages test passed:', packagesResponse);
+      } catch (error) {
+        console.warn('⚠️ Token packages test failed (non-critical):', error);
+      }
       
       return true;
     } catch (error) {
       console.error('❌ Connection test failed:', error);
       return false;
     }
+  }
+
+  // Token Management - Fallback to local client data
+  static async getTokenBalance(): Promise<TokenBalance> {
+    try {
+      const clientId = await this.getClientId();
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('quota_limit, quota_used')
+        .eq('user_id', clientId)
+        .single();
+
+      if (!clientData) {
+        throw new Error('Client not found');
+      }
+
+      return {
+        balance: clientData.quota_limit - clientData.quota_used,
+        package: {
+          name: 'Free Plan',
+          token_amount: clientData.quota_limit,
+          price_sar: 0,
+          bonus_tokens: 0
+        }
+      };
+    } catch (error) {
+      console.error('Error getting token balance:', error);
+      throw error;
+    }
+  }
+
+  // Business Intelligence - Placeholder for future implementation
+  static async analyzeWebsite(websiteUrl: string, analysisType: string = 'comprehensive'): Promise<BusinessAnalysis> {
+    throw new Error('Website analysis not yet implemented in Railway backend');
   }
 }
