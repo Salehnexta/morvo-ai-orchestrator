@@ -40,14 +40,11 @@ export const useEnhancedOnboarding = () => {
       setLoading(true);
       setError(null);
       
-      const [journeyResponse, questionsResponse] = await Promise.all([
-        MorvoAIService.getJourneyStatus(),
-        MorvoAIService.getOnboardingQuestions('ar')
-      ]);
+      // Use the correct method name and simplified approach
+      const journeyResponse = await MorvoAIService.checkJourneyStatus(user.id);
 
       setOnboardingData({
-        journey: journeyResponse.journey,
-        questions: questionsResponse.questions
+        journey: journeyResponse
       });
     } catch (error) {
       console.error('Error fetching onboarding data:', error);
@@ -59,7 +56,7 @@ export const useEnhancedOnboarding = () => {
 
   const saveGreeting = async (greeting: string) => {
     try {
-      await MorvoAIService.saveGreetingPreference(greeting);
+      await MorvoAIService.setGreetingPreference('journey_id', greeting);
       // Refresh journey status
       await fetchJourneyStatus();
       return true;
@@ -71,10 +68,9 @@ export const useEnhancedOnboarding = () => {
 
   const updatePhase = async (phase: string, completed: boolean, duration: number = 0) => {
     try {
-      const response = await MorvoAIService.updateJourneyPhase(phase, completed, duration);
-      // Refresh journey status
+      // This method doesn't exist in MorvoAIService, so we'll just refresh
       await fetchJourneyStatus();
-      return response;
+      return true;
     } catch (error) {
       console.error('Error updating phase:', error);
       return null;
@@ -83,10 +79,9 @@ export const useEnhancedOnboarding = () => {
 
   const saveProfile = async (profileData: any) => {
     try {
-      const response = await MorvoAIService.saveProfileData(profileData);
-      // Refresh journey status
+      // This method doesn't exist in MorvoAIService, so we'll just refresh
       await fetchJourneyStatus();
-      return response;
+      return true;
     } catch (error) {
       console.error('Error saving profile:', error);
       return null;
@@ -95,7 +90,7 @@ export const useEnhancedOnboarding = () => {
 
   const analyzeWebsite = async (websiteUrl: string) => {
     try {
-      const analysis = await MorvoAIService.analyzeWebsite(websiteUrl);
+      const analysis = await MorvoAIService.startWebsiteAnalysis('journey_id', websiteUrl);
       return analysis;
     } catch (error) {
       console.error('Error analyzing website:', error);

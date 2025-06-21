@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { MorvoAIService } from "./morvoAIService";
 
@@ -100,7 +99,7 @@ export class JourneyManager {
         .eq('customer_id', clientId)
         .maybeSingle();
 
-      if (profile?.profile_data && Object.keys(profile.profile_data).length > 3) {
+      if (profile?.profile_data && typeof profile.profile_data === 'object' && Object.keys(profile.profile_data).length > 3) {
         console.log('✅ User has completed profile, marking journey as complete');
         return {
           journey_id: `journey_${clientId}`,
@@ -273,7 +272,10 @@ export class JourneyManager {
         .eq('customer_id', clientId)
         .maybeSingle();
 
-      const existingData = existingProfile?.profile_data || {};
+      // Fix the spread operator issue by ensuring we have a proper object
+      const existingData = (existingProfile?.profile_data && typeof existingProfile.profile_data === 'object') 
+        ? existingProfile.profile_data as Record<string, any>
+        : {};
       
       const { error: profileError } = await supabase
         .from('customer_profiles')

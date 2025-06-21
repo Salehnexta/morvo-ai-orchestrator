@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { JourneyManager, JourneyStatus, OnboardingJourney } from '@/services/journeyManager';
@@ -106,11 +105,18 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         .eq('customer_id', userId)
         .maybeSingle();
 
-      if (profile?.profile_data?.greeting_preference) {
-        setGreetingPreference(profile.profile_data.greeting_preference);
-        console.log('✅ Loaded greeting preference:', profile.profile_data.greeting_preference);
+      // Properly cast and check the profile_data
+      if (profile?.profile_data && typeof profile.profile_data === 'object') {
+        const profileData = profile.profile_data as Record<string, any>;
+        if (profileData.greeting_preference) {
+          setGreetingPreference(profileData.greeting_preference as string);
+          console.log('✅ Loaded greeting preference:', profileData.greeting_preference);
+        } else {
+          console.log('ℹ️ No greeting preference found');
+          setGreetingPreference(null);
+        }
       } else {
-        console.log('ℹ️ No greeting preference found');
+        console.log('ℹ️ No profile data found');
         setGreetingPreference(null);
       }
     } catch (error) {
