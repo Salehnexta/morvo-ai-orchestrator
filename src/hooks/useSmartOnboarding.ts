@@ -28,36 +28,25 @@ export const useSmartOnboarding = () => {
     try {
       setLoading(true);
       
-      // Use the database function for consistent status checking
-      const { data, error } = await supabase.rpc('get_user_onboarding_status', {
-        p_user_id: user.id
-      });
-
-      if (error) {
-        console.error('Error checking onboarding status:', error);
-        // Fallback to manual check if function fails
-        return await fallbackStatusCheck();
-      }
-
-      const onboardingStatus = data as OnboardingStatus;
-      setStatus(onboardingStatus);
-      return onboardingStatus;
-    } catch (error) {
-      console.error('Error in checkOnboardingStatus:', error);
-      return await fallbackStatusCheck();
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  const fallbackStatusCheck = async (): Promise<OnboardingStatus | null> => {
-    try {
       // Get client record
-      const { data: clientData } = await supabase
+      const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('id, name, email')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .maybeSingle();
+
+      if (clientError) {
+        console.error('Error getting client:', clientError);
+        const fallbackStatus = {
+          exists: false,
+          onboarding_completed: false,
+          onboarding_started: false,
+          needs_setup: true,
+          profile_exists: false
+        };
+        setStatus(fallbackStatus);
+        return fallbackStatus;
+      }
 
       if (!clientData) {
         const fallbackStatus = {
@@ -72,29 +61,48 @@ export const useSmartOnboarding = () => {
       }
 
       // Get profile record
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('customer_profiles')
         .select('profile_data, status')
-        .eq('customer_id', user!.id)
+        .eq('customer_id', user.id)
         .eq('client_id', clientData.id)
         .maybeSingle();
 
-      const fallbackStatus = {
+      if (profileError) {
+        console.error('Error getting profile:', profileError);
+      }
+
+      // Safely extract profile data
+      const profileJson = profileData?.profile_data as any;
+      const onboardingCompleted = profileJson?.onboarding_completed === true;
+      const onboardingStarted = profileJson?.onboarding_started === true;
+
+      const onboardingStatus: OnboardingStatus = {
         exists: true,
         client_id: clientData.id,
         profile_exists: !!profileData,
-        onboarding_completed: profileData?.profile_data?.onboarding_completed || false,
-        onboarding_started: profileData?.profile_data?.onboarding_started || false,
+        onboarding_completed: onboardingCompleted,
+        onboarding_started: onboardingStarted,
         needs_setup: false
       };
 
+      setStatus(onboardingStatus);
+      return onboardingStatus;
+    } catch (error) {
+      console.error('Error in checkOnboardingStatus:', error);
+      const fallbackStatus = {
+        exists: false,
+        onboarding_completed: false,
+        onboarding_started: false,
+        needs_setup: true,
+        profile_exists: false
+      };
       setStatus(fallbackStatus);
       return fallbackStatus;
-    } catch (error) {
-      console.error('Fallback status check failed:', error);
-      return null;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   const markOnboardingStarted = useCallback(async () => {
     if (!user?.id || !status?.client_id) return false;
