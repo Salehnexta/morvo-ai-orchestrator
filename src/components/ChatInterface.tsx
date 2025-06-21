@@ -60,7 +60,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     analyzeWebsite,
     saveAnswer,
     generateStrategy,
-    loading: journeyLoading
+    loading: journeyLoading,
+    updateJourneyPhase
   } = useJourney();
   const { 
     enhanceConversation, 
@@ -119,6 +120,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             switch (currentPhase) {
               case 'welcome':
                 welcomeContent = 'مرحباً بك في مورفو! 🚀 أنا مساعدك الذكي للتسويق الرقمي. دعني أتعرف عليك أولاً - كيف تفضل أن أناديك؟ (مثال: أستاذ أحمد، دكتور سارة)';
+                break;
+              case 'greeting_preference':
+                welcomeContent = 'أهلاً وسهلاً! كيف تحب أن أناديك؟ يمكنك أن تقول لي مثلاً: أستاذ أحمد، دكتور سارة، مهندس محمد، أو أي طريقة تفضلها.';
                 break;
               case 'website_analysis':
                 welcomeContent = 'ممتاز! الآن أحتاج لتحليل موقعك الإلكتروني لأفهم نشاطك التجاري بشكل أفضل. يرجى مشاركة رابط موقعك معي.';
@@ -303,11 +307,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           console.log('🔄 Saving greeting preference:', cleanMessage);
           const success = await setGreeting(cleanMessage);
           if (success) {
-            return `شكراً لك! سأناديك ${cleanMessage} من الآن فصاعداً. 
+            console.log('✅ Greeting saved successfully, transitioning to website analysis');
+            // Update local phase immediately to prevent re-prompting
+            updateJourneyPhase('website_analysis');
+            return `شكراً لك! سأناديك ${cleanMessage} من الآن فصاعداً.
 
 الآن، لأتمكن من تقديم أفضل استراتيجية تسويقية لك، أحتاج لتحليل موقعك الإلكتروني أو نشاطك التجاري.
 
 يرجى مشاركة رابط موقعك الإلكتروني معي.`;
+          } else {
+            return `حدث خطأ في حفظ تفضيلاتك. دعني أحاول مرة أخرى. كيف تفضل أن أناديك؟`;
           }
         }
         break;
@@ -316,8 +325,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         if (cleanMessage.includes('http') || cleanMessage.includes('www') || cleanMessage.includes('.com') || cleanMessage.includes('.sa')) {
           const url = extractUrlFromMessage(cleanMessage);
           if (url) {
+            console.log('🔄 Starting website analysis for:', url);
             const success = await analyzeWebsite(url);
             if (success) {
+              updateJourneyPhase('analysis_review');
               return `ممتاز! بدأت في تحليل موقعك ${url} باستخدام الذكاء الاصطناعي المتقدم. 
 
 سأقوم بتحليل:
@@ -336,19 +347,61 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             }
           }
         }
-        break;
+        return `يرجى مشاركة رابط موقعك الإلكتروني معي لأتمكن من تحليله. مثال: https://example.com`;
 
+      case 'analysis_review':
       case 'profile_completion':
         // Handle profile questions
         if (cleanMessage) {
-          await saveAnswer('primary_goal', cleanMessage);
-          return `شكراً لك على هذه المعلومة المهمة!
+          console.log('🔄 Saving profile answer:', cleanMessage);
+          const success = await saveAnswer('primary_goal', cleanMessage);
+          if (success) {
+            updateJourneyPhase('professional_analysis');
+            return `شكراً لك على هذه المعلومة المهمة!
 
 سؤال آخر: ما هي الميزانية الشهرية المخصصة للتسويق الرقمي؟
 أ) أقل من 5,000 ريال
 ب) 5,000 - 15,000 ريال  
 ج) 15,000 - 50,000 ريال
 د) أكثر من 50,000 ريال`;
+          }
+        }
+        break;
+
+      case 'professional_analysis':
+        if (cleanMessage) {
+          const success = await saveAnswer('marketing_budget', cleanMessage);
+          if (success) {
+            updateJourneyPhase('strategy_generation');
+            return `ممتاز! الآن لدي فهم شامل عن نشاطك التجاري وأهدافك.
+
+سأبدأ في إنشاء استراتيجية تسويقية مخصصة لك تتضمن:
+• خطة المحتوى الشهرية
+• استراتيجية السيو المحلي
+• حملات التسويق المدفوعة
+• جدولة المنشورات
+
+هل تريد أن أبدأ في إنشاء الاستراتيجية الآن؟`;
+          }
+        }
+        break;
+
+      case 'strategy_generation':
+        if (cleanMessage.includes('نعم') || cleanMessage.includes('ابدأ') || cleanMessage.includes('موافق')) {
+          const strategy = await generateStrategy();
+          if (strategy) {
+            updateJourneyPhase('commitment_activation');
+            return `🎯 تم إنشاء استراتيجيتك التسويقية المخصصة بنجاح!
+
+استراتيجيتك تتضمن:
+✅ خطة محتوى شهرية مدروسة
+✅ كلمات مفتاحية محلية مستهدفة  
+✅ جدولة منشورات أسبوعية
+✅ حملات إعلانية محسنة
+✅ تقارير أداء شهرية
+
+هل أنت مستعد للالتزام بتنفيذ هذه الاستراتيجية؟`;
+          }
         }
         break;
     }
@@ -361,6 +414,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (!isOnboardingComplete) {
       switch (currentPhase) {
         case 'welcome':
+        case 'greeting_preference':
           return 'أهلاً بك! كيف تفضل أن أناديك؟ يمكنك أن تقول لي اسمك أو كيف تحب أن أخاطبك.';
         case 'website_analysis':
           return 'لأتمكن من مساعدتك بشكل أفضل، أحتاج لرابط موقعك الإلكتروني لتحليله.';

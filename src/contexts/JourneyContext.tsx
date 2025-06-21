@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { JourneyManager, JourneyStatus, OnboardingJourney } from '@/services/journeyManager';
@@ -121,6 +122,7 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
   };
 
   const updateJourneyPhase = (phase: string) => {
+    console.log('🔄 Updating journey phase to:', phase);
     if (journey) {
       const updatedJourney = { ...journey, current_phase: phase };
       setJourney(updatedJourney);
@@ -132,34 +134,87 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
   };
 
   const setGreeting = async (greeting: string): Promise<boolean> => {
-    if (!journey) return false;
+    if (!journey) {
+      console.warn('⚠️ No journey found, cannot save greeting');
+      return false;
+    }
     
+    console.log('💾 Saving greeting preference:', greeting);
     const success = await JourneyManager.setGreetingPreference(journey.journey_id, greeting);
     if (success) {
       setJourneyStatus(prev => prev ? { ...prev, greeting_preference: greeting } : null);
-      updateJourneyPhase('website_analysis');
+      console.log('✅ Greeting preference saved successfully');
+      return true;
+    } else {
+      console.error('❌ Failed to save greeting preference');
+      return false;
     }
-    return success;
   };
 
   const analyzeWebsite = async (url: string): Promise<boolean> => {
     if (!journey) return false;
-    return true; // Placeholder - implement actual website analysis
+    
+    console.log('🔍 Analyzing website:', url);
+    try {
+      const success = await JourneyManager.startWebsiteAnalysis(journey.journey_id, url);
+      if (success) {
+        setJourneyStatus(prev => prev ? { ...prev, website_url: url } : null);
+        console.log('✅ Website analysis started successfully');
+      }
+      return success;
+    } catch (error) {
+      console.error('❌ Website analysis failed:', error);
+      return false;
+    }
   };
 
   const saveAnswer = async (questionId: string, answer: string): Promise<boolean> => {
     if (!journey) return false;
-    return true; // Placeholder - implement actual answer saving
+    
+    console.log('💾 Saving answer:', questionId, answer);
+    try {
+      const success = await JourneyManager.saveProfileAnswer(journey.journey_id, questionId, answer);
+      console.log(success ? '✅ Answer saved successfully' : '❌ Failed to save answer');
+      return success;
+    } catch (error) {
+      console.error('❌ Save answer failed:', error);
+      return false;
+    }
   };
 
   const generateStrategy = async (): Promise<any> => {
     if (!journey) return null;
-    return {}; // Placeholder - implement actual strategy generation
+    
+    console.log('🎯 Generating strategy');
+    try {
+      const strategy = await JourneyManager.generateStrategy(journey.journey_id);
+      if (strategy) {
+        setJourneyStatus(prev => prev ? { ...prev, strategy_generated: true } : null);
+        console.log('✅ Strategy generated successfully');
+      }
+      return strategy;
+    } catch (error) {
+      console.error('❌ Strategy generation failed:', error);
+      return null;
+    }
   };
 
   const activateCommitment = async (): Promise<boolean> => {
     if (!journey) return false;
-    return true; // Placeholder - implement actual commitment activation
+    
+    console.log('🎯 Activating commitment');
+    try {
+      const success = await JourneyManager.activateCommitment(journey.journey_id);
+      if (success) {
+        setJourney(prev => prev ? { ...prev, is_completed: true } : null);
+        setJourneyStatus(prev => prev ? { ...prev, completed: true } : null);
+        console.log('✅ Commitment activated successfully');
+      }
+      return success;
+    } catch (error) {
+      console.error('❌ Commitment activation failed:', error);
+      return false;
+    }
   };
 
   const isOnboardingComplete = journeyStatus?.completed || journey?.is_completed || false;
