@@ -17,9 +17,10 @@ export const useChatOnboarding = () => {
   const loadOnboardingQuestions = async () => {
     try {
       const response = await OnboardingService.getOnboardingQuestions();
-      setOnboardingQuestions(response.questions);
+      setOnboardingQuestions(response.questions || []);
     } catch (error) {
       console.error('Failed to load onboarding questions:', error);
+      setOnboardingQuestions([]); // Set empty array as fallback
     }
   };
 
@@ -29,7 +30,7 @@ export const useChatOnboarding = () => {
   };
 
   const getCurrentQuestion = (): OnboardingQuestion | null => {
-    if (!isOnboardingActive || currentQuestionIndex >= onboardingQuestions.length) {
+    if (!isOnboardingActive || !onboardingQuestions || currentQuestionIndex >= onboardingQuestions.length) {
       return null;
     }
     return onboardingQuestions[currentQuestionIndex];
@@ -57,7 +58,7 @@ export const useChatOnboarding = () => {
       setCurrentQuestionIndex(prev => prev + 1);
       
       // Check if onboarding is complete
-      if (currentQuestionIndex + 1 >= onboardingQuestions.length) {
+      if (currentQuestionIndex + 1 >= (onboardingQuestions?.length || 0)) {
         setIsOnboardingActive(false);
       }
     }
@@ -67,22 +68,22 @@ export const useChatOnboarding = () => {
 
   const skipCurrentQuestion = () => {
     setCurrentQuestionIndex(prev => prev + 1);
-    if (currentQuestionIndex + 1 >= onboardingQuestions.length) {
+    if (currentQuestionIndex + 1 >= (onboardingQuestions?.length || 0)) {
       setIsOnboardingActive(false);
     }
   };
 
   const getOnboardingProgress = () => {
-    if (onboardingQuestions.length === 0) return 0;
+    if (!onboardingQuestions || onboardingQuestions.length === 0) return 0;
     return Math.round((currentQuestionIndex / onboardingQuestions.length) * 100);
   };
 
   const isOnboardingComplete = () => {
-    return currentQuestionIndex >= onboardingQuestions.length;
+    return currentQuestionIndex >= (onboardingQuestions?.length || 0);
   };
 
   return {
-    onboardingQuestions,
+    onboardingQuestions: onboardingQuestions || [],
     currentQuestion: getCurrentQuestion(),
     isOnboardingActive,
     onboardingAnswers,
@@ -92,6 +93,6 @@ export const useChatOnboarding = () => {
     getOnboardingProgress,
     isOnboardingComplete,
     currentQuestionIndex,
-    totalQuestions: onboardingQuestions.length
+    totalQuestions: onboardingQuestions?.length || 0
   };
 };
