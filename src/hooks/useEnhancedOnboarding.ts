@@ -40,7 +40,7 @@ export const useEnhancedOnboarding = () => {
       setLoading(true);
       setError(null);
       
-      // Use the correct method name and simplified approach
+      // Use the correct method name
       const journeyResponse = await MorvoAIService.checkJourneyStatus(user.id);
 
       setOnboardingData({
@@ -56,6 +56,7 @@ export const useEnhancedOnboarding = () => {
 
   const saveGreeting = async (greeting: string) => {
     try {
+      // Use the correct method name
       await MorvoAIService.setGreetingPreference('journey_id', greeting);
       // Refresh journey status
       await fetchJourneyStatus();
@@ -90,6 +91,7 @@ export const useEnhancedOnboarding = () => {
 
   const analyzeWebsite = async (websiteUrl: string) => {
     try {
+      // Use the correct method name
       const analysis = await MorvoAIService.startWebsiteAnalysis('journey_id', websiteUrl);
       return analysis;
     } catch (error) {

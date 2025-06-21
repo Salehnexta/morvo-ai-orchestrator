@@ -104,18 +104,24 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         .from('customer_profiles')
         .select('profile_data')
         .eq('customer_id', userId)
-        .order('created_at', { ascending: false }) // Get most recent profile
-        .limit(1) // Only get one profile
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      // Properly cast and check the profile_data
-      if (profile?.profile_data && typeof profile.profile_data === 'object') {
-        const profileData = profile.profile_data as Record<string, any>;
-        if (profileData.greeting_preference) {
-          setGreetingPreference(profileData.greeting_preference as string);
-          console.log('✅ Loaded greeting preference:', profileData.greeting_preference);
+      // Properly cast and check the profile_data with type safety
+      if (profile?.profile_data) {
+        // Type guard to ensure we have an object
+        if (typeof profile.profile_data === 'object' && profile.profile_data !== null && !Array.isArray(profile.profile_data)) {
+          const profileData = profile.profile_data as Record<string, any>;
+          if ('greeting_preference' in profileData && typeof profileData.greeting_preference === 'string') {
+            setGreetingPreference(profileData.greeting_preference);
+            console.log('✅ Loaded greeting preference:', profileData.greeting_preference);
+          } else {
+            console.log('ℹ️ No greeting preference found in profile data');
+            setGreetingPreference(null);
+          }
         } else {
-          console.log('ℹ️ No greeting preference found');
+          console.log('ℹ️ Profile data is not an object');
           setGreetingPreference(null);
         }
       } else {
