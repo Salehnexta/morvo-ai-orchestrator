@@ -23,7 +23,8 @@ const Dashboard = () => {
     journey 
   } = useJourney();
   
-  const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test' | 'onboarding' | 'perplexity-test'>('hero');
+  // Start with perplexity-test for immediate testing
+  const [contentType, setContentType] = useState<'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test' | 'onboarding' | 'perplexity-test'>('perplexity-test');
   const [journeyInitialized, setJourneyInitialized] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
