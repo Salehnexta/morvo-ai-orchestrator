@@ -252,6 +252,39 @@ export type Database = {
           },
         ]
       }
+      agent_memory: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string | null
+          id: string
+          importance_score: number | null
+          memory_type: string
+          timestamp: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          importance_score?: number | null
+          memory_type: string
+          timestamp?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          importance_score?: number | null
+          memory_type?: string
+          timestamp?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       agent_metrics: {
         Row: {
           agent_id: string
@@ -1404,6 +1437,39 @@ export type Database = {
           },
         ]
       }
+      conversation_messages: {
+        Row: {
+          client_id: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          message_content: string
+          message_type: string | null
+          metadata: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          message_content: string
+          message_type?: string | null
+          metadata?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          message_content?: string
+          message_type?: string | null
+          metadata?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           client_id: string
@@ -1575,6 +1641,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      customer_profiles: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          demographics: Json | null
+          id: string
+          preferences: Json | null
+          profile_data: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          demographics?: Json | null
+          id?: string
+          preferences?: Json | null
+          profile_data?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          demographics?: Json | null
+          id?: string
+          preferences?: Json | null
+          profile_data?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       dashboard_contexts: {
         Row: {
@@ -3715,6 +3814,10 @@ export type Database = {
             }
           | { p_client_id: string; p_feature_name: string; p_period?: string }
         Returns: Json
+      }
+      execute_sql: {
+        Args: { sql_statement: string }
+        Returns: undefined
       }
       handle_user_onboarding_update: {
         Args: Record<PropertyKey, never>

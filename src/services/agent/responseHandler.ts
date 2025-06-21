@@ -1,47 +1,52 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { AgentResponse } from "./types";
-import { AgentCustomerDataService } from "./customerDataService";
 
-export class AgentResponseHandler {
-  // معالجة استجابة العميل
-  static async processUserResponse(
-    clientId: string, 
-    response: AgentResponse
-  ): Promise<boolean> {
+export class ResponseHandler {
+  static async logMessage(
+    clientId: string,
+    conversationId: string,
+    content: string,
+    messageType: 'user' | 'assistant'
+  ): Promise<void> {
     try {
-      console.log('معالجة استجابة العميل:', response);
-
-      // حفظ الاستجابة في قاعدة البيانات
+      // Use messages table instead of conversation_messages
       const { error } = await supabase
-        .from('conversation_messages')
+        .from('messages')
         .insert({
+          conversation_id: conversationId,
           client_id: clientId,
-          content: JSON.stringify(response),
-          sender_type: 'user',
-          sender_id: clientId,
-          metadata: {
-            response_type: response.type,
-            processed: true,
-            timestamp: response.timestamp
-          },
-          timestamp: new Date().toISOString()
+          content: content,
+          role: messageType,
+          created_at: new Date().toISOString()
         });
 
       if (error) {
-        console.error('خطأ في حفظ استجابة العميل:', error);
-        return false;
+        console.error('Error logging message:', error);
       }
-
-      // إذا كانت الاستجابة تحتوي على بيانات نموذج، احفظها
-      if (response.type === 'form_submitted' && response.data) {
-        await AgentCustomerDataService.saveCustomerData(clientId, response.data);
-      }
-
-      return true;
     } catch (error) {
-      console.error('خطأ في معالجة استجابة العميل:', error);
-      return false;
+      console.error('Error in logMessage:', error);
+    }
+  }
+
+  static async parseAgentResponse(response: string): Promise<AgentResponse> {
+    try {
+      const parsedResponse = JSON.parse(response);
+      return {
+        response: parsedResponse.response || 'لا توجد استجابة',
+        suggested_actions: parsedResponse.suggested_actions || [],
+        processing_time: parsedResponse.processing_time || 0,
+        tokens_used: parsedResponse.tokens_used || 0,
+        personality_traits: parsedResponse.personality_traits || {}
+      };
+    } catch (error) {
+      console.error('Error parsing agent response:', error);
+      return {
+        response: response || 'لا توجد استجابة',
+        suggested_actions: [],
+        processing_time: 0,
+        tokens_used: 0,
+        personality_traits: {}
+      };
     }
   }
 }
