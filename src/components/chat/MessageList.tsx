@@ -52,12 +52,19 @@ export const MessageList = ({
           {messages.map((message) => (
             <Message
               key={message.id}
-              {...message}
+              content={message.content}
+              role={message.sender === 'user' ? 'user' : 'assistant'}
+              sender={message.sender}
+              timestamp={message.timestamp}
               theme={theme}
               isRTL={isRTL}
               onCommandResponse={onCommandResponse}
               language={language}
               onActionClick={onActionClick}
+              processing_time={message.processing_time}
+              cost={message.cost}
+              agents_involved={message.agents_involved}
+              commands={message.commands}
             />
           ))}
           
