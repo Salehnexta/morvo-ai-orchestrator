@@ -3,6 +3,7 @@ import React from 'react';
 import { Bot, Sun, Moon, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectionStatus } from './ConnectionStatus';
+import { useUserGreeting } from '@/hooks/useUserGreeting';
 
 interface ChatHeaderProps {
   theme: 'light' | 'dark';
@@ -13,7 +14,7 @@ interface ChatHeaderProps {
     connecting: string;
     connected: string;
   };
-  isConnecting: boolean;
+  isConnecting: boolean;  
   clientId?: string;
   tokenBalance?: number;
   onToggleTheme: () => void;
@@ -30,6 +31,8 @@ export const ChatHeader = ({
   onToggleTheme,
   onUpgrade
 }: ChatHeaderProps) => {
+  const { fullGreeting, loading: greetingLoading } = useUserGreeting();
+  
   const getTokenColor = () => {
     if (!tokenBalance) return 'text-white/60';
     if (tokenBalance < 1000) return 'text-red-300';
@@ -40,10 +43,15 @@ export const ChatHeader = ({
   return (
     <div className="p-6 border-b border-white/10">
       <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-        {/* Simple title like Layla */}
-        <h1 className="text-lg font-medium text-white">
-          {content.masterAgent}
-        </h1>
+        {/* Personalized greeting */}
+        <div className="flex flex-col">
+          <h1 className="text-lg font-medium text-white">
+            {greetingLoading ? 'مرحباً' : fullGreeting}
+          </h1>
+          <p className="text-sm text-blue-200 opacity-80">
+            {content.masterAgent}
+          </p>
+        </div>
 
         {/* Minimal controls */}
         <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>

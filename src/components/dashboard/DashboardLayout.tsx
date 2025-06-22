@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { useLanguage } from "@/contexts/LanguageContext";
 import { DashboardBackground } from './DashboardBackground';
 import { OnboardingLayout } from './OnboardingLayout';
 import { PostOnboardingLayout } from './PostOnboardingLayout';
+import { useUserGreeting } from '@/hooks/useUserGreeting';
 
 interface DashboardLayoutProps {
   isOnboardingComplete: boolean;
-  contentType: 'hero' | 'analytics' | 'content-creator' | 'calendar' | 'campaign' | 'connection-test' | 'onboarding' | 'perplexity-test';
+  contentType: string;
   showOnboarding: boolean;
   lastUserMessage: string;
   conversationHistory: string[];
@@ -28,32 +28,33 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onPhaseComplete,
   onContentAction
 }) => {
-  const { isRTL } = useLanguage();
+  const { fullGreeting, displayName, loading: greetingLoading } = useUserGreeting();
+  
+  // Pass greeting data to child components via props or context
+  const greetingProps = {
+    fullGreeting: greetingLoading ? 'مرحباً' : fullGreeting,
+    displayName: greetingLoading ? 'مستخدم' : displayName,
+    greetingLoading
+  };
 
   return (
-    <div 
-      className="h-screen w-full flex relative overflow-hidden"
-      dir={isRTL ? 'rtl' : 'ltr'}
-    >
+    <div className="min-h-screen">
       <DashboardBackground />
-
-      {/* Conditional Layout based on onboarding status */}
-      {!isOnboardingComplete ? (
-        <OnboardingLayout
-          contentType={contentType}
-          showOnboarding={showOnboarding}
-          onContentTypeChange={onContentTypeChange}
-          onMessageSent={onMessageSent}
+      
+      {showOnboarding ? (
+        <OnboardingLayout 
           onPhaseComplete={onPhaseComplete}
-          onContentAction={onContentAction}
+          greetingData={greetingProps}
         />
       ) : (
         <PostOnboardingLayout
+          contentType={contentType}
           lastUserMessage={lastUserMessage}
           conversationHistory={conversationHistory}
           onContentTypeChange={onContentTypeChange}
           onMessageSent={onMessageSent}
           onContentAction={onContentAction}
+          greetingData={greetingProps}
         />
       )}
     </div>

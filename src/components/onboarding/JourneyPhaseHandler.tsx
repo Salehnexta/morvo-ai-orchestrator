@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useJourney } from '@/contexts/JourneyContext';
+import { useUserGreeting } from '@/hooks/useUserGreeting';
 import { JourneyFlowService, JourneyFlowState } from '@/services/journeyFlowService';
 import { JourneyProgress } from './JourneyProgress';
 import { WebsiteAnalysisStep } from './steps/WebsiteAnalysisStep';
@@ -28,6 +28,8 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
     updateJourneyPhase,
     generateStrategy
   } = useJourney();
+  
+  const { fullGreeting, displayName, loading: greetingLoading } = useUserGreeting();
   
   const [flowState, setFlowState] = useState<JourneyFlowState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -145,14 +147,26 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
             <CardHeader>
               <CardTitle className="text-white text-center flex items-center justify-center gap-2">
                 <Sparkles className="w-6 h-6" />
-                {currentPhaseData.title}
+                {greetingLoading ? 'مرحباً بك في مورفو!' : `${fullGreeting}، مرحباً بك في مورفو!`}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              <p className="text-blue-200 mb-6">{currentPhaseData.description}</p>
-              <p className="text-blue-100 mb-6 text-sm">
-                سنقوم معاً ببناء استراتيجية تسويقية مخصصة لأعمالك في خطوات بسيطة
+              <p className="text-blue-200 mb-6">
+                {displayName !== 'مستخدم' ? 
+                  `${displayName}، سنقوم معاً ببناء استراتيجية تسويقية مخصصة لأعمالك في خطوات بسيطة` :
+                  'سنقوم معاً ببناء استراتيجية تسويقية مخصصة لأعمالك في خطوات بسيطة'
+                }
               </p>
+              <div className="bg-white/10 rounded-lg p-4 mb-6">
+                <h3 className="text-white font-semibold mb-2">ما ستحصل عليه:</h3>
+                <ul className="text-blue-200 text-sm space-y-1 text-right">
+                  <li>• استراتيجية تسويقية شاملة مخصصة لأعمالك</li>
+                  <li>• خطة محتوى لـ 3-6 أشهر</li>
+                  <li>• تحليل منافسين وفرص السوق</li>
+                  <li>• جدول نشر مقترح</li>
+                  <li>• مؤشرات أداء مخصصة</li>
+                </ul>
+              </div>
               <Button
                 onClick={() => handlePhaseAction('complete_phase')}
                 disabled={loading}
@@ -170,11 +184,16 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <User className="w-5 h-5" />
-                {currentPhaseData.title}
+                {displayName !== 'مستخدم' ? 
+                  `${displayName}، كيف تفضل أن أناديك؟` : 
+                  'كيف تفضل أن أناديك؟'
+                }
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-blue-200">{currentPhaseData.description}</p>
+              <p className="text-blue-200">
+                اختر الطريقة التي تفضل أن أخاطبك بها في جميع محادثاتنا المستقبلية
+              </p>
               <div className="space-y-3">
                 <label className="text-white block">اختر طريقة المخاطبة المفضلة:</label>
                 <Select onValueChange={(value) => setFormData({...formData, greeting: value})}>
@@ -294,13 +313,18 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
-                {currentPhaseData.title}
+                {greetingLoading ? 
+                  'تحضير استراتيجيتك الخاصة' : 
+                  `${fullGreeting}، تحضير استراتيجيتك الخاصة`
+                }
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
-              <p className="text-blue-200">{currentPhaseData.description}</p>
+              <p className="text-blue-200">
+                الآن سأقوم بإنشاء استراتيجية تسويقية مخصصة لك باستخدام أحدث تقنيات الذكاء الاصطناعي
+              </p>
               <p className="text-green-200">
-                🎯 سيتم الآن توليد استراتيجيتك التسويقية المخصصة باستخدام GPT-4
+                🎯 ستحصل على استراتيجية شاملة مصممة خصيصاً لأعمالك
               </p>
               <div className="bg-white/5 p-4 rounded-lg text-right">
                 <p className="text-blue-200 text-sm">
@@ -311,6 +335,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
                   <li>• استراتيجية المحتوى</li>
                   <li>• خطة التسويق الرقمي</li>
                   <li>• توصيات الأدوات والقنوات</li>
+                  <li>• جدول زمني للتنفيذ</li>
                 </ul>
               </div>
               <Button
