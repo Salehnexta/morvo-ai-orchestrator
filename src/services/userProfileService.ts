@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface UserProfile {
@@ -40,6 +41,7 @@ export interface UserProfile {
   data_completeness_score?: number;
   onboarding_completed?: boolean;
   onboarding_completed_at?: string;
+  first_time_setup_completed?: boolean;
   created_at?: string;
   updated_at?: string;
   

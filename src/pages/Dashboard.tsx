@@ -1,27 +1,17 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useJourney } from '@/contexts/JourneyContext';
 import { DashboardBackground } from '@/components/dashboard/DashboardBackground';
-import { OnboardingLayout } from '@/components/dashboard/OnboardingLayout';
-import { PostOnboardingLayout } from '@/components/dashboard/PostOnboardingLayout';
+import { DashboardContent } from '@/components/DashboardContent';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { 
-    isOnboardingComplete, 
-    loading,
-    startJourney
-  } = useJourney();
+  const { language } = useLanguage();
+  const { theme } = useTheme();
 
-  useEffect(() => {
-    if (user && !loading && !isOnboardingComplete) {
-      // Start journey for new users
-      startJourney();
-    }
-  }, [user, loading, isOnboardingComplete, startJourney]);
-
-  if (loading) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center">
@@ -32,44 +22,22 @@ const Dashboard = () => {
     );
   }
 
-  const handlePhaseComplete = (phase: string) => {
-    console.log('Phase completed:', phase);
-  };
-
-  const handleContentTypeChange = (type: string) => {
-    console.log('Content type changed:', type);
-  };
-
-  const handleMessageSent = (message: string) => {
-    console.log('Message sent:', message);
-  };
-
-  const handleContentAction = (action: string) => {
-    console.log('Content action:', action);
-  };
+  const isRTL = language === 'ar';
 
   return (
     <div className="min-h-screen flex">
       <DashboardBackground />
       
-      {!isOnboardingComplete ? (
-        <OnboardingLayout
-          contentType="onboarding"
-          showOnboarding={true}
-          onContentTypeChange={handleContentTypeChange}
-          onMessageSent={handleMessageSent}
-          onPhaseComplete={handlePhaseComplete}
-          onContentAction={handleContentAction}
+      {/* Main Dashboard Content */}
+      <div className="flex-1 relative">
+        <DashboardContent 
+          data={{}}
+          theme={theme}
+          language={language}
+          isRTL={isRTL}
+          content={{}}
         />
-      ) : (
-        <PostOnboardingLayout
-          lastUserMessage=""
-          conversationHistory={[]}
-          onContentTypeChange={handleContentTypeChange}
-          onMessageSent={handleMessageSent}
-          onContentAction={handleContentAction}
-        />
-      )}
+      </div>
     </div>
   );
 };
