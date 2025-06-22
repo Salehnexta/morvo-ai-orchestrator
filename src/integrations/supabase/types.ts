@@ -923,6 +923,7 @@ export type Database = {
           case_studies: string[] | null
           company_name: string | null
           company_overview: string | null
+          company_size: string | null
           contact_info: Json | null
           created_at: string | null
           current_monthly_revenue: string | null
@@ -964,6 +965,7 @@ export type Database = {
           case_studies?: string[] | null
           company_name?: string | null
           company_overview?: string | null
+          company_size?: string | null
           contact_info?: Json | null
           created_at?: string | null
           current_monthly_revenue?: string | null
@@ -1005,6 +1007,7 @@ export type Database = {
           case_studies?: string[] | null
           company_name?: string | null
           company_overview?: string | null
+          company_size?: string | null
           contact_info?: Json | null
           created_at?: string | null
           current_monthly_revenue?: string | null
