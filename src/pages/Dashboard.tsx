@@ -29,14 +29,19 @@ const Dashboard = () => {
     );
   }
 
+  const handlePhaseComplete = (phase: string) => {
+    console.log('Phase completed:', phase);
+  };
+
   const dashboardProps = {
     isOnboardingComplete,
-    contentType: 'default' as const,
+    contentType: 'onboarding' as const,
     showOnboarding: !isOnboardingComplete,
     lastUserMessage: '',
     conversationHistory: [],
     onContentTypeChange: () => {},
     onMessageSent: () => {},
+    onPhaseComplete: handlePhaseComplete,
     onContentAction: () => {}
   };
 
@@ -52,10 +57,11 @@ const Dashboard = () => {
         />
       ) : (
         <OnboardingLayout
-          contentType="default"
+          contentType="onboarding"
           showOnboarding={true}
           onContentTypeChange={() => {}}
           onMessageSent={() => {}}
+          onPhaseComplete={handlePhaseComplete}
           onContentAction={() => {}}
         />
       )}

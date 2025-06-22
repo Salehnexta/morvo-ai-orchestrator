@@ -1,166 +1,149 @@
-import { supabase } from "@/integrations/supabase/client";
-import { JourneyManager } from "./journeyManager";
-import { MorvoAIService } from "./morvoAIService";
+
+import { UserProfileService } from './userProfileService';
 
 export interface JourneyPhase {
   id: string;
-  name: string;
   title: string;
   description: string;
-  required: boolean;
-  estimatedDuration: number; // in minutes
-  prerequisites?: string[];
+  requiredData: string[];
+  estimatedTime: number;
+  order: number;
 }
 
 export interface JourneyFlowState {
   currentPhase: string;
   completedPhases: string[];
-  availablePhases: string[];
-  progress: number;
-  canProceed: boolean;
+  blockers: string[];
   nextPhase?: string;
-  blockers?: string[];
+  estimatedTimeRemaining: number;
+}
+
+export interface PhaseTransition {
+  from_phase: string;
+  to_phase: string;
+  user_id: string;
+  transition_data?: any;
+  timestamp: string;
 }
 
 export class JourneyFlowService {
-  private static readonly JOURNEY_PHASES: JourneyPhase[] = [
+  private static phases: JourneyPhase[] = [
     {
       id: 'welcome',
-      name: 'مرحبا',
-      title: 'مرحباً بك في مورفو AI',
-      description: 'ابدأ رحلتك التسويقية معنا',
-      required: true,
-      estimatedDuration: 2
+      title: 'المرحبة والترحيب',
+      description: 'نرحب بالمستخدم ونشرح له الرحلة',
+      requiredData: [],
+      estimatedTime: 2,
+      order: 1
     },
     {
       id: 'greeting_preference',
-      name: 'التفضيلات',
-      title: 'كيف تفضل أن نخاطبك؟',
-      description: 'اختر طريقة التخاطب المناسبة لك',
-      required: true,
-      estimatedDuration: 1
+      title: 'تحديد طريقة المخاطبة',
+      description: 'اختيار كيفية مناداة المستخدم',
+      requiredData: ['greeting_preference'],
+      estimatedTime: 1,
+      order: 2
     },
     {
       id: 'website_analysis',
-      name: 'تحليل الموقع',
-      title: 'تحليل موقعك الإلكتروني',
-      description: 'دعنا نحلل موقعك لفهم أعمالك بشكل أفضل',
-      required: false,
-      estimatedDuration: 5,
-      prerequisites: ['greeting_preference']
+      title: 'تحليل الموقع الإلكتروني',
+      description: 'تحليل موقع المستخدم أو نشاطه',
+      requiredData: ['website_url'],
+      estimatedTime: 5,
+      order: 3
     },
     {
       id: 'analysis_review',
-      name: 'مراجعة التحليل',
       title: 'مراجعة نتائج التحليل',
-      description: 'استعرض النتائج التي توصلنا إليها',
-      required: false,
-      estimatedDuration: 3,
-      prerequisites: ['website_analysis']
+      description: 'عرض ومراجعة نتائج تحليل الموقع',
+      requiredData: ['website_analysis_complete'],
+      estimatedTime: 3,
+      order: 4
     },
     {
       id: 'profile_completion',
-      name: 'إكمال الملف',
-      title: 'إكمال ملفك التجاري',
-      description: 'أخبرنا المزيد عن أعمالك وأهدافك',
-      required: true,
-      estimatedDuration: 8,
-      prerequisites: ['greeting_preference']
+      title: 'إكمال الملف التجاري',
+      description: 'جمع معلومات الأعمال الأساسية',
+      requiredData: ['company_name', 'industry', 'business_type'],
+      estimatedTime: 8,
+      order: 5
     },
     {
       id: 'professional_analysis',
-      name: 'التحليل المتقدم',
       title: 'التحليل التسويقي المتقدم',
-      description: 'تحليل شامل لوضعك التسويقي الحالي',
-      required: true,
-      estimatedDuration: 10,
-      prerequisites: ['profile_completion']
+      description: 'تحليل شامل للوضع التسويقي',
+      requiredData: ['marketing_goals', 'target_audience', 'budget'],
+      estimatedTime: 10,
+      order: 6
     },
     {
       id: 'strategy_generation',
-      name: 'إنشاء الاستراتيجية',
-      title: 'إنشاء استراتيجيتك التسويقية',
-      description: 'تطوير استراتيجية تسويقية مخصصة لأعمالك',
-      required: true,
-      estimatedDuration: 15,
-      prerequisites: ['professional_analysis']
+      title: 'توليد الاستراتيجية',
+      description: 'إنشاء استراتيجية تسويقية مخصصة',
+      requiredData: ['all_data_collected'],
+      estimatedTime: 15,
+      order: 7
+    },
+    {
+      id: 'commitment_activation',
+      title: 'تفعيل الالتزام',
+      description: 'الحصول على التزام المستخدم بالتنفيذ',
+      requiredData: ['strategy_approved'],
+      estimatedTime: 5,
+      order: 8
     }
   ];
 
-  static getPhase(phaseId: string): JourneyPhase | null {
-    return this.JOURNEY_PHASES.find(phase => phase.id === phaseId) || null;
+  static getPhase(phaseId: string): JourneyPhase | undefined {
+    return this.phases.find(phase => phase.id === phaseId);
   }
 
   static getAllPhases(): JourneyPhase[] {
-    return [...this.JOURNEY_PHASES];
+    return this.phases.sort((a, b) => a.order - b.order);
+  }
+
+  static getNextPhase(currentPhase: string): string | null {
+    const currentPhaseObj = this.getPhase(currentPhase);
+    if (!currentPhaseObj) return null;
+
+    const nextPhaseObj = this.phases.find(phase => phase.order === currentPhaseObj.order + 1);
+    return nextPhaseObj ? nextPhaseObj.id : null;
   }
 
   static async getJourneyFlowState(journeyId: string, clientId: string): Promise<JourneyFlowState> {
     try {
-      // Get journey status from the journey manager
-      const journeyStatus = await JourneyManager.getJourneyStatus(journeyId);
-      const currentPhase = journeyStatus?.current_phase || 'welcome';
+      // Since we don't have journey_phase_transitions table, we'll work with user_profiles
+      const profile = await UserProfileService.getUserProfile(clientId);
       
-      // Get completed phases from database
-      const { data: transitions } = await supabase
-        .from('journey_phase_transitions')
-        .select('to_phase')
-        .eq('journey_id', journeyId)
-        .order('transition_time', { ascending: true });
-
-      const completedPhases = transitions?.map(t => t.to_phase) || [];
-      const currentPhaseIndex = this.JOURNEY_PHASES.findIndex(p => p.id === currentPhase);
-      
-      // Calculate available phases based on prerequisites
-      const availablePhases = this.JOURNEY_PHASES.filter(phase => {
-        if (phase.prerequisites && phase.prerequisites.length > 0) {
-          return phase.prerequisites.every(prereq => completedPhases.includes(prereq));
-        }
-        return true;
-      }).map(p => p.id);
-
-      // Calculate progress
-      const totalRequiredPhases = this.JOURNEY_PHASES.filter(p => p.required).length;
-      const completedRequiredPhases = completedPhases.filter(phase => 
-        this.JOURNEY_PHASES.find(p => p.id === phase && p.required)
-      ).length;
-      const progress = Math.round((completedRequiredPhases / totalRequiredPhases) * 100);
-
-      // Determine next phase
-      const nextPhaseIndex = currentPhaseIndex + 1;
-      const nextPhase = nextPhaseIndex < this.JOURNEY_PHASES.length 
-        ? this.JOURNEY_PHASES[nextPhaseIndex].id 
-        : undefined;
-
-      // Check for blockers
-      const blockers: string[] = [];
-      const currentPhaseData = this.getPhase(currentPhase);
-      if (currentPhaseData?.prerequisites) {
-        const missingPrereqs = currentPhaseData.prerequisites.filter(
-          prereq => !completedPhases.includes(prereq)
-        );
-        if (missingPrereqs.length > 0) {
-          blockers.push(`Missing prerequisites: ${missingPrereqs.join(', ')}`);
-        }
+      if (!profile) {
+        return {
+          currentPhase: 'welcome',
+          completedPhases: [],
+          blockers: [],
+          nextPhase: 'greeting_preference',
+          estimatedTimeRemaining: this.calculateTotalTime()
+        };
       }
+
+      const completedPhases = this.determineCompletedPhases(profile);
+      const currentPhase = this.determineCurrentPhase(completedPhases);
+      const blockers = this.identifyBlockers(profile, currentPhase);
+      const nextPhase = blockers.length === 0 ? this.getNextPhase(currentPhase) : null;
 
       return {
         currentPhase,
         completedPhases,
-        availablePhases,
-        progress,
-        canProceed: blockers.length === 0,
-        nextPhase,
-        blockers: blockers.length > 0 ? blockers : undefined
+        blockers,
+        nextPhase: nextPhase || undefined,
+        estimatedTimeRemaining: this.calculateRemainingTime(completedPhases)
       };
     } catch (error) {
-      console.error('❌ Error getting journey flow state:', error);
+      console.error('Error getting journey flow state:', error);
       return {
         currentPhase: 'welcome',
         completedPhases: [],
-        availablePhases: ['welcome'],
-        progress: 0,
-        canProceed: true
+        blockers: ['Error loading journey state'],
+        estimatedTimeRemaining: this.calculateTotalTime()
       };
     }
   }
@@ -168,49 +151,84 @@ export class JourneyFlowService {
   static async recordPhaseTransition(
     journeyId: string, 
     clientId: string, 
-    fromPhase: string | null, 
-    toPhase: string,
-    metadata?: any
+    fromPhase: string, 
+    toPhase: string, 
+    transitionData?: any
   ): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('journey_phase_transitions')
-        .insert({
-          journey_id: journeyId,
-          client_id: clientId,
-          from_phase: fromPhase,
-          to_phase: toPhase,
-          metadata: metadata || {}
-        });
+      // Since we don't have journey_phase_transitions table, we'll track progress in user_profiles
+      const updateData = {
+        [`phase_${toPhase}_completed`]: true,
+        [`phase_${toPhase}_completed_at`]: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) {
-        console.error('❌ Error recording phase transition:', error);
-        return false;
+      if (transitionData) {
+        Object.keys(transitionData).forEach(key => {
+          updateData[key] = transitionData[key];
+        });
       }
 
-      console.log(`✅ Phase transition recorded: ${fromPhase} -> ${toPhase}`);
+      await UserProfileService.saveUserProfile(clientId, updateData);
       return true;
     } catch (error) {
-      console.error('❌ Error in recordPhaseTransition:', error);
+      console.error('Error recording phase transition:', error);
       return false;
     }
   }
 
-  static calculateEstimatedTimeRemaining(currentPhase: string, completedPhases: string[]): number {
-    const currentPhaseIndex = this.JOURNEY_PHASES.findIndex(p => p.id === currentPhase);
-    if (currentPhaseIndex === -1) return 0;
+  private static determineCompletedPhases(profile: any): string[] {
+    const completed = [];
+    
+    if (profile.greeting_preference) completed.push('welcome', 'greeting_preference');
+    if (profile.website_url) completed.push('website_analysis');
+    if (profile.website_analysis_complete) completed.push('analysis_review');
+    if (profile.company_name && profile.industry) completed.push('profile_completion');
+    if (profile.primary_marketing_goals && profile.target_audience) completed.push('professional_analysis');
+    if (profile.strategy_generated) completed.push('strategy_generation');
+    if (profile.commitment_confirmed) completed.push('commitment_activation');
 
-    const remainingPhases = this.JOURNEY_PHASES.slice(currentPhaseIndex);
-    const incompletePhases = remainingPhases.filter(phase => 
-      !completedPhases.includes(phase.id)
-    );
-
-    return incompletePhases.reduce((total, phase) => total + phase.estimatedDuration, 0);
+    return completed;
   }
 
-  static getPhaseProgress(phaseId: string): number {
-    const phaseIndex = this.JOURNEY_PHASES.findIndex(p => p.id === phaseId);
-    if (phaseIndex === -1) return 0;
-    return Math.round(((phaseIndex + 1) / this.JOURNEY_PHASES.length) * 100);
+  private static determineCurrentPhase(completedPhases: string[]): string {
+    const allPhases = this.getAllPhases();
+    
+    for (const phase of allPhases) {
+      if (!completedPhases.includes(phase.id)) {
+        return phase.id;
+      }
+    }
+    
+    return 'commitment_activation'; // Final phase
+  }
+
+  private static identifyBlockers(profile: any, currentPhase: string): string[] {
+    const blockers = [];
+    const phase = this.getPhase(currentPhase);
+    
+    if (!phase) return blockers;
+
+    phase.requiredData.forEach(requirement => {
+      if (!profile[requirement]) {
+        blockers.push(`Missing: ${requirement}`);
+      }
+    });
+
+    return blockers;
+  }
+
+  private static calculateTotalTime(): number {
+    return this.phases.reduce((total, phase) => total + phase.estimatedTime, 0);
+  }
+
+  private static calculateRemainingTime(completedPhases: string[]): number {
+    return this.phases
+      .filter(phase => !completedPhases.includes(phase.id))
+      .reduce((total, phase) => total + phase.estimatedTime, 0);
+  }
+
+  static calculateEstimatedTimeRemaining(currentPhase: string, completedPhases: string[]): number {
+    return this.calculateRemainingTime(completedPhases);
   }
 }

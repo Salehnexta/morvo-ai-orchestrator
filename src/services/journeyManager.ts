@@ -1,21 +1,7 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { MorvoAIService } from "./morvoAIService";
-import { DatabaseCleanupService } from "./databaseCleanupService";
+import { UserProfileService } from './userProfileService';
 
-export interface JourneyStatus {
-  journey_id: string;
-  current_phase: string;
-  completed: boolean;
-  profile_progress: number;
-  needs_onboarding: boolean;
-  greeting_preference?: string;
-  website_url?: string;
-  analysis_results?: any;
-  strategy_generated?: boolean;
-}
-
-export interface OnboardingJourney {
+interface JourneyData {
   journey_id: string;
   client_id: string;
   current_phase: string;
@@ -26,338 +12,96 @@ export interface OnboardingJourney {
 }
 
 export class JourneyManager {
-  private static readonly PHASES = [
-    'welcome',
-    'greeting_preference', 
-    'website_analysis',
-    'analysis_review',
-    'profile_completion',
-    'professional_analysis',
-    'strategy_generation'
-  ];
-
-  static async checkExistingJourney(clientId: string): Promise<OnboardingJourney | null> {
+  static async initializeJourney(userId: string): Promise<string | null> {
     try {
-      console.log('🔍 Checking existing journey for client:', clientId);
+      // Create journey record using user_profiles as the main tracking table
+      const journeyId = crypto.randomUUID();
       
-      // Clean up any duplicate profiles first
-      await DatabaseCleanupService.cleanupDuplicateProfiles(clientId);
-      
-      // Try backend first with better error handling
-      try {
-        const backendJourney = await MorvoAIService.checkJourneyStatus(clientId);
-        if (backendJourney && backendJourney.status !== 'completed') {
-          console.log('✅ Found active backend journey:', backendJourney);
-          
-          // Save/update local record
-          const localJourney = {
-            journey_id: backendJourney.journey_id,
-            client_id: clientId,
-            current_phase: backendJourney.current_phase || 'welcome',
-            profile_progress: backendJourney.completion_percentage || 0,
-            is_completed: backendJourney.status === 'completed',
-            created_at: backendJourney.created_at || new Date().toISOString(),
-            updated_at: backendJourney.updated_at || new Date().toISOString()
-          };
-          
-          await this.saveJourneyLocally(localJourney);
-          return localJourney;
-        }
-      } catch (backendError) {
-        console.warn('⚠️ Backend journey check failed, using local fallback:', backendError);
-      }
-      
-      // Fallback to local database
-      const { data: localJourney } = await supabase
-        .from('onboarding_journeys')
-        .select('*')
-        .eq('client_id', clientId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (localJourney) {
-        console.log('✅ Found existing local journey:', localJourney);
-        return {
-          journey_id: localJourney.journey_id,
-          client_id: localJourney.client_id,
-          current_phase: localJourney.current_phase,
-          profile_progress: localJourney.profile_progress || 0,
-          is_completed: localJourney.is_completed || false,
-          created_at: localJourney.created_at,
-          updated_at: localJourney.updated_at
-        };
-      }
-
-      // Ensure journey record exists for users with profiles
-      const journeyId = await DatabaseCleanupService.ensureJourneyRecord(clientId);
-      if (journeyId) {
-        return await this.checkExistingJourney(clientId);
-      }
-
-      return null;
-    } catch (error) {
-      console.error('❌ Error checking existing journey:', error);
-      return null;
-    }
-  }
-
-  static async startJourney(clientId: string, websiteUrl?: string): Promise<OnboardingJourney | null> {
-    try {
-      // Check if journey already exists
-      const existingJourney = await this.checkExistingJourney(clientId);
-      if (existingJourney && !existingJourney.is_completed) {
-        console.log('✅ Using existing journey:', existingJourney);
-        return existingJourney;
-      }
-
-      console.log('🚀 Starting new journey for client:', clientId);
-      
-      // Try backend first if website URL is provided
-      if (websiteUrl) {
-        try {
-          const backendJourney = await MorvoAIService.startJourneyWithWebsite(websiteUrl);
-          
-          if (backendJourney) {
-            console.log('✅ Backend journey started:', backendJourney);
-            
-            const journey = {
-              journey_id: backendJourney.journey_id,
-              client_id: clientId,
-              current_phase: backendJourney.current_phase || 'website_analysis',
-              profile_progress: backendJourney.completion_percentage || 25,
-              is_completed: false,
-              created_at: backendJourney.created_at || new Date().toISOString(),
-              updated_at: backendJourney.updated_at || new Date().toISOString()
-            };
-            
-            await this.saveJourneyLocally(journey);
-            return journey;
-          }
-        } catch (backendError) {
-          console.warn('⚠️ Backend journey creation failed, creating locally:', backendError);
-        }
-      }
-
-      // Create journey locally
-      const localJourney: OnboardingJourney = {
-        journey_id: `journey_${clientId}_${Date.now()}`,
-        client_id: clientId,
+      const success = await UserProfileService.saveUserProfile(userId, {
+        journey_id: journeyId,
         current_phase: 'welcome',
         profile_progress: 0,
         is_completed: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      await this.saveJourneyLocally(localJourney);
-      console.log('✅ Local journey created:', localJourney);
-      return localJourney;
-    } catch (error) {
-      console.error('❌ Error starting journey:', error);
-      return null;
-    }
-  }
-
-  static async saveJourneyLocally(journey: OnboardingJourney): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('onboarding_journeys')
-        .upsert({
-          journey_id: journey.journey_id,
-          client_id: journey.client_id,
-          current_phase: journey.current_phase,
-          profile_progress: journey.profile_progress,
-          is_completed: journey.is_completed,
-          created_at: journey.created_at,
-          updated_at: journey.updated_at
-        });
-
-      if (error) {
-        console.error('❌ Error saving journey locally:', error);
-      } else {
-        console.log('✅ Journey saved locally');
-      }
-    } catch (error) {
-      console.error('❌ Error in saveJourneyLocally:', error);
-    }
-  }
-
-  static async getJourneyStatus(journeyId: string): Promise<JourneyStatus | null> {
-    try {
-      // Extract client ID from journey ID for backend lookup
-      const clientId = journeyId.includes('_') ? journeyId.split('_')[1] : journeyId;
-      
-      // Try backend first
-      try {
-        const backendStatus = await MorvoAIService.checkJourneyStatus(clientId);
-        
-        if (backendStatus) {
-          return {
-            journey_id: backendStatus.journey_id,
-            current_phase: backendStatus.current_phase,
-            completed: backendStatus.status === 'completed',
-            profile_progress: backendStatus.completion_percentage || 0,
-            needs_onboarding: backendStatus.status !== 'completed',
-            greeting_preference: backendStatus.data?.greeting_preference,
-            website_url: backendStatus.data?.website_url
-          };
-        }
-      } catch (backendError) {
-        console.warn('⚠️ Backend status fetch failed, using local data:', backendError);
-      }
-
-      // Fallback to local database
-      const { data: localJourney } = await supabase
-        .from('onboarding_journeys')
-        .select('*')
-        .eq('journey_id', journeyId)
-        .maybeSingle();
-
-      if (localJourney) {
-        return {
-          journey_id: localJourney.journey_id,
-          current_phase: localJourney.current_phase,
-          completed: localJourney.is_completed || false,
-          profile_progress: localJourney.profile_progress || 0,
-          needs_onboarding: !localJourney.is_completed
-        };
-      }
-
-      return null;
-    } catch (error) {
-      console.error('❌ Error getting journey status:', error);
-      return null;
-    }
-  }
-
-  static async setGreetingPreference(journeyId: string, greeting: string): Promise<boolean> {
-    try {
-      console.log('🔄 Setting greeting preference:', greeting, 'for journey:', journeyId);
-      
-      // Try backend first
-      try {
-        const success = await MorvoAIService.setGreetingPreference(journeyId, greeting);
-        if (success) {
-          console.log('✅ Greeting preference set on backend');
-        }
-      } catch (backendError) {
-        console.warn('⚠️ Backend greeting update failed:', backendError);
-      }
-
-      // Extract client ID from journey ID
-      const clientId = journeyId.includes('_') ? journeyId.split('_')[1] : journeyId;
-      
-      // Save locally
-      const { data: existingProfile } = await supabase
-        .from('customer_profiles')
-        .select('profile_data')
-        .eq('customer_id', clientId)
-        .maybeSingle();
-
-      const existingData = (existingProfile?.profile_data && typeof existingProfile.profile_data === 'object') 
-        ? existingProfile.profile_data as Record<string, any>
-        : {};
-      
-      const { error: profileError } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: clientId,
-          profile_data: { 
-            ...existingData,
-            greeting_preference: greeting 
-          },
-          updated_at: new Date().toISOString()
-        });
-
-      if (profileError) {
-        console.error('❌ Error saving greeting to profile:', profileError);
-      }
-
-      // Update journey phase to move to next step
-      const { error: journeyError } = await supabase
-        .from('onboarding_journeys')
-        .update({
-          current_phase: 'website_analysis',
-          profile_progress: 25,
-          updated_at: new Date().toISOString()
-        })
-        .eq('journey_id', journeyId);
-
-      if (journeyError) {
-        console.error('❌ Error updating journey phase:', journeyError);
-      }
-
-      console.log('✅ Greeting preference saved locally');
-      return !profileError;
-    } catch (error) {
-      console.error('❌ Error setting greeting preference:', error);
-      return false;
-    }
-  }
-
-  static async startWebsiteAnalysis(journeyId: string, websiteUrl: string): Promise<boolean> {
-    try {
-      console.log('🔍 Starting website analysis for:', websiteUrl);
-      
-      const success = await MorvoAIService.startWebsiteAnalysis(journeyId, websiteUrl);
-      
-      console.log('✅ Website analysis started:', success);
-      return success;
-    } catch (error) {
-      console.error('❌ Error starting website analysis:', error);
-      return false;
-    }
-  }
-
-  static async generateStrategy(journeyId: string): Promise<any> {
-    try {
-      console.log('🎯 Generating strategy for journey:', journeyId);
-      
-      const response = await MorvoAIService.makeRequest(`/onboarding/generate-strategy/${journeyId}`, {
-        method: 'POST'
+        journey_started_at: new Date().toISOString()
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to generate strategy: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Strategy generated:', data);
-      
-      // Mark journey as completed after strategy generation
-      const clientId = journeyId.includes('_') ? journeyId.split('_')[1] : journeyId;
-      await supabase
-        .from('onboarding_journeys')
-        .update({
-          is_completed: true,
-          profile_progress: 100,
-          updated_at: new Date().toISOString()
-        })
-        .eq('journey_id', journeyId);
-      
-      return data;
+      return success ? journeyId : null;
     } catch (error) {
-      console.error('❌ Error generating strategy:', error);
+      console.error('Error initializing journey:', error);
       return null;
     }
   }
 
-  static getPhaseIndex(phase: string): number {
-    return this.PHASES.indexOf(phase);
-  }
+  static async getJourney(userId: string): Promise<JourneyData | null> {
+    try {
+      const profile = await UserProfileService.getUserProfile(userId);
+      if (!profile) return null;
 
-  static getNextPhase(currentPhase: string): string | null {
-    const currentIndex = this.getPhaseIndex(currentPhase);
-    if (currentIndex === -1 || currentIndex === this.PHASES.length - 1) {
+      // Map user profile data to journey data structure
+      return {
+        journey_id: profile.id, // Use profile ID as journey ID
+        client_id: userId,
+        current_phase: profile.onboarding_completed ? 'completed' : 'welcome',
+        profile_progress: profile.data_completeness_score || 0,
+        is_completed: profile.onboarding_completed || false,
+        created_at: profile.created_at || new Date().toISOString(),
+        updated_at: profile.updated_at || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error getting journey:', error);
       return null;
     }
-    return this.PHASES[currentIndex + 1];
   }
 
-  static calculateProgress(phase: string): number {
-    const phaseIndex = this.getPhaseIndex(phase);
-    if (phaseIndex === -1) return 0;
-    return Math.round(((phaseIndex + 1) / this.PHASES.length) * 100);
+  static async updateJourneyPhase(userId: string, phase: string): Promise<boolean> {
+    try {
+      const success = await UserProfileService.saveUserProfile(userId, {
+        current_phase: phase,
+        updated_at: new Date().toISOString()
+      });
+
+      return success;
+    } catch (error) {
+      console.error('Error updating journey phase:', error);
+      return false;
+    }
+  }
+
+  static async completeJourney(userId: string): Promise<boolean> {
+    try {
+      const success = await UserProfileService.saveUserProfile(userId, {
+        is_completed: true,
+        onboarding_completed: true,
+        current_phase: 'completed',
+        profile_progress: 100,
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+      return success;
+    } catch (error) {
+      console.error('Error completing journey:', error);
+      return false;
+    }
+  }
+
+  static async getJourneyProgress(userId: string): Promise<number> {
+    try {
+      const profile = await UserProfileService.getUserProfile(userId);
+      return profile?.data_completeness_score || 0;
+    } catch (error) {
+      console.error('Error getting journey progress:', error);
+      return 0;
+    }
+  }
+
+  static async isJourneyCompleted(userId: string): Promise<boolean> {
+    try {
+      const profile = await UserProfileService.getUserProfile(userId);
+      return profile?.onboarding_completed || false;
+    } catch (error) {
+      console.error('Error checking journey completion:', error);
+      return false;
+    }
   }
 }

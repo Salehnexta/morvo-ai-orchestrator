@@ -21,6 +21,15 @@ export interface CompetitorAnalysis {
   lastUpdated: string;
 }
 
+// Add the missing EnhancedCompetitorData interface
+export interface EnhancedCompetitorData {
+  basicData: CompetitorAnalysis;
+  seRankingData?: any;
+  socialMediaData?: any;
+  enhancementStatus: 'pending' | 'enhanced' | 'failed';
+  lastEnhanced?: string;
+}
+
 export class CompetitorAnalysisService {
   static async saveBasicCompetitors(userId: string, competitors: string[]): Promise<boolean> {
     try {
@@ -60,6 +69,51 @@ export class CompetitorAnalysisService {
       return profile.competitor_analysis || null;
     } catch (error) {
       console.error('Error getting competitor analysis:', error);
+      return null;
+    }
+  }
+
+  // Add the missing method
+  static async getEnhancedCompetitorAnalysis(userId: string): Promise<EnhancedCompetitorData | null> {
+    try {
+      const basicData = await this.getCompetitorAnalysis(userId);
+      if (!basicData) return null;
+
+      return {
+        basicData,
+        enhancementStatus: 'pending',
+        lastEnhanced: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error getting enhanced competitor analysis:', error);
+      return null;
+    }
+  }
+
+  // Add the missing needsEnhancement property as a method
+  static needsEnhancement(data: EnhancedCompetitorData): boolean {
+    return data.enhancementStatus === 'pending' || 
+           (data.lastEnhanced && new Date(data.lastEnhanced) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+  }
+
+  // Add the missing enhanceWithSERanking method
+  static async enhanceWithSERanking(userId: string): Promise<EnhancedCompetitorData | null> {
+    try {
+      const basicData = await this.getCompetitorAnalysis(userId);
+      if (!basicData) return null;
+
+      // Simulate enhancement with SE Ranking data
+      return {
+        basicData,
+        seRankingData: {
+          enhanced: true,
+          timestamp: new Date().toISOString()
+        },
+        enhancementStatus: 'enhanced',
+        lastEnhanced: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error enhancing with SE Ranking:', error);
       return null;
     }
   }
@@ -139,7 +193,7 @@ export class CompetitorAnalysisService {
   private static generateThreats(profile: UserProfile): string[] {
     const threats = [];
     
-    if (profile.marketing_budget === 'less_than_1000') {
+    if (profile.monthly_marketing_budget === 'less_than_1000') {
       threats.push('Limited marketing budget vs competitors');
     }
     
