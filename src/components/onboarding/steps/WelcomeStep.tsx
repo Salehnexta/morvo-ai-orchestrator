@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sparkles, Target, BarChart3, Users } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { UserProfileService } from '@/services/userProfileService';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface WelcomeStepProps {
@@ -79,23 +79,11 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, data, onDataCh
     setIsLoading(true);
     
     try {
-      // Save greeting preference if provided
+      // Save greeting preference directly to user profile
       if (greeting.trim() && user) {
-        const { data: clientData } = await supabase
-          .from('clients')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (clientData) {
-          await supabase
-            .from('client_experience')
-            .upsert({
-              client_id: clientData.id,
-              greeting_preference: greeting.trim(),
-              updated_at: new Date().toISOString()
-            });
-        }
+        await UserProfileService.saveUserProfile(user.id, {
+          greeting_preference: greeting.trim()
+        });
       }
 
       // Update local data

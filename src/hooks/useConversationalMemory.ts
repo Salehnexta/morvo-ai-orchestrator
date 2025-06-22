@@ -1,307 +1,175 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserProfileService } from '@/services/userProfileService';
 
-interface ConversationMemory {
-  id: string;
-  type: 'preference' | 'context' | 'achievement' | 'goal' | 'behavior';
-  content: any;
-  importance: number;
-  lastAccessed: Date;
-  accessCount: number;
-}
-
-interface EmotionalContext {
-  currentEmotion: string;
-  confidence: number;
-  triggers: string[];
-  adaptationStrategy: string;
-  satisfactionLevel: number;
+interface ConversationalMemory {
+  memories: Array<{
+    type: string;
+    content: string;
+    importance: number;
+    timestamp: string;
+    accessCount: number;
+  }>;
+  emotionalContext: {
+    currentMood: string;
+    engagementLevel: number;
+    frustrationLevel: number;
+    satisfactionScore: number;
+  };
+  conversationFlow: {
+    currentTopic: string;
+    topicHistory: string[];
+    contextSwitches: number;
+    averageResponseTime: number;
+  };
 }
 
 export const useConversationalMemory = () => {
-  const [memories, setMemories] = useState<ConversationMemory[]>([]);
-  const [emotionalContext, setEmotionalContext] = useState<EmotionalContext>({
-    currentEmotion: 'neutral',
-    confidence: 0.7,
-    triggers: [],
-    adaptationStrategy: 'supportive',
-    satisfactionLevel: 0.8
-  });
-  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-
-  const loadMemories = useCallback(async () => {
-    if (!user?.id) return;
-
-    try {
-      setIsLoading(true);
-      
-      // Get client ID first
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!clientData) return;
-
-      // Load agent memories
-      const { data: memoriesData, error } = await supabase
-        .from('agent_memories')
-        .select('*')
-        .eq('client_id', clientData.id)
-        .eq('agent_id', 'morvo-ai')
-        .order('importance', { ascending: false })
-        .limit(50);
-
-      if (error) {
-        console.error('Error loading memories:', error);
-        return;
-      }
-
-      const formattedMemories: ConversationMemory[] = memoriesData.map(memory => ({
-        id: memory.id,
-        type: memory.memory_type as any,
-        content: memory.content,
-        importance: memory.importance || 5,
-        lastAccessed: new Date(memory.last_accessed_at || memory.created_at),
-        accessCount: memory.access_count || 0
-      }));
-
-      setMemories(formattedMemories);
-    } catch (error) {
-      console.error('Error in loadMemories:', error);
-    } finally {
-      setIsLoading(false);
+  const [memories, setMemories] = useState<ConversationalMemory>({
+    memories: [],
+    emotionalContext: {
+      currentMood: 'neutral',
+      engagementLevel: 0.5,
+      frustrationLevel: 0,
+      satisfactionScore: 0.5
+    },
+    conversationFlow: {
+      currentTopic: 'general',
+      topicHistory: [],
+      contextSwitches: 0,
+      averageResponseTime: 0
     }
-  }, [user?.id]);
+  });
+  
+  const [loading, setLoading] = useState(false);
 
-  const saveMemory = useCallback(async (
-    type: ConversationMemory['type'],
-    content: any,
-    importance: number = 5
-  ) => {
-    if (!user?.id) return false;
-
-    try {
-      // Get client ID
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!clientData) return false;
-
-      const { error } = await supabase
-        .from('agent_memories')
-        .insert({
-          client_id: clientData.id,
-          agent_id: 'morvo-ai',
-          memory_type: type,
-          content: content,
-          importance: importance,
-          access_count: 0,
-          last_accessed_at: new Date().toISOString()
-        });
-
-      if (!error) {
-        // Update local state
-        const newMemory: ConversationMemory = {
-          id: Date.now().toString(),
-          type,
-          content,
-          importance,
-          lastAccessed: new Date(),
-          accessCount: 0
-        };
-        
-        setMemories(prev => [newMemory, ...prev].slice(0, 50));
-        return true;
-      }
-    } catch (error) {
-      console.error('Error saving memory:', error);
-    }
-    
-    return false;
-  }, [user?.id]);
-
-  const updateEmotionalContext = useCallback(async (
-    emotion: string,
-    confidence: number,
-    triggers: string[] = [],
-    message?: string
-  ) => {
-    if (!user?.id) return;
-
-    // Determine adaptation strategy based on emotion
-    let adaptationStrategy = 'supportive';
-    let satisfactionLevel = emotionalContext.satisfactionLevel;
-
-    switch (emotion.toLowerCase()) {
-      case 'frustrated':
-      case 'angry':
-        adaptationStrategy = 'calming';
-        satisfactionLevel = Math.max(0.3, satisfactionLevel - 0.2);
-        break;
-      case 'confused':
-        adaptationStrategy = 'explanatory';
-        satisfactionLevel = Math.max(0.4, satisfactionLevel - 0.1);
-        break;
-      case 'excited':
-      case 'happy':
-        adaptationStrategy = 'encouraging';
-        satisfactionLevel = Math.min(1.0, satisfactionLevel + 0.1);
-        break;
-      case 'worried':
-      case 'anxious':
-        adaptationStrategy = 'reassuring';
-        break;
-      default:
-        adaptationStrategy = 'supportive';
-    }
-
-    const newContext: EmotionalContext = {
-      currentEmotion: emotion,
-      confidence,
-      triggers,
-      adaptationStrategy,
-      satisfactionLevel
-    };
-
-    setEmotionalContext(newContext);
-
-    // Save emotional context to database
-    try {
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (clientData) {
-        await supabase
-          .from('emotional_contexts')
-          .insert({
-            client_id: clientData.id,
-            primary_emotion: emotion,
-            confidence,
-            detected_triggers: triggers,
-            adaptation_strategy: adaptationStrategy,
-            emotional_intensity: confidence,
-            context_data: { message, satisfactionLevel }
-          });
-      }
-    } catch (error) {
-      console.error('Error saving emotional context:', error);
-    }
-  }, [user?.id, emotionalContext.satisfactionLevel]);
-
-  const getRelevantMemories = useCallback((
-    context: string,
-    limit: number = 5
-  ): ConversationMemory[] => {
-    const contextLower = context.toLowerCase();
-    
-    return memories
-      .filter(memory => {
-        if (typeof memory.content === 'string') {
-          return memory.content.toLowerCase().includes(contextLower);
-        }
-        if (typeof memory.content === 'object') {
-          return JSON.stringify(memory.content).toLowerCase().includes(contextLower);
-        }
-        return false;
-      })
-      .sort((a, b) => {
-        // Sort by importance and recency
-        const importanceWeight = (b.importance - a.importance) * 0.7;
-        const recencyWeight = (b.lastAccessed.getTime() - a.lastAccessed.getTime()) * 0.3;
-        return importanceWeight + recencyWeight;
-      })
-      .slice(0, limit);
-  }, [memories]);
-
-  const analyzeMessageEmotion = useCallback((message: string): {
-    emotion: string;
-    confidence: number;
-    triggers: string[];
-  } => {
-    const messageLower = message.toLowerCase();
-    
-    // Simple emotion detection based on keywords
-    const emotionPatterns = {
-      frustrated: ['محبط', 'مزعج', 'صعب', 'مشكلة', 'خطأ', 'frustrated', 'annoying', 'difficult'],
-      excited: ['رائع', 'ممتاز', 'مذهل', 'سعيد', 'excited', 'amazing', 'great', 'awesome'],
-      confused: ['لا أفهم', 'مربك', 'غامض', 'confused', 'unclear', 'complicated'],
-      worried: ['قلق', 'خائف', 'مخاوف', 'worried', 'concerned', 'afraid'],
-      satisfied: ['شكرا', 'ممتن', 'راضي', 'thanks', 'grateful', 'satisfied']
-    };
-
-    let detectedEmotion = 'neutral';
-    let confidence = 0.5;
-    const triggers: string[] = [];
-
-    for (const [emotion, patterns] of Object.entries(emotionPatterns)) {
-      const matchedPatterns = patterns.filter(pattern => 
-        messageLower.includes(pattern.toLowerCase())
-      );
-      
-      if (matchedPatterns.length > 0) {
-        detectedEmotion = emotion;
-        confidence = Math.min(0.9, 0.6 + (matchedPatterns.length * 0.1));
-        triggers.push(...matchedPatterns);
-        break;
-      }
-    }
-
-    return { emotion: detectedEmotion, confidence, triggers };
-  }, []);
-
-  const getPersonalizedResponse = useCallback((baseResponse: string): string => {
-    const { adaptationStrategy, currentEmotion, satisfactionLevel } = emotionalContext;
-    
-    let personalizedResponse = baseResponse;
-
-    // Add emotional adaptation
-    switch (adaptationStrategy) {
-      case 'calming':
-        personalizedResponse = `أفهم شعورك، دعني أساعدك بهدوء. ${baseResponse}`;
-        break;
-      case 'encouraging':
-        personalizedResponse = `رائع! حماسك يشجعني. ${baseResponse}`;
-        break;
-      case 'explanatory':
-        personalizedResponse = `دعني أوضح الأمر بطريقة مبسطة. ${baseResponse}`;
-        break;
-      case 'reassuring':
-        personalizedResponse = `لا تقلق، سنحل هذا معاً. ${baseResponse}`;
-        break;
-    }
-
-    // Add satisfaction-based adjustments
-    if (satisfactionLevel < 0.5) {
-      personalizedResponse += '\n\nهل تحتاج مني توضيح أكثر أو مساعدة إضافية؟';
-    }
-
-    return personalizedResponse;
-  }, [emotionalContext]);
-
+  // Load user profile data as conversation memory
   useEffect(() => {
+    const loadMemories = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        const userProfile = await UserProfileService.getUserProfile(user.id);
+        
+        if (userProfile) {
+          // Transform user profile data into conversational memory format
+          const profileMemories = [];
+          
+          if (userProfile.company_name) {
+            profileMemories.push({
+              type: 'business_identity',
+              content: `Company: ${userProfile.company_name}`,
+              importance: 0.9,
+              timestamp: userProfile.created_at || new Date().toISOString(),
+              accessCount: 1
+            });
+          }
+          
+          if (userProfile.industry) {
+            profileMemories.push({
+              type: 'business_context',
+              content: `Industry: ${userProfile.industry}`,
+              importance: 0.8,
+              timestamp: userProfile.created_at || new Date().toISOString(),
+              accessCount: 1
+            });
+          }
+          
+          if (userProfile.marketing_experience) {
+            profileMemories.push({
+              type: 'experience_level',
+              content: `Marketing Experience: ${userProfile.marketing_experience}`,
+              importance: 0.7,
+              timestamp: userProfile.created_at || new Date().toISOString(),
+              accessCount: 1
+            });
+          }
+
+          setMemories(prev => ({
+            ...prev,
+            memories: profileMemories
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading conversational memories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadMemories();
-  }, [loadMemories]);
+  }, [user]);
+
+  const addMemory = async (type: string, content: string, importance: number = 0.5) => {
+    const newMemory = {
+      type,
+      content,
+      importance,
+      timestamp: new Date().toISOString(),
+      accessCount: 1
+    };
+
+    setMemories(prev => ({
+      ...prev,
+      memories: [newMemory, ...prev.memories].slice(0, 50) // Keep only latest 50 memories
+    }));
+  };
+
+  const updateEmotionalContext = (updates: Partial<ConversationalMemory['emotionalContext']>) => {
+    setMemories(prev => ({
+      ...prev,
+      emotionalContext: {
+        ...prev.emotionalContext,
+        ...updates
+      }
+    }));
+  };
+
+  const updateConversationFlow = (updates: Partial<ConversationalMemory['conversationFlow']>) => {
+    setMemories(prev => ({
+      ...prev,
+      conversationFlow: {
+        ...prev.conversationFlow,
+        ...updates
+      }
+    }));
+  };
+
+  const getRelevantMemories = (query: string, limit: number = 5) => {
+    return memories.memories
+      .filter(memory => 
+        memory.content.toLowerCase().includes(query.toLowerCase()) ||
+        memory.type.toLowerCase().includes(query.toLowerCase())
+      )
+      .sort((a, b) => b.importance - a.importance)
+      .slice(0, limit);
+  };
+
+  const getContextualSummary = () => {
+    const recentMemories = memories.memories.slice(0, 10);
+    const topics = [...new Set(recentMemories.map(m => m.type))];
+    
+    return {
+      recentTopics: topics,
+      totalMemories: memories.memories.length,
+      averageImportance: memories.memories.reduce((sum, m) => sum + m.importance, 0) / memories.memories.length || 0,
+      emotionalState: memories.emotionalContext,
+      conversationState: memories.conversationFlow
+    };
+  };
 
   return {
-    memories,
-    emotionalContext,
-    isLoading,
-    saveMemory,
+    memories: memories.memories,
+    emotionalContext: memories.emotionalContext,
+    conversationFlow: memories.conversationFlow,
+    loading,
+    addMemory,
     updateEmotionalContext,
+    updateConversationFlow,
     getRelevantMemories,
-    analyzeMessageEmotion,
-    getPersonalizedResponse,
-    loadMemories
+    getContextualSummary
   };
 };

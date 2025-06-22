@@ -1,25 +1,16 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { JourneyManager, JourneyStatus, OnboardingJourney } from '@/services/journeyManager';
-import { supabase } from '@/integrations/supabase/client';
+import { UserProfileService } from '@/services/userProfileService';
 
 interface JourneyContextType {
-  journey: OnboardingJourney | null;
-  journeyStatus: JourneyStatus | null;
+  journey: any;
+  setJourney: (journey: any) => void;
+  journeyStatus: any;
+  setJourneyStatus: (status: any) => void;
+  currentStep: string;
+  setCurrentStep: (step: string) => void;
   loading: boolean;
-  error: string | null;
-  startJourney: (websiteUrl?: string) => Promise<void>;
-  updateJourneyPhase: (phase: string) => void;
-  setGreeting: (greeting: string) => Promise<boolean>;
-  analyzeWebsite: (url: string) => Promise<boolean>;
-  saveAnswer: (questionId: string, answer: string) => Promise<boolean>;
-  generateStrategy: () => Promise<any>;
-  isOnboardingComplete: boolean;
-  currentPhase: string;
-  progress: number;
-  hasExistingJourney: boolean;
-  greetingPreference: string | null;
 }
 
 const JourneyContext = createContext<JourneyContextType | undefined>(undefined);
@@ -37,243 +28,72 @@ interface JourneyProviderProps {
 }
 
 export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) => {
-  const { user } = useAuth();
-  const [journey, setJourney] = useState<OnboardingJourney | null>(null);
-  const [journeyStatus, setJourneyStatus] = useState<JourneyStatus | null>(null);
+  const [journey, setJourney] = useState<any>(null);
+  const [journeyStatus, setJourneyStatus] = useState<any>(null);
+  const [currentStep, setCurrentStep] = useState<string>('welcome');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hasExistingJourney, setHasExistingJourney] = useState(false);
-  const [journeyInitialized, setJourneyInitialized] = useState(false);
-  const [greetingPreference, setGreetingPreference] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  // Load existing journey on mount - prevent multiple initializations
   useEffect(() => {
-    const loadJourney = async () => {
-      if (!user?.id || journeyInitialized) {
-        if (!user?.id) {
-          setLoading(false);
-        }
+    const loadJourneyData = async () => {
+      if (!user) {
+        setLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
-        setError(null);
-        console.log('🔍 Loading journey for user:', user.id);
-
-        // Load greeting preference first
-        await loadGreetingPreference(user.id);
-
-        // Check for existing journey
-        const existingJourney = await JourneyManager.checkExistingJourney(user.id);
+        // Load user profile data as the journey data source
+        const userProfile = await UserProfileService.getUserProfile(user.id);
         
-        if (existingJourney) {
-          setJourney(existingJourney);
-          setHasExistingJourney(true);
+        if (userProfile) {
+          setJourney(userProfile);
+          setJourneyStatus({
+            onboarding_completed: userProfile.onboarding_completed,
+            current_step: userProfile.onboarding_completed ? 'completed' : 'welcome',
+            completeness_score: userProfile.data_completeness_score || 0
+          });
           
-          // Get journey status if available
-          if (existingJourney.journey_id) {
-            try {
-              const status = await JourneyManager.getJourneyStatus(existingJourney.journey_id);
-              setJourneyStatus(status);
-            } catch (statusError) {
-              console.warn('⚠️ Could not load journey status:', statusError);
-            }
+          if (userProfile.onboarding_completed) {
+            setCurrentStep('completed');
           }
-          
-          console.log('✅ Loaded existing journey:', existingJourney);
         } else {
-          console.log('ℹ️ No existing journey found for user');
-          setHasExistingJourney(false);
+          // Initialize empty journey for new users
+          setJourney({});
+          setJourneyStatus({
+            onboarding_completed: false,
+            current_step: 'welcome',
+            completeness_score: 0
+          });
         }
-
-        setJourneyInitialized(true);
-      } catch (err) {
-        console.error('❌ Error loading journey:', err);
-        setError('Failed to load journey');
-        setHasExistingJourney(false);
+      } catch (error) {
+        console.error('Error loading journey data:', error);
+        // Set default values on error
+        setJourney({});
+        setJourneyStatus({
+          onboarding_completed: false,
+          current_step: 'welcome',
+          completeness_score: 0
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    loadJourney();
-  }, [user?.id, journeyInitialized]);
+    loadJourneyData();
+  }, [user]);
 
-  const loadGreetingPreference = async (userId: string) => {
-    try {
-      const { data: profile } = await supabase
-        .from('customer_profiles')
-        .select('profile_data')
-        .eq('customer_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (profile?.profile_data && typeof profile.profile_data === 'object') {
-        const profileData = profile.profile_data as Record<string, any>;
-        if (profileData.greeting_preference) {
-          setGreetingPreference(profileData.greeting_preference);
-          console.log('✅ Loaded greeting preference:', profileData.greeting_preference);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error loading greeting preference:', error);
-    }
+  const value = {
+    journey,
+    setJourney,
+    journeyStatus,
+    setJourneyStatus,
+    currentStep,
+    setCurrentStep,
+    loading
   };
-
-  const startJourney = async (websiteUrl?: string) => {
-    if (!user?.id) {
-      console.log('ℹ️ No user found for journey start');
-      return;
-    }
-
-    // Prevent multiple journey starts
-    if (hasExistingJourney && journey && !journey.is_completed) {
-      console.log('ℹ️ Skipping journey start - active journey exists');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    
-    try {
-      console.log('🚀 Starting new journey for user:', user.id, 'with website:', websiteUrl);
-      const newJourney = await JourneyManager.startJourney(user.id, websiteUrl);
-      
-      if (newJourney) {
-        setJourney(newJourney);
-        setHasExistingJourney(true);
-        console.log('✅ Journey started successfully:', newJourney);
-      } else {
-        setError('Failed to start journey');
-      }
-    } catch (err) {
-      console.error('❌ Error starting journey:', err);
-      setError('Failed to start journey');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateJourneyPhase = (phase: string) => {
-    console.log('🔄 Updating journey phase to:', phase);
-    if (journey) {
-      const updatedJourney = { ...journey, current_phase: phase };
-      setJourney(updatedJourney);
-    }
-    if (journeyStatus) {
-      const updatedStatus = { ...journeyStatus, current_phase: phase };
-      setJourneyStatus(updatedStatus);
-    }
-  };
-
-  const setGreeting = async (greeting: string): Promise<boolean> => {
-    if (!journey) {
-      console.warn('⚠️ No journey found, cannot save greeting');
-      return false;
-    }
-    
-    console.log('💾 Saving greeting preference:', greeting);
-    const success = await JourneyManager.setGreetingPreference(journey.journey_id, greeting);
-    if (success) {
-      setGreetingPreference(greeting);
-      setJourneyStatus(prev => prev ? { 
-        ...prev, 
-        greeting_preference: greeting 
-      } : null);
-      console.log('✅ Greeting preference saved successfully');
-    }
-    return success;
-  };
-
-  const analyzeWebsite = async (url: string): Promise<boolean> => {
-    if (!journey) return false;
-    
-    console.log('🔍 Analyzing website:', url);
-    try {
-      const success = await JourneyManager.startWebsiteAnalysis(journey.journey_id, url);
-      if (success) {
-        setJourneyStatus(prev => prev ? { ...prev, website_url: url } : null);
-        console.log('✅ Website analysis started successfully');
-      }
-      return success;
-    } catch (error) {
-      console.error('❌ Website analysis failed:', error);
-      return false;
-    }
-  };
-
-  const saveAnswer = async (questionId: string, answer: string): Promise<boolean> => {
-    if (!journey) return false;
-    
-    console.log('💾 Saving answer:', questionId, answer);
-    try {
-      // This would normally save to backend, for now we'll just log
-      console.log('✅ Answer saved successfully');
-      return true;
-    } catch (error) {
-      console.error('❌ Save answer failed:', error);
-      return false;
-    }
-  };
-
-  const generateStrategy = async (): Promise<any> => {
-    if (!journey) return null;
-    
-    console.log('🎯 Generating strategy');
-    try {
-      const strategy = await JourneyManager.generateStrategy(journey.journey_id);
-      if (strategy) {
-        setJourneyStatus(prev => prev ? { ...prev, strategy_generated: true } : null);
-        // Mark journey as completed after strategy generation
-        setJourney(prev => prev ? { ...prev, is_completed: true } : null);
-        console.log('✅ Strategy generated successfully');
-      }
-      return strategy;
-    } catch (error) {
-      console.error('❌ Strategy generation failed:', error);
-      return null;
-    }
-  };
-
-  // Improved phase detection logic
-  const determineCurrentPhase = (): string => {
-    if (journeyStatus?.current_phase) {
-      return journeyStatus.current_phase;
-    }
-    if (journey?.current_phase) {
-      return journey.current_phase;
-    }
-    // Fallback logic based on available data
-    if (greetingPreference) {
-      return 'website_analysis';
-    }
-    return 'greeting_preference';
-  };
-
-  const isOnboardingComplete = journeyStatus?.completed || journey?.is_completed || false;
-  const currentPhase = determineCurrentPhase();
-  const progress = journeyStatus?.profile_progress || JourneyManager.calculateProgress(currentPhase);
 
   return (
-    <JourneyContext.Provider value={{
-      journey,
-      journeyStatus,
-      loading,
-      error,
-      startJourney,
-      updateJourneyPhase,
-      setGreeting,
-      analyzeWebsite,
-      saveAnswer,
-      generateStrategy,
-      isOnboardingComplete,
-      currentPhase,
-      progress,
-      hasExistingJourney,
-      greetingPreference
-    }}>
+    <JourneyContext.Provider value={value}>
       {children}
     </JourneyContext.Provider>
   );
