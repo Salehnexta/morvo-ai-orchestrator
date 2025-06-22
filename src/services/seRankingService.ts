@@ -159,10 +159,10 @@ export class SERankingService {
         return null;
       }
 
-      // Safe type conversion with validation
+      // Safe type conversion with proper validation
       const snapshot = data.data_snapshot;
-      if (typeof snapshot === 'object' && snapshot !== null && !Array.isArray(snapshot)) {
-        return snapshot as SeoDataSnapshot;
+      if (this.isValidSeoDataSnapshot(snapshot)) {
+        return snapshot as unknown as SeoDataSnapshot;
       }
 
       return null;
@@ -170,6 +170,29 @@ export class SERankingService {
       console.error('Error getting latest analysis:', error);
       return null;
     }
+  }
+
+  // Type guard function to validate SeoDataSnapshot structure
+  private static isValidSeoDataSnapshot(obj: any): obj is SeoDataSnapshot {
+    return (
+      obj &&
+      typeof obj === 'object' &&
+      typeof obj.domain === 'string' &&
+      typeof obj.organic_traffic === 'number' &&
+      typeof obj.total_keywords === 'number' &&
+      typeof obj.visibility_score === 'number' &&
+      typeof obj.backlinks === 'number' &&
+      typeof obj.domain_authority === 'number' &&
+      typeof obj.page_speed === 'number' &&
+      typeof obj.mobile_score === 'number' &&
+      typeof obj.technical_score === 'number' &&
+      Array.isArray(obj.competitors) &&
+      obj.keyword_analysis &&
+      Array.isArray(obj.keyword_analysis.top_keywords) &&
+      Array.isArray(obj.keyword_analysis.keyword_gaps) &&
+      Array.isArray(obj.technical_issues) &&
+      typeof obj.timestamp === 'string'
+    );
   }
 
   static async trackKeywordRankings(keywords: string[], domain: string): Promise<any> {
