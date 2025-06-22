@@ -20,7 +20,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const [checkingSetup, setCheckingSetup] = useState(true);
 
   useEffect(() => {
-    console.log('🔒 ProtectedRoute check:', { user: !!user, session: !!session, loading, path: location.pathname });
+    console.log('🔒 ProtectedRoute check:', { 
+      user: !!user, 
+      session: !!session, 
+      loading, 
+      path: location.pathname,
+      userId: user?.id,
+      userEmail: user?.email
+    });
     
     if (!loading && (!user || !session)) {
       console.log('🔒 Redirecting to login - no authentication');
@@ -38,24 +45,27 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   const checkFirstTimeSetup = async () => {
     if (!user) {
+      console.log('🔒 No user found, stopping setup check');
       setCheckingSetup(false);
       return;
     }
 
     try {
-      console.log('🔒 Checking first-time setup for user:', user.email);
+      console.log('🔒 Checking first-time setup for user:', user.email, 'ID:', user.id);
       const profile = await UserProfileService.getUserProfile(user.id);
       
-      console.log('🔒 User profile:', { 
-        exists: !!profile, 
+      console.log('🔒 User profile check result:', { 
+        profileExists: !!profile, 
         setupCompleted: profile?.first_time_setup_completed,
         companyName: profile?.company_name,
-        greetingPreference: profile?.greeting_preference
+        greetingPreference: profile?.greeting_preference,
+        fullProfile: profile
       });
       
-      // If no profile exists or setup not completed, redirect to first-time setup
-      if (!profile || !profile.first_time_setup_completed) {
-        console.log('🔒 Redirecting to first-time setup - profile incomplete');
+      // If no profile exists OR setup not completed, redirect to first-time setup
+      if (!profile || profile.first_time_setup_completed !== true) {
+        console.log('🔒 Redirecting to first-time setup - profile incomplete or setup not completed');
+        console.log('🔒 Setup status:', profile?.first_time_setup_completed);
         navigate('/first-time-setup', { replace: true });
         return;
       }
@@ -64,6 +74,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     } catch (error) {
       console.error('🔒 Error checking first-time setup:', error);
       // On error, redirect to setup to be safe
+      console.log('🔒 Error occurred, redirecting to setup as fallback');
       navigate('/first-time-setup', { replace: true });
     } finally {
       setCheckingSetup(false);
@@ -84,9 +95,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Don't render children if not authenticated
   if (!user || !session) {
+    console.log('🔒 Not rendering children - no auth');
     return null;
   }
 
   // Render children when authenticated and setup is complete
+  console.log('🔒 Rendering protected content');
   return <>{children}</>;
 };
