@@ -27,11 +27,12 @@ import Profile from "./pages/Profile";
 import ProfileSetup from "./pages/ProfileSetup";
 import Billing from "./pages/Billing";
 import Admin from "./pages/Admin";
+import ApiSettings from "./pages/admin/ApiSettings";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { JourneyProvider } from "./contexts/JourneyContext";
-import ApiSettings from "./pages/admin/ApiSettings";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <Routes>
+                  {/* Public Routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/features" element={<Features />} />
                   <Route path="/pricing" element={<Pricing />} />
@@ -59,16 +61,45 @@ const App = () => (
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/cookies" element={<Cookies />} />
+                  
+                  {/* Auth Routes */}
                   <Route path="/auth/login" element={<Login />} />
                   <Route path="/auth/register" element={<Register />} />
                   <Route path="/auth/forgot-password" element={<ForgotPassword />} />
                   <Route path="/auth/reset-password" element={<ResetPassword />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/profile-setup" element={<ProfileSetup />} />
-                  <Route path="/billing" element={<Billing />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/admin/api-settings" element={<ApiSettings />} />
+                  
+                  {/* Protected Routes */}
+                  <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile-setup" element={
+                    <ProtectedRoute>
+                      <ProfileSetup />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/billing" element={
+                    <ProtectedRoute>
+                      <Billing />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin" element={
+                    <ProtectedRoute>
+                      <Admin />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/api-settings" element={
+                    <ProtectedRoute>
+                      <ApiSettings />
+                    </ProtectedRoute>
+                  } />
+                  
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

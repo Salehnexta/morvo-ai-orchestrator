@@ -1,17 +1,28 @@
-import { ShoppingCart, User, Globe, Menu, X, ChevronDown, Brain, Sparkles, Zap, Languages } from "lucide-react";
+
+import { ShoppingCart, User, Globe, Menu, X, ChevronDown, Brain, Sparkles, Zap, Languages, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
-  onStartChat: () => void;
+  onStartChat?: () => void;
 }
 
 export const Header = ({ onStartChat }: HeaderProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, toggleLanguage, isRTL } = useLanguage();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -24,6 +35,15 @@ export const Header = ({ onStartChat }: HeaderProps) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   const content = {
     ar: {
       languageLabel: "العربية",
@@ -35,6 +55,10 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       login: "تسجيل الدخول",
       register: "إنشاء حساب",
       startNow: "ابدأ الآن",
+      dashboard: "لوحة التحكم",
+      profile: "الملف الشخصي",
+      settings: "الإعدادات",
+      logout: "تسجيل الخروج",
       storeName: "مورفو",
       aiPowered: "مدعوم بالذكاء الاصطناعي"
     },
@@ -48,6 +72,10 @@ export const Header = ({ onStartChat }: HeaderProps) => {
       login: "Login",
       register: "Sign Up",
       startNow: "Start Now",
+      dashboard: "Dashboard",
+      profile: "Profile", 
+      settings: "Settings",
+      logout: "Logout",
       storeName: "Morvo",
       aiPowered: "AI-Powered"
     }
@@ -150,43 +178,94 @@ export const Header = ({ onStartChat }: HeaderProps) => {
               </button>
             </div>
 
-            {/* Enhanced Auth Buttons */}
-            <div className="hidden md:flex items-center gap-3">
-              <Link to="/auth/login">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`transition-all duration-300 hover:scale-105 backdrop-blur-sm border ${
-                    theme === 'dark' 
-                      ? 'text-gray-300 hover:text-white hover:bg-gray-800/50 border-gray-700/50' 
-                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/50 border-gray-200/50'
-                  }`}
-                >
-                  <User className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                  {t.login}
-                </Button>
-              </Link>
-              
-              <Link to="/auth/register">
-                <Button
-                  size="sm"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
-                >
-                  {t.register}
-                </Button>
-              </Link>
-              
-              <Link to="/pricing">
-                <Button 
-                  size="sm"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
-                  <ShoppingCart className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} relative z-10`} />
-                  <span className="relative z-10">{t.startNow}</span>
-                </Button>
-              </Link>
-            </div>
+            {/* Conditional Auth Buttons */}
+            {user ? (
+              // Authenticated User Menu
+              <div className="hidden md:flex items-center gap-3">
+                <Link to="/dashboard">
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  >
+                    {t.dashboard}
+                  </Button>
+                </Link>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`transition-all duration-300 hover:scale-105 backdrop-blur-sm border ${
+                        theme === 'dark' 
+                          ? 'text-gray-300 hover:text-white hover:bg-gray-800/50 border-gray-700/50' 
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/50 border-gray-200/50'
+                      }`}
+                    >
+                      <User className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center">
+                        <User className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                        {t.profile}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/billing" className="flex items-center">
+                        <Settings className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                        {t.settings}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-red-600">
+                      <LogOut className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                      {t.logout}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              // Unauthenticated Auth Buttons
+              <div className="hidden md:flex items-center gap-3">
+                <Link to="/auth/login">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`transition-all duration-300 hover:scale-105 backdrop-blur-sm border ${
+                      theme === 'dark' 
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-800/50 border-gray-700/50' 
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/50 border-gray-200/50'
+                    }`}
+                  >
+                    <User className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                    {t.login}
+                  </Button>
+                </Link>
+                
+                <Link to="/auth/register">
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
+                  >
+                    {t.register}
+                  </Button>
+                </Link>
+                
+                <Link to="/pricing">
+                  <Button 
+                    size="sm"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
+                    <ShoppingCart className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} relative z-10`} />
+                    <span className="relative z-10">{t.startNow}</span>
+                  </Button>
+                </Link>
+              </div>
+            )}
 
             {/* Enhanced Mobile Menu Button */}
             <button
@@ -266,30 +345,66 @@ export const Header = ({ onStartChat }: HeaderProps) => {
               
               {/* Mobile Auth Buttons */}
               <div className="pt-4 space-y-3">
-                <Link to="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-center backdrop-blur-sm"
-                  >
-                    <User className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                    {t.login}
-                  </Button>
-                </Link>
-                
-                <Link to="/auth/register" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                  >
-                    {t.register}
-                  </Button>
-                </Link>
-                
-                <Link to="/pricing" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
-                    <ShoppingCart className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                    {t.startNow}
-                  </Button>
-                </Link>
+                {user ? (
+                  // Authenticated mobile menu
+                  <>
+                    <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                        {t.dashboard}
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-center backdrop-blur-sm"
+                      >
+                        <User className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                        {t.profile}
+                      </Button>
+                    </Link>
+                    
+                    <Button
+                      onClick={() => {
+                        handleSignOut();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      variant="outline"
+                      className="w-full justify-center text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <LogOut className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                      {t.logout}
+                    </Button>
+                  </>
+                ) : (
+                  // Unauthenticated mobile menu
+                  <>
+                    <Link to="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-center backdrop-blur-sm"
+                      >
+                        <User className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                        {t.login}
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/auth/register" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button
+                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                      >
+                        {t.register}
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/pricing" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+                        <ShoppingCart className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                        {t.startNow}
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -31,48 +31,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('🔐 AuthProvider initializing...');
     
-    // Set up auth state listener FIRST
+    let mounted = true;
+    
+    // Set up auth state listener FIRST - this handles all auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 Auth state changed:', event, !!session);
         
-        // Update state synchronously
+        if (!mounted) return;
+        
+        // Update state immediately for all events
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Only set loading to false after we've handled the session
-        if (event !== 'INITIAL_SESSION') {
-          setLoading(false);
-        }
-
         // Handle specific auth events
         if (event === 'SIGNED_IN') {
           console.log('✅ User signed in successfully');
+          // Force a small delay to ensure persistence
+          setTimeout(() => {
+            if (mounted) setLoading(false);
+          }, 100);
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 User signed out');
+          // Clear any cached data
+          localStorage.removeItem('sb-teniefzxdikestahdnur-auth-token');
+          if (mounted) setLoading(false);
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('🔄 Token refreshed successfully');
+        } else if (event === 'INITIAL_SESSION') {
+          console.log('🔐 Initial session loaded:', !!session);
+          if (mounted) setLoading(false);
         }
       }
     );
 
-    // THEN get initial session
+    // THEN get initial session with retry logic
     const getInitialSession = async () => {
       try {
         console.log('🔐 Getting initial session...');
+        
+        // First attempt
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('❌ Error getting session:', error);
+          // Try to recover from stored session
+          const storedSession = localStorage.getItem('sb-teniefzxdikestahdnur-auth-token');
+          if (storedSession && mounted) {
+            console.log('🔄 Attempting session recovery...');
+            // Let the auth state change handler manage this
+            await supabase.auth.refreshSession();
+          }
         } else {
-          console.log('🔐 Initial session:', !!session);
-          setSession(session);
-          setUser(session?.user ?? null);
+          console.log('🔐 Initial session loaded:', !!session);
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
         }
       } catch (error) {
         console.error('❌ Error in getInitialSession:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          // Always set loading to false after initial attempt
+          setTimeout(() => {
+            if (mounted) setLoading(false);
+          }, 500);
+        }
       }
     };
 
@@ -80,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       console.log('🔐 AuthProvider cleanup');
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -87,6 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       console.log('🔐 Signing in user:', email);
+      setLoading(true);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -94,13 +122,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error('❌ Sign in error:', error.message);
+        setLoading(false);
       } else {
         console.log('✅ Sign in successful');
+        // Loading will be set to false by auth state change
       }
       
       return { error };
     } catch (error) {
       console.error('❌ Unexpected sign in error:', error);
+      setLoading(false);
       return { error: error as AuthError };
     }
   };
@@ -111,6 +142,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
       });
       
       if (error) {
@@ -129,17 +163,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       console.log('🔐 Signing out user');
+      setLoading(true);
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('❌ Sign out error:', error.message);
+        setLoading(false);
       } else {
         console.log('✅ Sign out successful');
+        // Clear all local storage auth data
+        localStorage.removeItem('sb-teniefzxdikestahdnur-auth-token');
+        // Loading will be set to false by auth state change
       }
       
       return { error };
     } catch (error) {
       console.error('❌ Unexpected sign out error:', error);
+      setLoading(false);
       return { error: error as AuthError };
     }
   };
