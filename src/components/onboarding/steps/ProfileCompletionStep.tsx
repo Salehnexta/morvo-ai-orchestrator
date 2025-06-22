@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building, Users, Target, Globe, Plus, Trash2 } from 'lucide-react';
+import { Building } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BasicInfoTab } from './profile-completion/BasicInfoTab';
+import { BusinessDetailsTab } from './profile-completion/BusinessDetailsTab';
+import { TeamMembersTab } from './profile-completion/TeamMembersTab';
+import { ContactInfoTab } from './profile-completion/ContactInfoTab';
 
 interface ProfileData {
   company_name: string;
@@ -65,29 +65,6 @@ export const ProfileCompletionStep: React.FC<ProfileCompletionStepProps> = ({
       facebook: initialData.social_media?.facebook || ''
     }
   });
-
-  const industries = [
-    { value: 'technology', label: 'التقنية والبرمجيات' },
-    { value: 'retail', label: 'التجارة والبيع بالتجزئة' },
-    { value: 'healthcare', label: 'الرعاية الصحية' },
-    { value: 'education', label: 'التعليم' },
-    { value: 'finance', label: 'المالية والمصرفية' },
-    { value: 'real_estate', label: 'العقارات' },
-    { value: 'food', label: 'المأكولات والمشروبات' },
-    { value: 'manufacturing', label: 'التصنيع' },
-    { value: 'services', label: 'الخدمات المهنية' },
-    { value: 'consulting', label: 'الاستشارات' },
-    { value: 'marketing', label: 'التسويق والإعلان' },
-    { value: 'other', label: 'أخرى' }
-  ];
-
-  const companySizes = [
-    { value: '1-5', label: '1-5 موظفين' },
-    { value: '6-20', label: '6-20 موظف' },
-    { value: '21-50', label: '21-50 موظف' },
-    { value: '51-200', label: '51-200 موظف' },
-    { value: '200+', label: 'أكثر من 200 موظف' }
-  ];
 
   const updateField = (field: keyof ProfileData, value: any) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
@@ -156,223 +133,35 @@ export const ProfileCompletionStep: React.FC<ProfileCompletionStepProps> = ({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-white mb-2 block">اسم الشركة *</Label>
-                <Input
-                  value={profileData.company_name}
-                  onChange={(e) => updateField('company_name', e.target.value)}
-                  placeholder="أدخل اسم شركتك"
-                  className="bg-gray-700/80 border-gray-600/50 text-white"
-                />
-              </div>
-              
-              <div>
-                <Label className="text-white mb-2 block">القطاع *</Label>
-                <Select value={profileData.industry} onValueChange={(value) => updateField('industry', value)}>
-                  <SelectTrigger className="bg-gray-700/80 border-gray-600/50 text-white">
-                    <SelectValue placeholder="اختر القطاع" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-600">
-                    {industries.map((industry) => (
-                      <SelectItem key={industry.value} value={industry.value} className="text-white">
-                        {industry.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-white mb-2 block">حجم الشركة *</Label>
-                <Select value={profileData.company_size} onValueChange={(value) => updateField('company_size', value)}>
-                  <SelectTrigger className="bg-gray-700/80 border-gray-600/50 text-white">
-                    <SelectValue placeholder="اختر حجم الشركة" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-600">
-                    {companySizes.map((size) => (
-                      <SelectItem key={size.value} value={size.value} className="text-white">
-                        {size.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-white mb-2 block">نظرة عامة على الشركة</Label>
-              <Textarea
-                value={profileData.company_overview}
-                onChange={(e) => updateField('company_overview', e.target.value)}
-                placeholder="وصف مختصر عن شركتك ونشاطها الأساسي..."
-                className="bg-gray-700/80 border-gray-600/50 text-white min-h-[100px]"
-              />
-            </div>
+          <TabsContent value="basic">
+            <BasicInfoTab 
+              profileData={profileData}
+              updateField={updateField}
+            />
           </TabsContent>
 
-          <TabsContent value="business" className="space-y-6 mt-6">
-            <div>
-              <Label className="text-white mb-2 block">العروض والحلول الأساسية</Label>
-              <Textarea
-                value={profileData.core_offerings}
-                onChange={(e) => updateField('core_offerings', e.target.value)}
-                placeholder="المنتجات أو الخدمات الأساسية التي تقدمها شركتك..."
-                className="bg-gray-700/80 border-gray-600/50 text-white min-h-[100px]"
-              />
-            </div>
-
-            <div>
-              <Label className="text-white mb-2 block">المنتجات التقنية</Label>
-              <Textarea
-                value={profileData.technical_products}
-                onChange={(e) => updateField('technical_products', e.target.value)}
-                placeholder="التقنيات وواجهات البرمجة والحلول التقنية المستخدمة..."
-                className="bg-gray-700/80 border-gray-600/50 text-white min-h-[100px]"
-              />
-            </div>
-
-            <div>
-              <Label className="text-white mb-2 block">التركيز التجاري</Label>
-              <Textarea
-                value={profileData.business_focus}
-                onChange={(e) => updateField('business_focus', e.target.value)}
-                placeholder="أهدافك التجارية وتأثيرك في السوق..."
-                className="bg-gray-700/80 border-gray-600/50 text-white min-h-[100px]"
-              />
-            </div>
-
-            <div>
-              <Label className="text-white mb-2 block">وصف المنتجات والخدمات</Label>
-              <Textarea
-                value={profileData.product_descriptions}
-                onChange={(e) => updateField('product_descriptions', e.target.value)}
-                placeholder="تفاصيل ما تقدمه للعملاء وقيمته المضافة..."
-                className="bg-gray-700/80 border-gray-600/50 text-white min-h-[100px]"
-              />
-            </div>
+          <TabsContent value="business">
+            <BusinessDetailsTab 
+              profileData={profileData}
+              updateField={updateField}
+            />
           </TabsContent>
 
-          <TabsContent value="team" className="space-y-6 mt-6">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <Label className="text-white">أعضاء الفريق الرئيسيون</Label>
-                <Button
-                  onClick={addTeamMember}
-                  variant="outline"
-                  size="sm"
-                  className="bg-blue-600/20 border-blue-500/50 text-blue-300 hover:bg-blue-600/30"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  إضافة عضو
-                </Button>
-              </div>
-              
-              <div className="space-y-3">
-                {profileData.team_members.map((member, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={member}
-                      onChange={(e) => updateTeamMember(index, e.target.value)}
-                      placeholder="اسم ومنصب عضو الفريق..."
-                      className="bg-gray-700/80 border-gray-600/50 text-white flex-1"
-                    />
-                    {profileData.team_members.length > 1 && (
-                      <Button
-                        onClick={() => removeTeamMember(index)}
-                        variant="outline"
-                        size="sm"
-                        className="bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+          <TabsContent value="team">
+            <TeamMembersTab 
+              teamMembers={profileData.team_members}
+              addTeamMember={addTeamMember}
+              updateTeamMember={updateTeamMember}
+              removeTeamMember={removeTeamMember}
+            />
           </TabsContent>
 
-          <TabsContent value="contact" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-white mb-2 block">البريد الإلكتروني</Label>
-                <Input
-                  type="email"
-                  value={profileData.contact_email}
-                  onChange={(e) => updateField('contact_email', e.target.value)}
-                  placeholder="email@company.com"
-                  className="bg-gray-700/80 border-gray-600/50 text-white"
-                />
-              </div>
-              
-              <div>
-                <Label className="text-white mb-2 block">رقم الهاتف</Label>
-                <Input
-                  value={profileData.contact_phone}
-                  onChange={(e) => updateField('contact_phone', e.target.value)}
-                  placeholder="+966 50 123 4567"
-                  className="bg-gray-700/80 border-gray-600/50 text-white"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-white mb-2 block">العنوان</Label>
-              <Input
-                value={profileData.contact_address}
-                onChange={(e) => updateField('contact_address', e.target.value)}
-                placeholder="العنوان الكامل للشركة..."
-                className="bg-gray-700/80 border-gray-600/50 text-white"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <Label className="text-white block">حسابات التواصل الاجتماعي</Label>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-300 mb-1 block text-sm">الموقع الإلكتروني</Label>
-                  <Input
-                    value={profileData.social_media.website}
-                    onChange={(e) => updateSocialMedia('website', e.target.value)}
-                    placeholder="https://yourwebsite.com"
-                    className="bg-gray-700/80 border-gray-600/50 text-white"
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-gray-300 mb-1 block text-sm">لينكد إن</Label>
-                  <Input
-                    value={profileData.social_media.linkedin}
-                    onChange={(e) => updateSocialMedia('linkedin', e.target.value)}
-                    placeholder="https://linkedin.com/company/..."
-                    className="bg-gray-700/80 border-gray-600/50 text-white"
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-gray-300 mb-1 block text-sm">تويتر</Label>
-                  <Input
-                    value={profileData.social_media.twitter}
-                    onChange={(e) => updateSocialMedia('twitter', e.target.value)}
-                    placeholder="https://twitter.com/..."
-                    className="bg-gray-700/80 border-gray-600/50 text-white"
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-gray-300 mb-1 block text-sm">إنستغرام</Label>
-                  <Input
-                    value={profileData.social_media.instagram}
-                    onChange={(e) => updateSocialMedia('instagram', e.target.value)}
-                    placeholder="https://instagram.com/..."
-                    className="bg-gray-700/80 border-gray-600/50 text-white"
-                  />
-                </div>
-              </div>
-            </div>
+          <TabsContent value="contact">
+            <ContactInfoTab 
+              profileData={profileData}
+              updateField={updateField}
+              updateSocialMedia={updateSocialMedia}
+            />
           </TabsContent>
         </Tabs>
 
