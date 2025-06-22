@@ -27,7 +27,8 @@ export const useAdvancedConversation = () => {
     updateEmotionalContext,
     getRelevantMemories,
     analyzeMessageEmotion,
-    getPersonalizedResponse
+    getPersonalizedResponse,
+    saveMemory
   } = useConversationalMemory();
 
   // Simple conversation state management
@@ -130,7 +131,7 @@ export const useAdvancedConversation = () => {
 
     // Execute memory updates
     memoryUpdates.forEach(async (update) => {
-      await addMemory(update.type, JSON.stringify(update.content), update.importance);
+      await saveMemory(update.type, update.content, update.importance);
     });
 
     return {
@@ -144,14 +145,14 @@ export const useAdvancedConversation = () => {
     updateEmotionalContext,
     getRelevantMemories,
     getPersonalizedResponse,
-    addMemory,
+    saveMemory,
     memories.length
   ]);
 
   const getConversationInsights = useCallback(() => {
     const insights = [];
     
-    // Emotional insights
+    // Emotional insights - fixed property name
     if (emotionalContext.satisfactionScore < 0.6) {
       insights.push({
         type: 'emotional',

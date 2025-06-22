@@ -1,195 +1,155 @@
-import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { ConversationalOnboarding } from '@/services/conversationalOnboarding';
-import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
 
-interface OnboardingData {
-  [key: string]: any;
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserProfileService } from '@/services/userProfileService';
+
+interface SmartChatState {
+  isActive: boolean;
+  context: any;
+  userProfile: any;
+  suggestions: string[];
 }
 
 export const useSmartChat = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [onboardingData, setOnboardingData] = useState<OnboardingData>({});
-  const { toast } = useToast();
   const { user } = useAuth();
+  const [chatState, setChatState] = useState<SmartChatState>({
+    isActive: false,
+    context: {},
+    userProfile: null,
+    suggestions: []
+  });
+  
+  const [loading, setLoading] = useState(false);
 
-  const processOnboardingMessage = useCallback(async (message: string) => {
-    if (!user?.id) return null;
+  useEffect(() => {
+    const loadUserContext = async () => {
+      if (!user) return;
 
-    try {
-      // Get current onboarding state
-      const nextQuestion = ConversationalOnboarding.getNextQuestion(onboardingData);
-      
-      if (!nextQuestion) return null;
-
-      // Extract answer from message
-      const answer = ConversationalOnboarding.extractAnswerFromText(message, nextQuestion);
-      
-      if (answer) {
-        const updatedData = {
-          ...onboardingData,
-          [nextQuestion.field]: answer
-        };
+      setLoading(true);
+      try {
+        // Use user_profiles table instead of customer_profiles
+        const userProfile = await UserProfileService.getUserProfile(user.id);
         
-        setOnboardingData(updatedData);
+        if (userProfile) {
+          setChatState(prev => ({
+            ...prev,
+            userProfile,
+            context: {
+              companyName: userProfile.company_name,
+              industry: userProfile.industry,
+              marketingGoals: userProfile.primary_marketing_goals,
+              greetingPreference: userProfile.greeting_preference
+            }
+          }));
 
-        // Save to database incrementally
-        await saveOnboardingProgress(updatedData);
-
-        // Check if onboarding is complete
-        if (ConversationalOnboarding.isOnboardingComplete(updatedData)) {
-          await completeOnboarding(updatedData);
-          return {
-            isComplete: true,
-            response: nextQuestion.field === 'completed' ? nextQuestion.question : 
-              'ممتاز! تم حفظ إجابتك. ' + ConversationalOnboarding.getNextQuestion(updatedData)?.question
-          };
+          // Generate smart suggestions based on profile
+          const suggestions = generateSmartSuggestions(userProfile);
+          setChatState(prev => ({ ...prev, suggestions }));
         }
-
-        // Get next question
-        const nextQ = ConversationalOnboarding.getNextQuestion(updatedData);
-        return {
-          isComplete: false,
-          response: nextQ ? `ممتاز! تم حفظ إجابتك. ${nextQ.question}` : 
-            'شكراً لك! دعني أراجع معلوماتك وسأعود إليك قريباً.'
-        };
+      } catch (error) {
+        console.error('Error loading user context:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      return null;
-    } catch (error) {
-      console.error('Error processing onboarding message:', error);
-      return null;
-    }
-  }, [onboardingData, user?.id]);
+    loadUserContext();
+  }, [user]);
 
-  const generateSmartResponse = useCallback(async (
-    message: string,
-    context: {
-      conversationHistory: Array<{ role: string; content: string }>;
-      onboardingStatus: any;
-      currentPhase: string;
+  const generateSmartSuggestions = (profile: any): string[] => {
+    const suggestions = [];
+
+    if (!profile.company_name) {
+      suggestions.push('أخبرني عن شركتك');
     }
-  ) => {
+
+    if (!profile.industry) {
+      suggestions.push('ما هو مجال عملك؟');
+    }
+
+    if (!profile.primary_marketing_goals || profile.primary_marketing_goals.length === 0) {
+      suggestions.push('ما هي أهدافك التسويقية؟');
+    }
+
+    if (!profile.website_url) {
+      suggestions.push('هل لديك موقع إلكتروني؟');
+    }
+
+    if (!profile.monthly_marketing_budget) {
+      suggestions.push('ما هي ميزانيتك التسويقية الشهرية؟');
+    }
+
+    // Default suggestions if profile is complete
+    if (suggestions.length === 0) {
+      suggestions.push(
+        'كيف يمكنني تحسين استراتيجيتي التسويقية؟',
+        'أريد تحليل منافسيني',
+        'اقترح محتوى لوسائل التواصل الاجتماعي',
+        'كيف أقيس نجاح حملاتي التسويقية؟'
+      );
+    }
+
+    return suggestions.slice(0, 4); // Limit to 4 suggestions
+  };
+
+  const updateContext = async (newContext: any) => {
+    if (!user) return false;
+
     try {
-      setIsLoading(true);
+      // Save updated context to user profile
+      await UserProfileService.saveUserProfile(user.id, newContext);
       
-      const response = await SmartResponseGenerator.generateResponse({
-        userMessage: message,
-        conversationHistory: context.conversationHistory,
-        onboardingStatus: context.onboardingStatus,
-        currentPhase: context.currentPhase
-      });
-      
-      return response;
+      setChatState(prev => ({
+        ...prev,
+        context: { ...prev.context, ...newContext },
+        userProfile: { ...prev.userProfile, ...newContext }
+      }));
+
+      return true;
     } catch (error) {
-      console.error('Error generating smart response:', error);
-      return {
-        response: 'عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى.',
-        suggestedActions: []
-      };
-    } finally {
-      setIsLoading(false);
+      console.error('Error updating context:', error);
+      return false;
     }
+  };
+
+  const activateSmartMode = useCallback(() => {
+    setChatState(prev => ({ ...prev, isActive: true }));
   }, []);
 
-  const saveOnboardingProgress = useCallback(async (data: OnboardingData) => {
-    if (!user?.id) return false;
+  const deactivateSmartMode = useCallback(() => {
+    setChatState(prev => ({ ...prev, isActive: false }));
+  }, []);
 
-    try {
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!clientData) return false;
-
-      const { error } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: user.id,
-          client_id: clientData.id,
-          profile_data: {
-            ...data,
-            onboarding_started: true,
-            last_updated: new Date().toISOString()
-          },
-          status: 'active',
-          updated_at: new Date().toISOString()
-        });
-
-      return !error;
-    } catch (error) {
-      console.error('Error saving onboarding progress:', error);
-      return false;
-    }
-  }, [user?.id]);
-
-  const completeOnboarding = useCallback(async (data: OnboardingData) => {
-    if (!user?.id) return false;
-
-    try {
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!clientData) return false;
-
-      const profileData = ConversationalOnboarding.formatProfileData(data);
-      
-      const { error } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: user.id,
-          client_id: clientData.id,
-          profile_data: profileData,
-          status: 'active',
-          updated_at: new Date().toISOString()
-        });
-
-      if (!error) {
-        toast({
-          title: "مبروك!",
-          description: "تم إكمال إعداد ملفك الشخصي بنجاح",
-        });
-      }
-
-      return !error;
-    } catch (error) {
-      console.error('Error completing onboarding:', error);
-      return false;
-    }
-  }, [user?.id, toast]);
-
-  const getOnboardingProgress = useCallback(() => {
-    const totalQuestions = 7; // Excluding welcome and completion
-    const answeredQuestions = Object.keys(onboardingData).length;
-    return Math.round((answeredQuestions / totalQuestions) * 100);
-  }, [onboardingData]);
-
-  const isOnboardingMessage = useCallback((message: string) => {
-    // Simple heuristics to detect onboarding-related messages
-    const onboardingKeywords = [
-      'شركت', 'مشروع', 'قطاع', 'موظف', 'ميزانية', 'هدف', 'جمهور', 'خبرة',
-      'company', 'business', 'industry', 'budget', 'goal', 'audience', 'experience'
-    ];
+  const getContextualPrompt = useCallback((userMessage: string) => {
+    const { context } = chatState;
     
-    return onboardingKeywords.some(keyword => 
-      message.toLowerCase().includes(keyword.toLowerCase())
-    );
-  }, []);
+    let prompt = `المستخدم يسأل: "${userMessage}"\n\n`;
+    
+    if (context.companyName) {
+      prompt += `اسم الشركة: ${context.companyName}\n`;
+    }
+    
+    if (context.industry) {
+      prompt += `المجال: ${context.industry}\n`;
+    }
+    
+    if (context.marketingGoals && context.marketingGoals.length > 0) {
+      prompt += `الأهداف التسويقية: ${context.marketingGoals.join(', ')}\n`;
+    }
+    
+    prompt += '\nيرجى تقديم إجابة مخصصة بناءً على هذه المعلومات.';
+    
+    return prompt;
+  }, [chatState]);
 
   return {
-    isLoading,
-    processOnboardingMessage,
-    generateSmartResponse,
-    getOnboardingProgress,
-    isOnboardingMessage,
-    onboardingData,
-    setOnboardingData
+    chatState,
+    loading,
+    activateSmartMode,
+    deactivateSmartMode,
+    updateContext,
+    getContextualPrompt,
+    suggestions: chatState.suggestions,
+    isSmartModeActive: chatState.isActive
   };
 };

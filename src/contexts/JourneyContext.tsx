@@ -11,15 +11,17 @@ interface JourneyContextType {
   currentStep: string;
   setCurrentStep: (step: string) => void;
   loading: boolean;
-  // Add missing properties that components expect
+  // Fixed: Add all missing properties that components expect
   currentPhase: string;
   progress: number;
   isOnboardingComplete: boolean;
+  greetingPreference: string;
   setGreeting: (greeting: string) => Promise<boolean>;
   analyzeWebsite: (url: string) => Promise<boolean>;
   updateJourneyPhase: (phase: string) => void;
   generateStrategy: () => Promise<any>;
   saveAnswer: (key: string, value: string) => Promise<boolean>;
+  startJourney: () => void;
 }
 
 const JourneyContext = createContext<JourneyContextType | undefined>(undefined);
@@ -43,6 +45,7 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
   const [currentPhase, setCurrentPhase] = useState<string>('welcome');
   const [progress, setProgress] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [greetingPreference, setGreetingPreference] = useState<string>('أستاذ');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -58,6 +61,7 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         
         if (userProfile) {
           setJourney(userProfile);
+          setGreetingPreference(userProfile.greeting_preference || 'أستاذ');
           setJourneyStatus({
             onboarding_completed: userProfile.onboarding_completed,
             current_step: userProfile.onboarding_completed ? 'completed' : 'welcome',
@@ -118,6 +122,7 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
       
       // Update local state
       setJourney(prev => ({ ...prev, greeting_preference: greeting }));
+      setGreetingPreference(greeting);
       return true;
     } catch (error) {
       console.error('Error saving greeting:', error);
@@ -184,6 +189,11 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     }
   };
 
+  const startJourney = () => {
+    setCurrentStep('welcome');
+    setCurrentPhase('welcome');
+  };
+
   const isOnboardingComplete = journeyStatus?.onboarding_completed || false;
 
   const value = {
@@ -197,11 +207,13 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     currentPhase,
     progress,
     isOnboardingComplete,
+    greetingPreference,
     setGreeting,
     analyzeWebsite,
     updateJourneyPhase,
     generateStrategy,
-    saveAnswer
+    saveAnswer,
+    startJourney
   };
 
   return (

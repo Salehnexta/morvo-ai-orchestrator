@@ -35,16 +35,18 @@ export const useJourneyState = () => {
       if (userProfile) {
         // Create a journey state object from user profile
         const journeyStateFromProfile: JourneyState = {
-          id: userProfile.id,
+          id: userProfile.id || user.id,
           user_id: user.id,
-          client_id: userProfile.id, // Using profile id as placeholder
+          client_id: userProfile.id || user.id, // Using profile id as placeholder
           journey_type: 'onboarding',
           current_state: userProfile.onboarding_completed ? 'completed' : 'welcome',
           state_data: {
             greeting_preference: userProfile.greeting_preference,
             company_name: userProfile.company_name,
             website_url: userProfile.website_url,
-            onboarding_completed: userProfile.onboarding_completed
+            onboarding_completed: userProfile.onboarding_completed,
+            industry: userProfile.industry,
+            marketing_experience: userProfile.marketing_experience
           },
           last_interaction_at: userProfile.updated_at || new Date().toISOString(),
           session_id: sessionStorage.getItem('session_id') || undefined,

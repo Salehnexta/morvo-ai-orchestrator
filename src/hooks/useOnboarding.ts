@@ -1,147 +1,153 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { UserProfileService } from '@/services/userProfileService';
 
-interface OnboardingStep {
-  id: number;
-  component: string;
-  required: boolean;
+export interface OnboardingStep {
+  id: string;
+  title: string;
+  completed: boolean;
+  data?: any;
 }
 
 export const useOnboarding = () => {
   const { user } = useAuth();
-  const [isComplete, setIsComplete] = useState(false);
+  const [steps, setSteps] = useState<OnboardingStep[]>([
+    { id: 'welcome', title: 'مرحباً بك', completed: false },
+    { id: 'company-info', title: 'معلومات الشركة', completed: false },
+    { id: 'website-analysis', title: 'تحليل الموقع', completed: false },
+    { id: 'marketing-goals', title: 'أهداف التسويق', completed: false },
+    { id: 'target-audience', title: 'الجمهور المستهدف', completed: false },
+    { id: 'budget', title: 'الميزانية', completed: false },
+    { id: 'completion', title: 'اكتمال الإعداد', completed: false }
+  ]);
+  
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [currentStep, setCurrentStep] = useState(1);
-
-  // Define the onboarding steps
-  const steps: OnboardingStep[] = [
-    { id: 1, component: 'Welcome', required: true },
-    { id: 2, component: 'CompanyInfo', required: true },
-    { id: 3, component: 'MarketingGoals', required: true },
-    { id: 4, component: 'TargetAudience', required: true },
-    { id: 5, component: 'Budget', required: true },
-    { id: 6, component: 'Channels', required: true },
-    { id: 7, component: 'Experience', required: true },
-    { id: 8, component: 'Completion', required: true }
-  ];
-
-  const completionPercentage = (currentStep / steps.length) * 100;
 
   useEffect(() => {
-    const checkOnboardingStatus = async () => {
+    const loadOnboardingData = async () => {
       if (!user) {
         setLoading(false);
         return;
       }
 
       try {
-        console.log('🔍 Checking onboarding status for user:', user.id);
+        // Use user_profiles table instead of customer_profiles
+        const userProfile = await UserProfileService.getUserProfile(user.id);
         
-        // Check customer_profiles table for completion status
-        const { data: profileData, error: profileError } = await supabase
-          .from('customer_profiles')
-          .select('profile_data, status')
-          .eq('customer_id', user.id)
-          .maybeSingle();
+        if (userProfile) {
+          // Update steps based on user profile completeness
+          const updatedSteps = steps.map(step => {
+            switch (step.id) {
+              case 'welcome':
+                return { ...step, completed: !!userProfile.greeting_preference };
+              case 'company-info':
+                return { ...step, completed: !!userProfile.company_name };
+              case 'website-analysis':
+                return { ...step, completed: !!userProfile.website_url };
+              case 'marketing-goals':
+                return { ...step, completed: !!userProfile.primary_marketing_goals && userProfile.primary_marketing_goals.length > 0 };
+              case 'target-audience':
+                return { ...step, completed: !!userProfile.target_audience };
+              case 'budget':
+                return { ...step, completed: !!userProfile.monthly_marketing_budget };
+              case 'completion':
+                return { ...step, completed: !!userProfile.onboarding_completed };
+              default:
+                return step;
+            }
+          });
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Error checking profile:', profileError);
-          setIsComplete(false);
-          setLoading(false);
-          return;
+          setSteps(updatedSteps);
+          
+          // Find current step
+          const nextIncompleteIndex = updatedSteps.findIndex(step => !step.completed);
+          setCurrentStepIndex(nextIncompleteIndex === -1 ? updatedSteps.length - 1 : nextIncompleteIndex);
         }
-
-        // Check if onboarding is marked as completed
-        let onboardingCompleted = false;
-        if (profileData?.profile_data && typeof profileData.profile_data === 'object') {
-          onboardingCompleted = (profileData.profile_data as any)?.onboarding_completed === true;
-        }
-        
-        console.log('📊 Onboarding status:', {
-          profileExists: !!profileData,
-          onboardingCompleted,
-          profileData: profileData?.profile_data
-        });
-
-        setIsComplete(onboardingCompleted);
-        
       } catch (error) {
-        console.error('Error in checkOnboardingStatus:', error);
-        setIsComplete(false);
+        console.error('Error loading onboarding data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    checkOnboardingStatus();
+    loadOnboardingData();
   }, [user]);
 
-  const updateStep = async (stepId: number, stepData: any) => {
-    console.log('📝 Updating step:', stepId, stepData);
-    // Here you could save step data to the database if needed
-    setCurrentStep(prev => Math.min(prev + 1, steps.length));
-    return true;
-  };
-
-  const skipStep = async (stepId: number) => {
-    console.log('⏭️ Skipping step:', stepId);
-    setCurrentStep(prev => Math.min(prev + 1, steps.length));
-    return true;
-  };
-
-  const markComplete = async () => {
+  const saveStepData = async (stepId: string, data: any) => {
     if (!user) return false;
 
     try {
-      // Get client record
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      // Save to user_profiles table
+      await UserProfileService.saveUserProfile(user.id, data);
+      
+      // Update local state
+      setSteps(prev => prev.map(step => 
+        step.id === stepId 
+          ? { ...step, completed: true, data }
+          : step
+      ));
 
-      if (!clientData) {
-        console.error('No client record found');
-        return false;
-      }
-
-      // Update profile with completion status
-      const { error } = await supabase
-        .from('customer_profiles')
-        .upsert({
-          customer_id: user.id,
-          client_id: clientData.id,
-          profile_data: {
-            onboarding_completed: true,
-            completed_at: new Date().toISOString()
-          },
-          status: 'active',
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Error marking onboarding complete:', error);
-        return false;
-      }
-
-      setIsComplete(true);
       return true;
     } catch (error) {
-      console.error('Error in markComplete:', error);
+      console.error('Error saving step data:', error);
       return false;
     }
   };
 
+  const nextStep = () => {
+    if (currentStepIndex < steps.length - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
+    }
+  };
+
+  const previousStep = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1);
+    }
+  };
+
+  const goToStep = (stepIndex: number) => {
+    if (stepIndex >= 0 && stepIndex < steps.length) {
+      setCurrentStepIndex(stepIndex);
+    }
+  };
+
+  const completeOnboarding = async () => {
+    if (!user) return false;
+
+    try {
+      await UserProfileService.saveUserProfile(user.id, {
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString()
+      });
+
+      setSteps(prev => prev.map(step => 
+        step.id === 'completion' 
+          ? { ...step, completed: true }
+          : step
+      ));
+
+      return true;
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      return false;
+    }
+  };
+
+  const progress = Math.round((steps.filter(step => step.completed).length / steps.length) * 100);
+
   return {
-    isComplete,
-    loading,
-    markComplete,
     steps,
-    currentStep,
-    completionPercentage,
-    updateStep,
-    skipStep
+    currentStep: steps[currentStepIndex],
+    currentStepIndex,
+    progress,
+    loading,
+    nextStep,
+    previousStep,
+    goToStep,
+    saveStepData,
+    completeOnboarding
   };
 };
