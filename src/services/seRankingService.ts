@@ -3,89 +3,112 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserProfileService } from "./userProfileService";
 
 export interface SeoDataSnapshot {
-  domain_analysis: {
-    domain_authority: number;
-    trust_score: number;
-    domain_age: string;
-    alexa_rank: number;
-  };
-  organic_metrics: {
-    total_keywords: number;
-    top_10_keywords: number;
-    organic_traffic: number;
-    traffic_value: number;
-    visibility_score: number;
-  };
+  domain: string;
+  organic_traffic: number;
+  total_keywords: number;
+  visibility_score: number;
+  backlinks: number;
+  domain_authority: number;
+  page_speed: number;
+  mobile_score: number;
+  technical_score: number;
+  competitors: Array<{
+    domain: string;
+    similarity_score: number;
+    common_keywords: number;
+  }>;
   keyword_analysis: {
-    branded_keywords: string[];
-    non_branded_keywords: string[];
-    keyword_gaps: string[];
-    trending_keywords: string[];
+    top_keywords: Array<{
+      keyword: string;
+      position: number;
+      search_volume: number;
+      difficulty: number;
+    }>;
+    keyword_gaps: Array<{
+      keyword: string;
+      competitor_position: number;
+      search_volume: number;
+    }>;
   };
-  competitors: any[];
-  backlink_metrics: {
-    total_backlinks: number;
-    referring_domains: number;
-    dofollow_ratio: number;
-    anchor_text_distribution: any;
-  };
-  technical_audit: {
-    page_speed_score: number;
-    mobile_friendly: boolean;
-    ssl_certificate: boolean;
-    sitemap_status: string;
-  };
-  serp_features: {
-    featured_snippets: string[];
-    local_pack_presence: boolean;
-    knowledge_panel: boolean;
-  };
+  technical_issues: Array<{
+    issue_type: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    description: string;
+    recommendation: string;
+  }>;
+  timestamp: string;
 }
 
-export class SEOAnalysisService {
-  static async analyzeDomain(websiteUrl: string): Promise<SeoDataSnapshot | null> {
+export class SERankingService {
+  private static API_BASE_URL = 'https://api4.seranking.com/';
+  
+  static async analyzeDomain(domain: string, userId: string): Promise<SeoDataSnapshot | null> {
     try {
-      // TODO: Integrate with SE Ranking API
-      // For now, return mock data structure
+      // Mock data for demonstration since SE Ranking requires API key
       const mockData: SeoDataSnapshot = {
-        domain_analysis: {
-          domain_authority: 45,
-          trust_score: 38,
-          domain_age: "5 years",
-          alexa_rank: 50000
-        },
-        organic_metrics: {
-          total_keywords: 1250,
-          top_10_keywords: 45,
-          organic_traffic: 12500,
-          traffic_value: 8500,
-          visibility_score: 65
-        },
+        domain,
+        organic_traffic: Math.floor(Math.random() * 10000) + 1000,
+        total_keywords: Math.floor(Math.random() * 500) + 100,
+        visibility_score: Math.floor(Math.random() * 40) + 60,
+        backlinks: Math.floor(Math.random() * 1000) + 100,
+        domain_authority: Math.floor(Math.random() * 30) + 40,
+        page_speed: Math.floor(Math.random() * 20) + 70,
+        mobile_score: Math.floor(Math.random() * 15) + 80,
+        technical_score: Math.floor(Math.random() * 25) + 70,
+        competitors: [
+          {
+            domain: 'competitor1.com',
+            similarity_score: 0.85,
+            common_keywords: 45
+          },
+          {
+            domain: 'competitor2.com',
+            similarity_score: 0.72,
+            common_keywords: 38
+          }
+        ],
         keyword_analysis: {
-          branded_keywords: ["brand name", "company name"],
-          non_branded_keywords: ["service keyword", "industry term"],
-          keyword_gaps: ["opportunity keyword"],
-          trending_keywords: ["trending term"]
+          top_keywords: [
+            {
+              keyword: 'main keyword',
+              position: 3,
+              search_volume: 1200,
+              difficulty: 65
+            },
+            {
+              keyword: 'secondary keyword',
+              position: 7,
+              search_volume: 800,
+              difficulty: 45
+            }
+          ],
+          keyword_gaps: [
+            {
+              keyword: 'opportunity keyword',
+              competitor_position: 2,
+              search_volume: 950
+            }
+          ]
         },
-        competitors: [],
-        backlink_metrics: {
-          total_backlinks: 850,
-          referring_domains: 120,
-          dofollow_ratio: 0.75,
-          anchor_text_distribution: {}
-        },
-        technical_audit: {
-          page_speed_score: 85,
-          mobile_friendly: true,
-          ssl_certificate: true,
-          sitemap_status: "Found"
-        },
-        serp_features: {
-          featured_snippets: [],
-          local_pack_presence: false,
-          knowledge_panel: false
-        }
+        technical_issues: [
+          {
+            issue_type: 'Page Speed',
+            severity: 'medium',
+            description: 'Some pages load slowly',
+            recommendation: 'Optimize images and enable compression'
+          }
+        ],
+        timestamp: new Date().toISOString()
       };
+
+      // Save to user profile
+      await UserProfileService.saveUserProfile(userId, {
+        seo_data: mockData as any,
+        last_seo_update: new Date().toISOString()
+      });
+
+      // Also save to seo_data table
+      await this.saveSeoDataSnapshot(userId, domain, mockData);
 
       return mockData;
     } catch (error) {
@@ -94,78 +117,69 @@ export class SEOAnalysisService {
     }
   }
 
-  static async updateUserSeoData(userId: string, websiteUrl: string): Promise<boolean> {
+  private static async saveSeoDataSnapshot(userId: string, domain: string, data: SeoDataSnapshot): Promise<boolean> {
     try {
-      console.log('🔍 Starting SEO analysis for:', websiteUrl);
-      
-      const seoData = await this.analyzeDomain(websiteUrl);
-      if (!seoData) {
-        console.error('Failed to get SEO data');
+      const { error } = await supabase
+        .from('seo_data')
+        .insert({
+          user_id: userId,
+          website_url: domain,
+          data_snapshot: data as any,
+          data_type: 'se_ranking_analysis',
+          collected_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error saving SEO data snapshot:', error);
         return false;
       }
 
-      // Update user profile with new SEO data
-      const success = await UserProfileService.updateSeoData(userId, seoData);
-      if (!success) {
-        return false;
-      }
-
-      // Store historical data
-      await this.storeSeoHistory(userId, websiteUrl, seoData);
-
-      console.log('✅ SEO data updated successfully');
       return true;
     } catch (error) {
-      console.error('Error updating user SEO data:', error);
+      console.error('Error in saveSeoDataSnapshot:', error);
       return false;
     }
   }
 
-  static async storeSeoHistory(userId: string, websiteUrl: string, data: SeoDataSnapshot): Promise<void> {
-    try {
-      await supabase
-        .from('seo_data')
-        .insert({
-          user_id: userId,
-          website_url: websiteUrl,
-          data_snapshot: data,
-          data_type: 'daily_update',
-          collected_at: new Date().toISOString()
-        });
-    } catch (error) {
-      console.error('Error storing SEO history:', error);
-    }
-  }
-
-  static async getSeoHistory(userId: string, websiteUrl: string, days: number = 30): Promise<any[]> {
+  static async getLatestAnalysis(userId: string, domain: string): Promise<SeoDataSnapshot | null> {
     try {
       const { data, error } = await supabase
         .from('seo_data')
         .select('*')
         .eq('user_id', userId)
-        .eq('website_url', websiteUrl)
-        .gte('collected_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
-        .order('collected_at', { ascending: false });
+        .eq('website_url', domain)
+        .eq('data_type', 'se_ranking_analysis')
+        .order('collected_at', { ascending: false })
+        .limit(1)
+        .single();
 
-      if (error) {
-        console.error('Error getting SEO history:', error);
-        return [];
+      if (error || !data) {
+        return null;
       }
 
-      return data || [];
+      return data.data_snapshot as SeoDataSnapshot;
     } catch (error) {
-      console.error('Error in getSeoHistory:', error);
-      return [];
+      console.error('Error getting latest analysis:', error);
+      return null;
     }
   }
 
-  static async getLatestSeoData(userId: string): Promise<SeoDataSnapshot | null> {
-    try {
-      const profile = await UserProfileService.getUserProfile(userId);
-      return profile?.seo_data || null;
-    } catch (error) {
-      console.error('Error getting latest SEO data:', error);
-      return null;
-    }
+  static async trackKeywordRankings(keywords: string[], domain: string): Promise<any> {
+    // Mock implementation
+    return {
+      success: true,
+      tracking_id: 'mock_tracking_id',
+      message: 'Keywords added to tracking'
+    };
+  }
+
+  static async getCompetitorAnalysis(domain: string): Promise<any> {
+    // Mock implementation
+    return {
+      competitors: [
+        { domain: 'competitor1.com', similarity: 0.85 },
+        { domain: 'competitor2.com', similarity: 0.72 }
+      ]
+    };
   }
 }

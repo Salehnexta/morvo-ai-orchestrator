@@ -30,13 +30,6 @@ export const JourneyProgress: React.FC<JourneyProgressProps> = ({
     } else if (phase.id === currentPhase) {
       return 'current';
     } else {
-      // Check if phase is available (prerequisites met)
-      if (phase.prerequisites && phase.prerequisites.length > 0) {
-        const prereqsMet = phase.prerequisites.every(prereq => 
-          completedPhases.includes(prereq)
-        );
-        return prereqsMet ? 'available' : 'locked';
-      }
       return 'available';
     }
   };
@@ -95,7 +88,7 @@ export const JourneyProgress: React.FC<JourneyProgressProps> = ({
             <p className="text-blue-200 text-sm mb-2">{currentPhaseData.description}</p>
             <div className="flex items-center gap-2 text-xs text-blue-300">
               <Clock className="w-3 h-3" />
-              <span>المدة المقدرة: {currentPhaseData.estimatedDuration} دقائق</span>
+              <span>المدة المقدرة: {currentPhaseData.estimatedTime} دقائق</span>
             </div>
           </div>
         )}
@@ -115,17 +108,15 @@ export const JourneyProgress: React.FC<JourneyProgressProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{phase.name}</span>
-                    {phase.required && (
-                      <Badge variant="secondary" className="text-xs px-1 py-0">
-                        مطلوب
-                      </Badge>
-                    )}
+                    <span className="font-medium text-sm">{phase.title}</span>
+                    <Badge variant="secondary" className="text-xs px-1 py-0">
+                      مطلوب
+                    </Badge>
                   </div>
                   <p className="text-xs opacity-75 mt-1">{phase.description}</p>
                 </div>
                 <div className="text-xs opacity-60">
-                  {phase.estimatedDuration}د
+                  {phase.estimatedTime}د
                 </div>
               </div>
             );

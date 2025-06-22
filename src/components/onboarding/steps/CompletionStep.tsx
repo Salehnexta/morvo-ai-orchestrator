@@ -1,149 +1,134 @@
 
-import React from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { CheckCircle, Sparkles, ArrowRight, Trophy } from 'lucide-react';
 import { UserProfileService } from '@/services/userProfileService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CompletionStepProps {
+  onNext?: () => void;
+  onPrevious?: () => void;
+  onSkip?: () => void;
   onComplete?: () => void;
   data?: any;
   onDataChange?: (data: any) => void;
 }
 
-export const CompletionStep: React.FC<CompletionStepProps> = ({ 
-  onComplete, 
-  data = {}, 
-  onDataChange = () => {} 
+export const CompletionStep: React.FC<CompletionStepProps> = ({
+  onNext,
+  onPrevious,
+  onSkip,
+  onComplete,
+  data,
+  onDataChange
 }) => {
-  const { language, isRTL } = useLanguage();
+  const [completing, setCompleting] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
-
-  const content = {
-    ar: {
-      title: 'تهانينا! 🎉',
-      subtitle: 'تم إعداد حسابك بنجاح',
-      message: 'نحن الآن جاهزون لمساعدتك في بناء استراتيجية تسويقية ناجحة مخصصة لشركتك',
-      features: [
-        'تحليل شامل لبياناتك وجمهورك المستهدف',
-        'استراتيجية تسويقية مخصصة حسب أهدافك',
-        'توصيات ذكية لتحسين أداء حملاتك',
-        'دعم فني متخصص على مدار الساعة'
-      ],
-      startJourney: 'ابدأ رحلتك التسويقية',
-      ready: 'جاهز للانطلاق!'
-    },
-    en: {
-      title: 'Congratulations! 🎉',
-      subtitle: 'Your account has been successfully set up',
-      message: 'We are now ready to help you build a successful marketing strategy customized for your company',
-      features: [
-        'Comprehensive analysis of your data and target audience',
-        'Customized marketing strategy according to your goals',
-        'Smart recommendations to improve campaign performance',
-        '24/7 specialized technical support'
-      ],
-      startJourney: 'Start Your Marketing Journey',
-      ready: 'Ready to Launch!'
-    }
-  };
-
-  const t = content[language];
 
   const handleComplete = async () => {
-    if (!user) {
-      console.error('No user found for onboarding completion');
-      return;
-    }
+    if (!user) return;
 
+    setCompleting(true);
     try {
-      console.log('🎯 Completing onboarding for user:', user.id);
-      
-      // Mark onboarding as completed in user profile
-      const success = await UserProfileService.markOnboardingComplete(user.id);
-      
-      if (!success) {
-        toast({
-          title: "خطأ",
-          description: "حدث خطأ في إتمام عملية الإعداد",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Update completeness score
-      await UserProfileService.updateCompletenessScore(user.id);
-
-      console.log('✅ Onboarding completed successfully');
-      
-      // Update local state
-      onDataChange({ 
-        ...data, 
-        completed: true, 
-        completedAt: new Date().toISOString() 
+      // Mark onboarding as complete
+      await UserProfileService.saveUserProfile(user.id, {
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString()
       });
 
-      // Call the completion callback
+      // Update completeness score
+      await UserProfileService.updateCompleteness(user.id);
+
       if (onComplete) {
         onComplete();
       }
-
-      toast({
-        title: "مبروك!",
-        description: "تم إكمال عملية الإعداد بنجاح",
-      });
-      
     } catch (error) {
-      console.error('Error in handleComplete:', error);
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ غير متوقع",
-        variant: "destructive",
-      });
+      console.error('Error completing onboarding:', error);
+    } finally {
+      setCompleting(false);
     }
   };
 
   return (
-    <div className="text-center space-y-8" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-32 h-32 bg-gradient-to-r from-green-400/20 to-blue-400/20 rounded-full blur-xl"></div>
-        </div>
-        <CheckCircle className="w-24 h-24 text-green-400 mx-auto mb-6 relative z-10" />
-      </div>
+    <div className="space-y-6">
+      <Card className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border-green-500/20">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 p-3 bg-green-500/20 rounded-full w-fit">
+            <Trophy className="w-8 h-8 text-green-400" />
+          </div>
+          <CardTitle className="text-2xl text-white mb-2">
+            مبروك! اكتمل الإعداد
+          </CardTitle>
+          <p className="text-blue-200">
+            تم إعداد ملفك التسويقي بنجاح، الآن يمكنك البدء في استخدام مورفو AI
+          </p>
+        </CardHeader>
 
-      <div>
-        <h2 className="text-4xl font-bold text-white mb-4">{t.title}</h2>
-        <h3 className="text-xl text-green-400 font-semibold mb-4">{t.subtitle}</h3>
-        <p className="text-lg text-blue-200 max-w-2xl mx-auto leading-relaxed">{t.message}</p>
-      </div>
+        <CardContent className="space-y-6">
+          {/* Achievement Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-white/5 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
+              <p className="text-sm text-white font-medium">معلومات الشركة</p>
+              <p className="text-xs text-blue-200">مكتملة</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
+              <p className="text-sm text-white font-medium">الأهداف التسويقية</p>
+              <p className="text-xs text-blue-200">محددة</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
+              <p className="text-sm text-white font-medium">الجمهور المستهدف</p>
+              <p className="text-xs text-blue-200">معرّف</p>
+            </div>
+          </div>
 
-      <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-2xl p-8 border border-green-400/20 max-w-2xl mx-auto">
-        <h4 className="text-lg font-semibold text-white mb-4">{t.ready}</h4>
-        <ul className="space-y-3 text-blue-200">
-          {t.features.map((feature, index) => (
-            <li key={index} className="flex items-start text-left">
-              <CheckCircle className="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+          {/* Next Steps */}
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+            <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              الخطوات التالية
+            </h4>
+            <ul className="space-y-2 text-sm text-blue-200">
+              <li className="flex items-center gap-2">
+                <ArrowRight className="w-3 h-3" />
+                استكشف لوحة التحكم الرئيسية
+              </li>
+              <li className="flex items-center gap-2">
+                <ArrowRight className="w-3 h-3" />
+                ابدأ محادثة مع مستشارك الذكي
+              </li>
+              <li className="flex items-center gap-2">
+                <ArrowRight className="w-3 h-3" />
+                احصل على استراتيجية تسويقية مخصصة
+              </li>
+            </ul>
+          </div>
 
-      <div className="pt-8">
-        <Button
-          onClick={handleComplete}
-          className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold"
-          size="lg"
-        >
-          <Sparkles className="w-6 h-6 mr-3" />
-          {t.startJourney}
-          <ArrowRight className="w-6 h-6 ml-3" />
-        </Button>
-      </div>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <Button
+              onClick={handleComplete}
+              disabled={completing}
+              className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+            >
+              {completing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  جاري الإنهاء...
+                </>
+              ) : (
+                <>
+                  <Trophy className="w-4 h-4 mr-2" />
+                  ابدأ رحلتك مع مورفو
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
