@@ -29,13 +29,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onContentAction
 }) => {
   const { fullGreeting, displayName, loading: greetingLoading } = useUserGreeting();
-  
-  // Pass greeting data to child components via props or context
-  const greetingProps = {
-    fullGreeting: greetingLoading ? 'مرحباً' : fullGreeting,
-    displayName: greetingLoading ? 'مستخدم' : displayName,
-    greetingLoading
-  };
 
   return (
     <div className="min-h-screen">
@@ -43,18 +36,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       
       {showOnboarding ? (
         <OnboardingLayout 
+          contentType={contentType as any}
+          showOnboarding={showOnboarding}
+          onContentTypeChange={onContentTypeChange}
+          onMessageSent={onMessageSent}
           onPhaseComplete={onPhaseComplete}
-          greetingData={greetingProps}
+          onContentAction={onContentAction}
         />
       ) : (
         <PostOnboardingLayout
-          contentType={contentType}
           lastUserMessage={lastUserMessage}
           conversationHistory={conversationHistory}
           onContentTypeChange={onContentTypeChange}
           onMessageSent={onMessageSent}
           onContentAction={onContentAction}
-          greetingData={greetingProps}
         />
       )}
     </div>
