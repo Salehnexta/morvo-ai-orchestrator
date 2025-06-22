@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface UserProfile {
@@ -68,7 +67,8 @@ export interface UserProfile {
 export class UserProfileService {
   static async getUserProfile(userId: string): Promise<UserProfile | null> {
     try {
-      console.log('📊 Fetching user profile for ID:', userId);
+      const timestamp = new Date().toISOString();
+      console.log(`📊 [${timestamp}] Fetching user profile for ID:`, userId);
       
       const { data: profile, error } = await supabase
         .from('user_profiles')
@@ -87,7 +87,18 @@ export class UserProfileService {
         return null;
       }
 
-      console.log('✅ User profile fetched successfully:', profile);
+      console.log(`✅ [${timestamp}] User profile fetched successfully:`, {
+        profileExists: !!profile,
+        userId: profile?.user_id,
+        setupCompleted: profile?.first_time_setup_completed,
+        companyName: profile?.company_name,
+        industry: profile?.industry,
+        marketingExperience: profile?.marketing_experience,
+        monthlyBudget: profile?.monthly_marketing_budget,
+        greetingPreference: profile?.greeting_preference,
+        completenessScore: profile?.data_completeness_score
+      });
+      
       return profile;
     } catch (error) {
       console.error('❌ Unexpected error in getUserProfile:', error);
@@ -97,7 +108,8 @@ export class UserProfileService {
 
   static async saveUserProfile(userId: string, profileData: Partial<UserProfile>): Promise<boolean> {
     try {
-      console.log('💾 Saving user profile for ID:', userId);
+      const timestamp = new Date().toISOString();
+      console.log(`💾 [${timestamp}] Saving user profile for ID:`, userId);
       console.log('💾 Profile data to save:', profileData);
 
       // First check if profile exists
@@ -137,7 +149,7 @@ export class UserProfileService {
           });
           return false;
         }
-        console.log('✅ Profile updated successfully');
+        console.log(`✅ [${timestamp}] Profile updated successfully`);
       } else {
         console.log('➕ Creating new profile...');
         const { error } = await supabase
@@ -158,7 +170,7 @@ export class UserProfileService {
           });
           return false;
         }
-        console.log('✅ Profile created successfully');
+        console.log(`✅ [${timestamp}] Profile created successfully`);
       }
 
       return true;

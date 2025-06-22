@@ -19,16 +19,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const location = useLocation();
   const [checkingSetup, setCheckingSetup] = useState(true);
   const [hasChecked, setHasChecked] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>({});
 
   useEffect(() => {
-    console.log('🔒 ProtectedRoute useEffect triggered:', { 
+    const currentTime = new Date().toISOString();
+    console.log(`🔒 [${currentTime}] ProtectedRoute useEffect triggered:`, { 
       user: !!user, 
       session: !!session, 
       loading, 
       path: location.pathname,
       userId: user?.id,
       userEmail: user?.email,
-      hasChecked
+      hasChecked,
+      checkingSetup
     });
     
     // Prevent multiple checks
@@ -70,6 +73,24 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       
       const profile = await UserProfileService.getUserProfile(user.id);
       
+      // Store debug info for analysis
+      const currentDebugInfo = {
+        profileExists: !!profile,
+        profileData: profile ? {
+          first_time_setup_completed: profile.first_time_setup_completed,
+          company_name: profile.company_name,
+          industry: profile.industry,
+          marketing_experience: profile.marketing_experience,
+          monthly_marketing_budget: profile.monthly_marketing_budget,
+          greeting_preference: profile.greeting_preference,
+          data_completeness_score: profile.data_completeness_score
+        } : null,
+        timestamp: new Date().toISOString()
+      };
+      
+      setDebugInfo(currentDebugInfo);
+      console.log('🔒 Debug Info:', currentDebugInfo);
+      
       if (!profile) {
         console.log('🔒 No profile found - redirecting to first-time setup');
         setHasChecked(true);
@@ -85,13 +106,32 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         monthly_marketing_budget: !!profile.monthly_marketing_budget
       });
       
-      // Check essential fields
-      const hasEssentialInfo = !!(
-        profile.company_name && 
-        profile.industry && 
-        profile.marketing_experience && 
-        profile.monthly_marketing_budget
-      );
+      // Check essential fields with detailed logging
+      const fieldChecks = {
+        company_name: {
+          value: profile.company_name,
+          exists: !!(profile.company_name && profile.company_name.trim())
+        },
+        industry: {
+          value: profile.industry,
+          exists: !!(profile.industry && profile.industry.trim())
+        },
+        marketing_experience: {
+          value: profile.marketing_experience,
+          exists: !!(profile.marketing_experience && profile.marketing_experience.trim())
+        },
+        monthly_marketing_budget: {
+          value: profile.monthly_marketing_budget,
+          exists: !!(profile.monthly_marketing_budget && profile.monthly_marketing_budget.trim())
+        }
+      };
+      
+      console.log('🔒 Field checks:', fieldChecks);
+      
+      const hasEssentialInfo = fieldChecks.company_name.exists && 
+                              fieldChecks.industry.exists && 
+                              fieldChecks.marketing_experience.exists && 
+                              fieldChecks.monthly_marketing_budget.exists;
       
       // Setup is complete if flag is true AND essential info exists
       const setupComplete = profile.first_time_setup_completed === true && hasEssentialInfo;
@@ -99,11 +139,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       console.log('🔒 Setup completion result:', {
         hasEssentialInfo,
         setupComplete,
-        flagValue: profile.first_time_setup_completed
+        flagValue: profile.first_time_setup_completed,
+        flagType: typeof profile.first_time_setup_completed
       });
       
       if (!setupComplete) {
         console.log('🔒 Setup incomplete - redirecting to first-time setup');
+        console.log('🔒 Reason for incompleteness:', {
+          flagNotTrue: profile.first_time_setup_completed !== true,
+          missingEssentialInfo: !hasEssentialInfo
+        });
         setHasChecked(true);
         navigate('/first-time-setup', { replace: true });
         return;
@@ -114,6 +159,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       
     } catch (error) {
       console.error('🔒 Error checking first-time setup:', error);
+      console.error('🔒 Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
       // On error, allow access but mark as checked to prevent loops
       console.log('🔒 Error occurred, allowing access and marking as checked');
       setHasChecked(true);
@@ -129,6 +178,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-400" />
           <p className="text-white">جاري التحقق من تسجيل الدخول...</p>
+          {debugInfo.timestamp && (
+            <div className="mt-4 text-xs text-gray-400 max-w-md">
+              <p>Debug: Last check at {debugInfo.timestamp}</p>
+              <p>Profile exists: {debugInfo.profileExists ? 'Yes' : 'No'}</p>
+              {debugInfo.profileData && (
+                <p>Setup flag: {String(debugInfo.profileData.first_time_setup_completed)}</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
