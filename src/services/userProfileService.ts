@@ -136,37 +136,45 @@ export class UserProfileService {
   }
 
   static async calculateCompleteness(profile: UserProfile): Promise<number> {
+    // Essential required fields that should be filled
     const requiredFields = [
       'greeting_preference',
       'company_name', 
       'industry', 
       'company_size',
-      'company_overview',
-      'core_offerings',
-      'contact_email',
-      'contact_phone'
+      'business_type',
+      'marketing_experience',
+      'monthly_marketing_budget',
+      'current_monthly_revenue'
     ];
 
+    // Important optional fields that add to completeness
     const optionalFields = [
+      'full_name',
       'website_url',
-      'technical_products',
-      'business_focus',
-      'product_descriptions',
-      'team_members'
+      'company_overview',
+      'target_market',
+      'revenue_target',
+      'biggest_marketing_challenge',
+      'primary_marketing_goals',
+      'unique_selling_points',
+      'contact_info'
     ];
 
     let completedRequired = 0;
     let completedOptional = 0;
 
+    console.log('🔍 Calculating completeness for profile:', profile);
+
     // Check required fields
     requiredFields.forEach(field => {
       const value = profile[field as keyof UserProfile];
+      console.log(`🔍 Required field ${field}:`, value);
+      
       if (value !== null && value !== undefined && value !== '') {
-        if (field === 'team_members' && Array.isArray(value)) {
-          if (value.length > 0 && value.some(member => member && member.trim())) {
-            completedRequired++;
-          }
-        } else {
+        if (Array.isArray(value) && value.length > 0) {
+          completedRequired++;
+        } else if (!Array.isArray(value)) {
           completedRequired++;
         }
       }
@@ -175,12 +183,19 @@ export class UserProfileService {
     // Check optional fields
     optionalFields.forEach(field => {
       const value = profile[field as keyof UserProfile];
+      console.log(`🔍 Optional field ${field}:`, value);
+      
       if (value !== null && value !== undefined && value !== '') {
-        if (field === 'team_members' && Array.isArray(value)) {
-          if (value.length > 0 && value.some(member => member && member.trim())) {
+        if (field === 'primary_marketing_goals' && Array.isArray(value) && value.length > 0) {
+          completedOptional++;
+        } else if (field === 'unique_selling_points' && Array.isArray(value) && value.length > 0) {
+          completedOptional++;
+        } else if (field === 'contact_info' && typeof value === 'object' && value !== null) {
+          const contactInfo = value as any;
+          if (contactInfo.email || contactInfo.phone) {
             completedOptional++;
           }
-        } else {
+        } else if (!Array.isArray(value) && typeof value !== 'object') {
           completedOptional++;
         }
       }
@@ -193,7 +208,19 @@ export class UserProfileService {
     const requiredScore = (completedRequired / requiredFields.length) * requiredWeight;
     const optionalScore = (completedOptional / optionalFields.length) * optionalWeight;
     
-    return Math.round((requiredScore + optionalScore) * 100);
+    const finalScore = Math.round((requiredScore + optionalScore) * 100);
+    
+    console.log('🔍 Completeness calculation:', {
+      completedRequired,
+      totalRequired: requiredFields.length,
+      completedOptional,
+      totalOptional: optionalFields.length,
+      requiredScore,
+      optionalScore,
+      finalScore
+    });
+
+    return finalScore;
   }
 
   static async updateCompleteness(userId: string): Promise<void> {
