@@ -1,7 +1,6 @@
 
 import { useCallback } from 'react';
 import { useConversationalMemory } from './useConversationalMemory';
-import { useConversationalFlow } from './useConversationalFlow';
 
 interface ConversationEnhancement {
   personalizedResponse: string;
@@ -14,18 +13,28 @@ interface ConversationEnhancement {
   }>;
 }
 
+// Simple conversational flow state
+interface ConversationState {
+  phase: 'onboarding' | 'chat' | 'analysis';
+  conversationDepth: number;
+}
+
 export const useAdvancedConversation = () => {
   const {
     memories,
     emotionalContext,
-    saveMemory,
+    addMemory,
     updateEmotionalContext,
     getRelevantMemories,
     analyzeMessageEmotion,
     getPersonalizedResponse
   } = useConversationalMemory();
 
-  const { conversationState, processMessage } = useConversationalFlow();
+  // Simple conversation state management
+  const conversationState: ConversationState = {
+    phase: 'chat',
+    conversationDepth: memories.length
+  };
 
   const enhanceConversation = useCallback(async (
     userMessage: string,
@@ -36,12 +45,10 @@ export const useAdvancedConversation = () => {
     
     // Update emotional context if confidence is high enough
     if (emotionAnalysis.confidence > 0.6) {
-      await updateEmotionalContext(
-        emotionAnalysis.emotion,
-        emotionAnalysis.confidence,
-        emotionAnalysis.triggers,
-        userMessage
-      );
+      updateEmotionalContext({
+        currentMood: emotionAnalysis.emotion,
+        frustrationLevel: emotionAnalysis.emotion === 'frustrated' ? 0.8 : 0.2
+      });
     }
 
     // Get relevant memories for context
@@ -53,7 +60,7 @@ export const useAdvancedConversation = () => {
     if (relevantMemories.length > 0) {
       relevantMemories.forEach(memory => {
         if (memory.type === 'preference') {
-          contextualInsights.push(`تذكرت أنك تفضل: ${JSON.stringify(memory.content)}`);
+          contextualInsights.push(`تذكرت أنك تفضل: ${memory.content}`);
         } else if (memory.type === 'goal') {
           contextualInsights.push(`هدفك المحدد سابقاً: ${memory.content}`);
         }
@@ -123,7 +130,7 @@ export const useAdvancedConversation = () => {
 
     // Execute memory updates
     memoryUpdates.forEach(async (update) => {
-      await saveMemory(update.type as any, update.content, update.importance);
+      await addMemory(update.type, JSON.stringify(update.content), update.importance);
     });
 
     return {
@@ -137,15 +144,15 @@ export const useAdvancedConversation = () => {
     updateEmotionalContext,
     getRelevantMemories,
     getPersonalizedResponse,
-    conversationState,
-    saveMemory
+    addMemory,
+    memories.length
   ]);
 
   const getConversationInsights = useCallback(() => {
     const insights = [];
     
     // Emotional insights
-    if (emotionalContext.satisfactionLevel < 0.6) {
+    if (emotionalContext.satisfactionScore < 0.6) {
       insights.push({
         type: 'emotional',
         message: 'يبدو أن المستخدم يحتاج المزيد من المساعدة',
@@ -155,7 +162,7 @@ export const useAdvancedConversation = () => {
 
     // Memory insights
     const recentMemories = memories.filter(m => 
-      new Date().getTime() - m.lastAccessed.getTime() < 24 * 60 * 60 * 1000
+      new Date().getTime() - new Date(m.timestamp).getTime() < 24 * 60 * 60 * 1000
     );
     
     if (recentMemories.length > 0) {

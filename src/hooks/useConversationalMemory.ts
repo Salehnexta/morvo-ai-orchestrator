@@ -161,6 +161,30 @@ export const useConversationalMemory = () => {
     };
   };
 
+  // Add missing functions that other hooks expect
+  const analyzeMessageEmotion = (message: string) => {
+    // Simple emotion analysis based on keywords
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('frustrated') || lowerMessage.includes('angry')) {
+      return { emotion: 'frustrated', confidence: 0.8, triggers: ['negative_keywords'] };
+    } else if (lowerMessage.includes('happy') || lowerMessage.includes('great')) {
+      return { emotion: 'happy', confidence: 0.8, triggers: ['positive_keywords'] };
+    }
+    
+    return { emotion: 'neutral', confidence: 0.5, triggers: [] };
+  };
+
+  const getPersonalizedResponse = (baseResponse: string) => {
+    // Simple personalization based on user's greeting preference
+    const greeting = memories.memories.find(m => m.type === 'greeting_preference')?.content || 'أستاذ';
+    return baseResponse.replace(/مستخدم/g, greeting);
+  };
+
+  const saveMemory = async (type: string, content: any, importance: number = 0.5) => {
+    await addMemory(type, JSON.stringify(content), importance);
+  };
+
   return {
     memories: memories.memories,
     emotionalContext: memories.emotionalContext,
@@ -170,6 +194,9 @@ export const useConversationalMemory = () => {
     updateEmotionalContext,
     updateConversationFlow,
     getRelevantMemories,
-    getContextualSummary
+    getContextualSummary,
+    analyzeMessageEmotion,
+    getPersonalizedResponse,
+    saveMemory
   };
 };

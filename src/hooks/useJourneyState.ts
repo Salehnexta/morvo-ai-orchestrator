@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserProfileService } from '@/services/userProfileService';
 
 export interface JourneyState {
   id: string;
@@ -29,28 +29,35 @@ export const useJourneyState = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('user_journey_states')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('journey_type', 'onboarding')
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
+      // Use user profile as journey state since we don't have user_journey_states table
+      const userProfile = await UserProfileService.getUserProfile(user.id);
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching journey state:', error);
-        return;
-      }
-
-      if (data) {
-        // Type conversion for JSONB fields
-        const typedData: JourneyState = {
-          ...data,
-          state_data: (data.state_data as any) || {},
-          device_info: (data.device_info as any) || {},
+      if (userProfile) {
+        // Create a journey state object from user profile
+        const journeyStateFromProfile: JourneyState = {
+          id: userProfile.id,
+          user_id: user.id,
+          client_id: userProfile.id, // Using profile id as placeholder
+          journey_type: 'onboarding',
+          current_state: userProfile.onboarding_completed ? 'completed' : 'welcome',
+          state_data: {
+            greeting_preference: userProfile.greeting_preference,
+            company_name: userProfile.company_name,
+            website_url: userProfile.website_url,
+            onboarding_completed: userProfile.onboarding_completed
+          },
+          last_interaction_at: userProfile.updated_at || new Date().toISOString(),
+          session_id: sessionStorage.getItem('session_id') || undefined,
+          device_info: {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language
+          },
+          created_at: userProfile.created_at || new Date().toISOString(),
+          updated_at: userProfile.updated_at || new Date().toISOString()
         };
-        setJourneyState(typedData);
+        
+        setJourneyState(journeyStateFromProfile);
       }
     } catch (error) {
       console.error('Error in fetchJourneyState:', error);
@@ -63,79 +70,23 @@ export const useJourneyState = () => {
     if (!user) return;
 
     try {
-      // Get client ID
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!clientData) return;
-
+      // Update user profile instead of journey state table
       const updateData = {
-        current_state: newState,
-        state_data: stateData || {},
-        last_interaction_at: new Date().toISOString(),
-        session_id: sessionStorage.getItem('session_id') || crypto.randomUUID(),
-        device_info: {
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          language: navigator.language,
-          viewport: {
-            width: window.innerWidth,
-            height: window.innerHeight
-          }
-        }
+        ...stateData,
+        updated_at: new Date().toISOString()
       };
 
+      await UserProfileService.saveUserProfile(user.id, updateData);
+
+      // Update local state
       if (journeyState) {
-        // Update existing state
-        const { data, error } = await supabase
-          .from('user_journey_states')
-          .update(updateData)
-          .eq('id', journeyState.id)
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Error updating journey state:', error);
-          return;
-        }
-
-        if (data) {
-          const typedData: JourneyState = {
-            ...data,
-            state_data: (data.state_data as any) || {},
-            device_info: (data.device_info as any) || {},
-          };
-          setJourneyState(typedData);
-        }
-      } else {
-        // Create new state
-        const { data, error } = await supabase
-          .from('user_journey_states')
-          .insert([{
-            user_id: user.id,
-            client_id: clientData.id,
-            journey_type: 'onboarding',
-            ...updateData
-          }])
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Error creating journey state:', error);
-          return;
-        }
-
-        if (data) {
-          const typedData: JourneyState = {
-            ...data,
-            state_data: (data.state_data as any) || {},
-            device_info: (data.device_info as any) || {},
-          };
-          setJourneyState(typedData);
-        }
+        setJourneyState(prev => prev ? {
+          ...prev,
+          current_state: newState,
+          state_data: { ...prev.state_data, ...stateData },
+          last_interaction_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } : null);
       }
     } catch (error) {
       console.error('Error in updateJourneyState:', error);
