@@ -11,7 +11,6 @@ interface JourneyContextType {
   currentStep: string;
   setCurrentStep: (step: string) => void;
   loading: boolean;
-  // Fixed: Add all missing properties that components expect
   currentPhase: string;
   progress: number;
   isOnboardingComplete: boolean;
@@ -62,15 +61,19 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         if (userProfile) {
           setJourney(userProfile);
           setGreetingPreference(userProfile.greeting_preference || 'أستاذ');
+          
+          // Set current phase from profile or default to welcome
+          const savedPhase = userProfile.current_phase || 'welcome';
+          setCurrentPhase(savedPhase);
+          setCurrentStep(savedPhase);
+          
           setJourneyStatus({
             onboarding_completed: userProfile.onboarding_completed,
-            current_step: userProfile.onboarding_completed ? 'completed' : 'welcome',
+            current_step: savedPhase,
             completeness_score: userProfile.data_completeness_score || 0
           });
           
           if (userProfile.onboarding_completed) {
-            setCurrentStep('completed');
-            setCurrentPhase('completed');
             setProgress(100);
           } else {
             // Calculate progress based on completed fields
@@ -87,6 +90,8 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         } else {
           // Initialize empty journey for new users
           setJourney({});
+          setCurrentPhase('welcome');
+          setCurrentStep('welcome');
           setJourneyStatus({
             onboarding_completed: false,
             current_step: 'welcome',
@@ -98,6 +103,8 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
         console.error('Error loading journey data:', error);
         // Set default values on error
         setJourney({});
+        setCurrentPhase('welcome');
+        setCurrentStep('welcome');
         setJourneyStatus({
           onboarding_completed: false,
           current_step: 'welcome',
@@ -164,9 +171,25 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     }
   };
 
-  const updateJourneyPhase = (phase: string) => {
-    setCurrentPhase(phase);
-    setCurrentStep(phase);
+  const updateJourneyPhase = async (phase: string) => {
+    if (!user) return;
+    
+    try {
+      // Save phase to database immediately
+      await UserProfileService.saveUserProfile(user.id, {
+        current_phase: phase,
+        updated_at: new Date().toISOString()
+      });
+      
+      console.log('✅ Phase saved to database:', phase);
+      
+      // Update local state
+      setCurrentPhase(phase);
+      setCurrentStep(phase);
+      setJourney(prev => ({ ...prev, current_phase: phase }));
+    } catch (error) {
+      console.error('Error updating journey phase:', error);
+    }
   };
 
   const generateStrategy = async (): Promise<any> => {
@@ -176,7 +199,8 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
       // Mark onboarding as completed
       await UserProfileService.saveUserProfile(user.id, {
         onboarding_completed: true,
-        onboarding_completed_at: new Date().toISOString()
+        onboarding_completed_at: new Date().toISOString(),
+        current_phase: 'completed'
       });
       
       setProgress(100);

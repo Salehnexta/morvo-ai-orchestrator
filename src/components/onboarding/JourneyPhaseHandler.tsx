@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useJourney } from '@/contexts/JourneyContext';
 import { useUserGreeting } from '@/hooks/useUserGreeting';
 import { JourneyFlowService, JourneyFlowState } from '@/services/journeyFlowService';
@@ -36,12 +36,25 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [websiteAnalysisData, setWebsiteAnalysisData] = useState<any>(null);
   const [localCurrentPhase, setLocalCurrentPhase] = useState(currentPhase);
+  
+  // Add ref to track if we're in a transition to prevent sync conflicts
+  const isTransitioningRef = useRef(false);
+  const lastTransitionRef = useRef<string>('');
 
-  // Sync local phase with context phase
+  // Sync local phase with context phase - but prevent conflicts during transitions
   useEffect(() => {
-    console.log('🔄 Phase sync: context phase =', currentPhase, ', local phase =', localCurrentPhase);
-    if (currentPhase !== localCurrentPhase) {
-      setLocalCurrentPhase(currentPhase);
+    console.log('🔄 Phase sync: context phase =', currentPhase, ', local phase =', localCurrentPhase, ', transitioning =', isTransitioningRef.current);
+    
+    // Only sync if we're not in the middle of a transition and the phases are actually different
+    if (!isTransitioningRef.current && currentPhase !== localCurrentPhase) {
+      // Add a small delay to avoid conflicts with rapid state changes
+      const timeoutId = setTimeout(() => {
+        if (!isTransitioningRef.current) {
+          setLocalCurrentPhase(currentPhase);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [currentPhase]);
 
@@ -67,6 +80,9 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
     }
 
     console.log('🎯 Phase action:', action, 'current phase:', localCurrentPhase);
+    
+    // Set transition flag to prevent sync conflicts
+    isTransitioningRef.current = true;
     setLoading(true);
     
     try {
@@ -78,44 +94,32 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
           success = await setGreeting(data.greeting);
           if (success) {
             nextPhase = 'website_analysis';
-            updateJourneyPhase(nextPhase);
-            setLocalCurrentPhase(nextPhase);
           }
           break;
 
         case 'website_analysis_complete':
           setWebsiteAnalysisData(data);
           nextPhase = 'analysis_review';
-          updateJourneyPhase(nextPhase);
-          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
         case 'skip_website_analysis':
           nextPhase = 'profile_completion';
-          updateJourneyPhase(nextPhase);
-          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
         case 'analysis_review_complete':
           nextPhase = 'profile_completion';
-          updateJourneyPhase(nextPhase);
-          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
         case 'profile_completion_complete':
           nextPhase = 'professional_analysis';
-          updateJourneyPhase(nextPhase);
-          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
         case 'professional_analysis_complete':
           nextPhase = 'strategy_generation';
-          updateJourneyPhase(nextPhase);
-          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
@@ -140,23 +144,33 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
               nextPhase = nextPhaseFromFlow;
             }
           }
-          
-          if (nextPhase) {
-            updateJourneyPhase(nextPhase);
-            setLocalCurrentPhase(nextPhase);
-            success = true;
-            console.log('✅ Phase transition successful:', localCurrentPhase, '->', nextPhase);
-          }
+          success = true;
           break;
       }
 
-      if (success && onPhaseComplete && action !== 'generate_strategy') {
-        onPhaseComplete(localCurrentPhase);
+      if (success && nextPhase) {
+        // Prevent the sync effect from interfering
+        const transitionId = `${localCurrentPhase}->${nextPhase}`;
+        lastTransitionRef.current = transitionId;
+        
+        // Update both local and context state
+        setLocalCurrentPhase(nextPhase);
+        updateJourneyPhase(nextPhase);
+        
+        console.log('✅ Phase transition successful:', localCurrentPhase, '->', nextPhase);
+        
+        if (onPhaseComplete && action !== 'generate_strategy') {
+          onPhaseComplete(localCurrentPhase);
+        }
       }
     } catch (error) {
       console.error('❌ Phase action failed:', error);
     } finally {
       setLoading(false);
+      // Clear transition flag after a delay to ensure state has settled
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+      }, 500);
     }
   };
 
@@ -171,7 +185,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
     switch (currentPhaseToRender) {
       case 'welcome':
         return (
-          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
+          <Card className="bg-gray-800/95 border-gray-600/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white text-center flex items-center justify-center gap-2">
                 <Sparkles className="w-6 h-6 text-blue-400" />
@@ -185,7 +199,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
                   'سنقوم معاً ببناء استراتيجية تسويقية مخصصة لأعمالك في خطوات بسيطة'
                 }
               </p>
-              <div className="bg-gray-700/60 rounded-lg p-4 mb-6 border border-gray-600/30">
+              <div className="bg-gray-700/80 rounded-lg p-4 mb-6 border border-gray-600/50">
                 <h3 className="text-white font-semibold mb-2">ما ستحصل عليه:</h3>
                 <ul className="text-gray-200 text-sm space-y-1 text-right">
                   <li>• استراتيجية تسويقية شاملة مخصصة لأعمالك</li>
@@ -209,7 +223,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       case 'greeting_preference':
         return (
-          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
+          <Card className="bg-gray-800/95 border-gray-600/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-400" />
@@ -226,7 +240,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
               <div className="space-y-3">
                 <label className="text-white block">اختر طريقة المخاطبة المفضلة:</label>
                 <Select onValueChange={(value) => setFormData({...formData, greeting: value})}>
-                  <SelectTrigger className="bg-gray-700/60 border-gray-600/50 text-white">
+                  <SelectTrigger className="bg-gray-700/80 border-gray-600/50 text-white">
                     <SelectValue placeholder="اختر..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -381,7 +395,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       default:
         return (
-          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
+          <Card className="bg-gray-800/95 border-gray-600/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white">
                 {currentPhaseData.title}
@@ -420,11 +434,12 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
       {renderPhaseContent()}
 
       {/* Debug Info */}
-      <div className="bg-gray-800/60 p-3 rounded text-xs text-gray-300 border border-gray-600/30">
+      <div className="bg-gray-800/80 p-3 rounded text-xs text-gray-300 border border-gray-600/50">
         <p>Current Phase: {localCurrentPhase}</p>
         <p>Context Phase: {currentPhase}</p>
         <p>Progress: {progress}%</p>
         <p>Journey: {journey ? 'Loaded' : 'Not loaded'}</p>
+        <p>Transitioning: {isTransitioningRef.current ? 'Yes' : 'No'}</p>
       </div>
 
       {/* Blockers Display */}
