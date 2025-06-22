@@ -6,8 +6,9 @@ import { ChatHeader } from './chat/ChatHeader';
 import { ActionButtons } from './chat/ActionButtons';
 import { ChatInitializer } from './chat/ChatInitializer';
 import { useChatInterface } from '@/hooks/useChatInterface';
-import { useJourneyMessageHandler } from '@/hooks/useJourneyMessageHandler';
 import { MorvoAIService } from '@/services/morvoAIService';
+import { UserProfileService } from '@/services/userProfileService';
+import { SEOAnalysisService } from '@/services/seRankingService';
 import { AgentResponse } from '@/services/agent';
 
 interface MessageData {
@@ -17,16 +18,7 @@ interface MessageData {
   timestamp: Date;
   processing_time?: number;
   tokens_used?: number;
-  suggested_actions?: Array<{
-    action: string;
-    label: string;
-    priority: number;
-  }>;
-  personality_traits?: any;
-  isOnboarding?: boolean;
-  contextualInsights?: string[];
-  emotionalContext?: any;
-  journeyPhase?: string;
+  metadata?: any;
 }
 
 interface ChatInterfaceProps {
@@ -57,21 +49,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     isRTL,
     theme,
     toast,
-    journey,
-    journeyStatus,
-    isOnboardingComplete,
-    currentPhase,
-    journeyLoading,
-    greetingPreference,
+    userProfile,
     enhanceConversation,
     emotionalContext,
     conversationState,
     t,
     handleSidebarContentChange,
-    generateJourneyAwareResponse
+    extractUrlFromMessage,
+    generateContextualResponse
   } = useChatInterface(onContentTypeChange, onMessageSent);
-
-  const { handleJourneySpecificMessage } = useJourneyMessageHandler();
 
   const handleSendMessage = async () => {
     if (!input.trim() || !user) {
@@ -83,7 +69,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       content: input,
       sender: 'user',
       timestamp: new Date(),
-      journeyPhase: currentPhase
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -95,50 +80,52 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     handleSidebarContentChange(messageText);
 
     try {
-      console.log('🤖 Processing journey-aware message - Phase:', currentPhase);
+      console.log('🤖 Processing message with clean system');
       
-      let journeyResponse = await handleJourneySpecificMessage(messageText);
-      
-      if (!journeyResponse) {
-        const context = {
-          conversation_history: messages.slice(-3).map(m => ({
-            role: m.sender === 'user' ? 'user' : 'assistant',
-            content: m.content
-          })),
-          journey_context: {
-            journey_id: journey?.journey_id,
-            current_phase: currentPhase,
-            is_onboarding_complete: isOnboardingComplete,
-            profile_progress: journeyStatus?.profile_progress || 0,
-            greeting_preference: greetingPreference
-          },
-          emotional_context: emotionalContext,
-          conversation_state: conversationState,
-          user_id: user.id
-        };
-
-        let backendResponse;
-
-        if (isConnected) {
-          try {
-            const aiResponse = await MorvoAIService.processMessage(messageText, context);
-            backendResponse = aiResponse.response;
-            console.log('✅ Journey-aware backend response received');
-          } catch (backendError) {
-            console.warn('⚠️ Backend failed, using local processing:', backendError);
-            backendResponse = null;
-          }
-        }
-
-        if (!backendResponse) {
-          console.log('🔄 Using local journey-aware response generation...');
-          backendResponse = generateJourneyAwareResponse(messageText);
-        }
-
-        journeyResponse = backendResponse;
+      // Check for website URL and analyze if provided
+      const websiteUrl = extractUrlFromMessage(messageText);
+      if (websiteUrl && (!userProfile?.website_url || userProfile.website_url !== websiteUrl)) {
+        console.log('🔍 New website detected, analyzing...');
+        await UserProfileService.saveUserProfile(user.id, { website_url: websiteUrl });
+        await SEOAnalysisService.updateUserSeoData(user.id, websiteUrl);
       }
 
-      const enhancement = await enhanceConversation(messageText, journeyResponse);
+      // Handle profile updates based on message content
+      if (!userProfile?.onboarding_completed) {
+        if (!userProfile?.company_name && messageText.trim()) {
+          await UserProfileService.saveUserProfile(user.id, { 
+            company_name: messageText.trim() 
+          });
+        }
+      }
+
+      let botResponse: string;
+
+      if (isConnected) {
+        try {
+          const context = {
+            conversation_history: messages.slice(-3).map(m => ({
+              role: m.sender === 'user' ? 'user' : 'assistant',
+              content: m.content
+            })),
+            user_profile: userProfile,
+            emotional_context: emotionalContext,
+            conversation_state: conversationState,
+            user_id: user.id
+          };
+
+          const aiResponse = await MorvoAIService.processMessage(messageText, context);
+          botResponse = aiResponse.response;
+          console.log('✅ AI response received');
+        } catch (backendError) {
+          console.warn('⚠️ Backend failed, using local response:', backendError);
+          botResponse = generateContextualResponse(messageText);
+        }
+      } else {
+        botResponse = generateContextualResponse(messageText);
+      }
+
+      const enhancement = await enhanceConversation(messageText, botResponse);
       
       const botMessage: MessageData = {
         id: (Date.now() + 1).toString(),
@@ -146,14 +133,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         sender: 'agent',
         timestamp: new Date(),
         processing_time: Date.now() - userMessage.timestamp.getTime(),
-        isOnboarding: !isOnboardingComplete,
-        journeyPhase: currentPhase,
-        contextualInsights: enhancement.contextualInsights,
-        emotionalContext: emotionalContext
+        metadata: {
+          contextualInsights: enhancement.contextualInsights,
+          emotionalContext: emotionalContext
+        }
       };
 
       setMessages(prev => [...prev, botMessage]);
 
+      // Update sidebar based on message content
       if (onContentTypeChange) {
         if (messageText.includes('تحليل') || messageText.includes('analytics')) {
           onContentTypeChange('analytics');
@@ -167,7 +155,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
 
     } catch (error) {
-      console.error('❌ Journey chat error:', error);
+      console.error('❌ Chat error:', error);
       
       const errorMessage: MessageData = {
         id: (Date.now() + 1).toString(),
@@ -215,17 +203,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <ChatInitializer
         chatInitialized={chatInitialized}
         setChatInitialized={setChatInitialized}
-        journeyLoading={journeyLoading}
         user={user}
         messages={messages}
         setMessages={setMessages}
         setIsConnected={setIsConnected}
         setConnectionChecked={setConnectionChecked}
-        isOnboardingComplete={isOnboardingComplete}
-        currentPhase={currentPhase}
-        greetingPreference={greetingPreference}
-        journeyStatus={journeyStatus}
-        emotionalContext={emotionalContext}
+        userProfile={userProfile}
       />
 
       {/* Fixed Header */}
@@ -262,7 +245,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Fixed Input Area */}
       <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
         <div className="p-4">
-          {messages.length > 0 && messages[messages.length - 1]?.suggested_actions && (
+          {messages.length > 0 && messages[messages.length - 1]?.metadata?.suggested_actions && (
             <div className="mb-3">
               <ActionButtons 
                 messageContent={messages[messages.length - 1]?.content || ''}

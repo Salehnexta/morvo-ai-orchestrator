@@ -3,11 +3,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useJourney } from '@/contexts/JourneyContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAdvancedConversation } from '@/hooks/useAdvancedConversation';
 import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
 import { MorvoAIService } from '@/services/morvoAIService';
+import { UserProfileService } from '@/services/userProfileService';
 
 interface MessageData {
   id: string;
@@ -16,16 +16,7 @@ interface MessageData {
   timestamp: Date;
   processing_time?: number;
   tokens_used?: number;
-  suggested_actions?: Array<{
-    action: string;
-    label: string;
-    priority: number;
-  }>;
-  personality_traits?: any;
-  isOnboarding?: boolean;
-  contextualInsights?: string[];
-  emotionalContext?: any;
-  journeyPhase?: string;
+  metadata?: any;
 }
 
 export const useChatInterface = (
@@ -38,6 +29,7 @@ export const useChatInterface = (
   const [isConnected, setIsConnected] = useState(false);
   const [connectionChecked, setConnectionChecked] = useState(false);
   const [chatInitialized, setChatInitialized] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAuth();
@@ -45,21 +37,7 @@ export const useChatInterface = (
   const { theme } = useTheme();
   const { toast } = useToast();
   const { 
-    journey, 
-    journeyStatus, 
-    isOnboardingComplete, 
-    currentPhase,
-    setGreeting,
-    analyzeWebsite,
-    saveAnswer,
-    generateStrategy,
-    loading: journeyLoading,
-    updateJourneyPhase,
-    greetingPreference
-  } = useJourney();
-  const { 
     enhanceConversation, 
-    getConversationInsights, 
     emotionalContext,
     conversationState 
   } = useAdvancedConversation();
@@ -90,6 +68,17 @@ export const useChatInterface = (
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load user profile
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (user) {
+        const profile = await UserProfileService.getUserProfile(user.id);
+        setUserProfile(profile);
+      }
+    };
+    loadUserProfile();
+  }, [user]);
 
   const handleSidebarContentChange = (message: string) => {
     if (onContentTypeChange) {
@@ -124,20 +113,14 @@ export const useChatInterface = (
     return null;
   };
 
-  const generateJourneyAwareResponse = (message: string): string => {
+  const generateContextualResponse = (message: string): string => {
+    const isOnboardingComplete = userProfile?.onboarding_completed || false;
+    
     if (!isOnboardingComplete) {
-      switch (currentPhase) {
-        case 'welcome':
-        case 'greeting_preference':
-          return 'أهلاً بك! كيف تفضل أن أناديك؟ يمكنك أن تقول لي اسمك أو كيف تحب أن أخاطبك.';
-        case 'website_analysis':
-          return 'لأتمكن من مساعدتك بشكل أفضل، أحتاج لرابط موقعك الإلكتروني لتحليله.';
-        default:
-          return 'دعنا نكمل رحلة الإعداد الخاصة بك لأتمكن من تقديم أفضل خدمة لك.';
-      }
+      return 'مرحباً بك في مورفو! دعني أساعدك في إعداد ملفك التجاري أولاً. ما هو اسم شركتك؟';
     }
 
-    return SmartResponseGenerator.generateContextualResponse(message, [], journeyStatus);
+    return SmartResponseGenerator.generateContextualResponse(message, [], userProfile);
   };
 
   return {
@@ -159,17 +142,7 @@ export const useChatInterface = (
     isRTL,
     theme,
     toast,
-    journey,
-    journeyStatus,
-    isOnboardingComplete,
-    currentPhase,
-    setGreeting,
-    analyzeWebsite,
-    saveAnswer,
-    generateStrategy,
-    journeyLoading,
-    updateJourneyPhase,
-    greetingPreference,
+    userProfile,
     enhanceConversation,
     emotionalContext,
     conversationState,
@@ -177,6 +150,6 @@ export const useChatInterface = (
     scrollToBottom,
     handleSidebarContentChange,
     extractUrlFromMessage,
-    generateJourneyAwareResponse
+    generateContextualResponse
   };
 };

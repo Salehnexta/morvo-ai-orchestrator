@@ -1,247 +1,171 @@
 
-import { MorvoAIService } from './morvoAIService';
+import { supabase } from "@/integrations/supabase/client";
+import { UserProfileService } from "./userProfileService";
 
-export interface KeywordData {
-  keyword: string;
-  position: number;
-  volume: number;
-  difficulty: number;
-  cpc: number;
-  trend: 'up' | 'down' | 'stable';
-  url?: string;
-}
-
-export interface CompetitorData {
-  domain: string;
-  visibility: number;
-  keywords: number;
-  traffic: number;
-  position_change: number;
-}
-
-export interface BacklinkData {
-  total_backlinks: number;
-  referring_domains: number;
-  dofollow_links: number;
-  domain_authority: number;
-  new_links_last_month: number;
-}
-
-export interface SiteAuditData {
-  overall_score: number;
-  errors: number;
-  warnings: number;
-  notices: number;
-  pages_crawled: number;
-  issues: Array<{
-    type: string;
-    severity: 'high' | 'medium' | 'low';
-    count: number;
-  }>;
-}
-
-export interface SEORankingData {
-  keywords: KeywordData[];
-  competitors: CompetitorData[];
-  backlinks: BacklinkData;
-  site_audit: SiteAuditData;
-  local_seo?: {
-    local_pack_position: number;
-    google_my_business_score: number;
-    local_citations: number;
+export interface SeoDataSnapshot {
+  domain_analysis: {
+    domain_authority: number;
+    trust_score: number;
+    domain_age: string;
+    alexa_rank: number;
+  };
+  organic_metrics: {
+    total_keywords: number;
+    top_10_keywords: number;
+    organic_traffic: number;
+    traffic_value: number;
+    visibility_score: number;
+  };
+  keyword_analysis: {
+    branded_keywords: string[];
+    non_branded_keywords: string[];
+    keyword_gaps: string[];
+    trending_keywords: string[];
+  };
+  competitors: any[];
+  backlink_metrics: {
+    total_backlinks: number;
+    referring_domains: number;
+    dofollow_ratio: number;
+    anchor_text_distribution: any;
+  };
+  technical_audit: {
+    page_speed_score: number;
+    mobile_friendly: boolean;
+    ssl_certificate: boolean;
+    sitemap_status: string;
+  };
+  serp_features: {
+    featured_snippets: string[];
+    local_pack_presence: boolean;
+    knowledge_panel: boolean;
   };
 }
 
-// Extended interface for SEO responses
-interface SEOChatResponse {
-  response?: string;
-  seo_analysis?: {
-    keywords?: KeywordData[];
-    competitors?: CompetitorData[];
-    backlinks?: BacklinkData;
-    site_audit?: SiteAuditData;
-    local_seo?: {
-      local_pack_position: number;
-      google_my_business_score: number;
-      local_citations: number;
-    };
-  };
-}
-
-export class SERankingService {
-  static async getKeywordRankings(domain: string): Promise<KeywordData[]> {
+export class SEOAnalysisService {
+  static async analyzeDomain(websiteUrl: string): Promise<SeoDataSnapshot | null> {
     try {
-      const response = await MorvoAIService.processMessage(
-        `Get keyword rankings for domain: ${domain}`,
-        { 
-          tool_request: 'seranking_keywords',
-          domain: domain,
-          type: 'keyword_analysis'
+      // TODO: Integrate with SE Ranking API
+      // For now, return mock data structure
+      const mockData: SeoDataSnapshot = {
+        domain_analysis: {
+          domain_authority: 45,
+          trust_score: 38,
+          domain_age: "5 years",
+          alexa_rank: 50000
+        },
+        organic_metrics: {
+          total_keywords: 1250,
+          top_10_keywords: 45,
+          organic_traffic: 12500,
+          traffic_value: 8500,
+          visibility_score: 65
+        },
+        keyword_analysis: {
+          branded_keywords: ["brand name", "company name"],
+          non_branded_keywords: ["service keyword", "industry term"],
+          keyword_gaps: ["opportunity keyword"],
+          trending_keywords: ["trending term"]
+        },
+        competitors: [],
+        backlink_metrics: {
+          total_backlinks: 850,
+          referring_domains: 120,
+          dofollow_ratio: 0.75,
+          anchor_text_distribution: {}
+        },
+        technical_audit: {
+          page_speed_score: 85,
+          mobile_friendly: true,
+          ssl_certificate: true,
+          sitemap_status: "Found"
+        },
+        serp_features: {
+          featured_snippets: [],
+          local_pack_presence: false,
+          knowledge_panel: false
         }
-      ) as SEOChatResponse;
+      };
 
-      // Parse SE Ranking data from backend response
-      if (response.seo_analysis?.keywords) {
-        return response.seo_analysis.keywords;
-      }
-
-      // Fallback to mock data if backend doesn't return SE Ranking data yet
-      return this.getMockKeywordData();
+      return mockData;
     } catch (error) {
-      console.error('SE Ranking keyword analysis failed:', error);
-      return this.getMockKeywordData();
+      console.error('Error analyzing domain:', error);
+      return null;
     }
   }
 
-  static async getCompetitorAnalysis(domain: string): Promise<CompetitorData[]> {
+  static async updateUserSeoData(userId: string, websiteUrl: string): Promise<boolean> {
     try {
-      const response = await MorvoAIService.processMessage(
-        `Analyze competitors for domain: ${domain}`,
-        { 
-          tool_request: 'seranking_competitors',
-          domain: domain,
-          type: 'competitor_analysis'
-        }
-      ) as SEOChatResponse;
-
-      if (response.seo_analysis?.competitors) {
-        return response.seo_analysis.competitors;
+      console.log('🔍 Starting SEO analysis for:', websiteUrl);
+      
+      const seoData = await this.analyzeDomain(websiteUrl);
+      if (!seoData) {
+        console.error('Failed to get SEO data');
+        return false;
       }
 
-      return this.getMockCompetitorData();
+      // Update user profile with new SEO data
+      const success = await UserProfileService.updateSeoData(userId, seoData);
+      if (!success) {
+        return false;
+      }
+
+      // Store historical data
+      await this.storeSeoHistory(userId, websiteUrl, seoData);
+
+      console.log('✅ SEO data updated successfully');
+      return true;
     } catch (error) {
-      console.error('SE Ranking competitor analysis failed:', error);
-      return this.getMockCompetitorData();
+      console.error('Error updating user SEO data:', error);
+      return false;
     }
   }
 
-  static async getBacklinkAnalysis(domain: string): Promise<BacklinkData> {
+  static async storeSeoHistory(userId: string, websiteUrl: string, data: SeoDataSnapshot): Promise<void> {
     try {
-      const response = await MorvoAIService.processMessage(
-        `Analyze backlinks for domain: ${domain}`,
-        { 
-          tool_request: 'seranking_backlinks',
-          domain: domain,
-          type: 'backlink_analysis'
-        }
-      ) as SEOChatResponse;
-
-      if (response.seo_analysis?.backlinks) {
-        return response.seo_analysis.backlinks;
-      }
-
-      return this.getMockBacklinkData();
+      await supabase
+        .from('seo_data')
+        .insert({
+          user_id: userId,
+          website_url: websiteUrl,
+          data_snapshot: data,
+          data_type: 'daily_update',
+          collected_at: new Date().toISOString()
+        });
     } catch (error) {
-      console.error('SE Ranking backlink analysis failed:', error);
-      return this.getMockBacklinkData();
+      console.error('Error storing SEO history:', error);
     }
   }
 
-  static async getSiteAudit(domain: string): Promise<SiteAuditData> {
+  static async getSeoHistory(userId: string, websiteUrl: string, days: number = 30): Promise<any[]> {
     try {
-      const response = await MorvoAIService.processMessage(
-        `Perform site audit for domain: ${domain}`,
-        { 
-          tool_request: 'seranking_audit',
-          domain: domain,
-          type: 'site_audit'
-        }
-      ) as SEOChatResponse;
+      const { data, error } = await supabase
+        .from('seo_data')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('website_url', websiteUrl)
+        .gte('collected_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+        .order('collected_at', { ascending: false });
 
-      if (response.seo_analysis?.site_audit) {
-        return response.seo_analysis.site_audit;
+      if (error) {
+        console.error('Error getting SEO history:', error);
+        return [];
       }
 
-      return this.getMockSiteAuditData();
+      return data || [];
     } catch (error) {
-      console.error('SE Ranking site audit failed:', error);
-      return this.getMockSiteAuditData();
+      console.error('Error in getSeoHistory:', error);
+      return [];
     }
   }
 
-  static async getFullSEOAnalysis(domain: string): Promise<SEORankingData> {
+  static async getLatestSeoData(userId: string): Promise<SeoDataSnapshot | null> {
     try {
-      const response = await MorvoAIService.processMessage(
-        `Complete SEO analysis for domain: ${domain} using SE Ranking`,
-        { 
-          tool_request: 'seranking_full_analysis',
-          domain: domain,
-          type: 'complete_seo_analysis',
-          include_local: true
-        }
-      ) as SEOChatResponse;
-
-      if (response.seo_analysis) {
-        return {
-          keywords: response.seo_analysis.keywords || this.getMockKeywordData(),
-          competitors: response.seo_analysis.competitors || this.getMockCompetitorData(),
-          backlinks: response.seo_analysis.backlinks || this.getMockBacklinkData(),
-          site_audit: response.seo_analysis.site_audit || this.getMockSiteAuditData(),
-          local_seo: response.seo_analysis.local_seo
-        };
-      }
-
-      return this.getMockFullAnalysis();
+      const profile = await UserProfileService.getUserProfile(userId);
+      return profile?.seo_data || null;
     } catch (error) {
-      console.error('SE Ranking full analysis failed:', error);
-      return this.getMockFullAnalysis();
+      console.error('Error getting latest SEO data:', error);
+      return null;
     }
-  }
-
-  // Mock data methods for fallback
-  private static getMockKeywordData(): KeywordData[] {
-    return [
-      { keyword: 'digital marketing', position: 3, volume: 12000, difficulty: 78, cpc: 4.5, trend: 'up' },
-      { keyword: 'seo services', position: 7, volume: 8500, difficulty: 65, cpc: 6.2, trend: 'stable' },
-      { keyword: 'ppc advertising', position: 12, volume: 5200, difficulty: 72, cpc: 8.1, trend: 'down' },
-      { keyword: 'social media marketing', position: 5, volume: 15000, difficulty: 55, cpc: 3.8, trend: 'up' }
-    ];
-  }
-
-  private static getMockCompetitorData(): CompetitorData[] {
-    return [
-      { domain: 'competitor1.com', visibility: 85, keywords: 1250, traffic: 45000, position_change: 2 },
-      { domain: 'competitor2.com', visibility: 72, keywords: 980, traffic: 32000, position_change: -1 },
-      { domain: 'competitor3.com', visibility: 68, keywords: 850, traffic: 28000, position_change: 0 }
-    ];
-  }
-
-  private static getMockBacklinkData(): BacklinkData {
-    return {
-      total_backlinks: 1250,
-      referring_domains: 320,
-      dofollow_links: 780,
-      domain_authority: 65,
-      new_links_last_month: 45
-    };
-  }
-
-  private static getMockSiteAuditData(): SiteAuditData {
-    return {
-      overall_score: 78,
-      errors: 12,
-      warnings: 28,
-      notices: 45,
-      pages_crawled: 156,
-      issues: [
-        { type: 'Missing meta descriptions', severity: 'high', count: 8 },
-        { type: 'Slow loading pages', severity: 'medium', count: 15 },
-        { type: 'Missing alt tags', severity: 'medium', count: 23 }
-      ]
-    };
-  }
-
-  private static getMockFullAnalysis(): SEORankingData {
-    return {
-      keywords: this.getMockKeywordData(),
-      competitors: this.getMockCompetitorData(),
-      backlinks: this.getMockBacklinkData(),
-      site_audit: this.getMockSiteAuditData(),
-      local_seo: {
-        local_pack_position: 4,
-        google_my_business_score: 82,
-        local_citations: 156
-      }
-    };
   }
 }
