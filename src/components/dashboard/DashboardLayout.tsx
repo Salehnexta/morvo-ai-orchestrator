@@ -31,7 +31,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { fullGreeting, displayName, loading: greetingLoading } = useUserGreeting();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex">
       <DashboardBackground />
       
       {showOnboarding ? (
