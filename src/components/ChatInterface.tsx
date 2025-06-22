@@ -490,21 +490,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800" dir={isRTL ? 'rtl' : 'ltr'}>
-      <ChatHeader 
-        theme={theme}
-        isRTL={isRTL}
-        content={{
-          masterAgent: t.masterAgent,
-          clientAgent: '',
-          connecting: t.connecting,
-          connected: t.connected
-        }}
-        isConnecting={!connectionChecked}
-        clientId={user?.id || ''}
-        onToggleTheme={() => {}}
-      />
+      {/* Fixed Header */}
+      <div className="flex-shrink-0">
+        <ChatHeader 
+          theme={theme}
+          isRTL={isRTL}
+          content={{
+            masterAgent: t.masterAgent,
+            clientAgent: '',
+            connecting: t.connecting,
+            connected: t.connected
+          }}
+          isConnecting={!connectionChecked}
+          clientId={user?.id || ''}
+          onToggleTheme={() => {}}
+        />
+      </div>
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Scrollable Messages Area */}
+      <div className="flex-1 overflow-hidden">
         <MessageList 
           messages={messages}
           isLoading={isLoading}
@@ -515,33 +519,34 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           language={language}
           onActionClick={handleActionClick}
         />
-        
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-          <div className="p-4">
-            {messages.length > 0 && messages[messages.length - 1]?.suggested_actions && (
-              <div className="mb-3">
-                <ActionButtons 
-                  messageContent={messages[messages.length - 1]?.content || ''}
-                  language={language}
-                  theme={theme}
-                  isRTL={isRTL}
-                  onActionClick={handleActionClick}
-                />
-              </div>
-            )}
-            
-            <ChatInput
-              input={input}
-              isLoading={isLoading}
-              theme={theme}
-              isRTL={isRTL}
-              placeholder={t.placeholder}
-              onInputChange={setInput}
-              onSend={handleSendMessage}
-              onKeyPress={handleKeyPress}
-              hasTokens={true}
-            />
-          </div>
+      </div>
+      
+      {/* Fixed Input Area */}
+      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+        <div className="p-4">
+          {messages.length > 0 && messages[messages.length - 1]?.suggested_actions && (
+            <div className="mb-3">
+              <ActionButtons 
+                messageContent={messages[messages.length - 1]?.content || ''}
+                language={language}
+                theme={theme}
+                isRTL={isRTL}
+                onActionClick={handleActionClick}
+              />
+            </div>
+          )}
+          
+          <ChatInput
+            input={input}
+            isLoading={isLoading}
+            theme={theme}
+            isRTL={isRTL}
+            placeholder={t.placeholder}
+            onInputChange={setInput}
+            onSend={handleSendMessage}
+            onKeyPress={handleKeyPress}
+            hasTokens={true}
+          />
         </div>
       </div>
       <div ref={messagesEndRef} />

@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Message } from './Message';
@@ -49,9 +48,9 @@ export const MessageList = ({
   }, [messages, isLoading]);
 
   return (
-    <div className="flex-1 overflow-hidden">
-      <ScrollArea className="h-full px-4 pb-4" ref={scrollAreaRef}>
-        <div className="space-y-4 pt-4">
+    <div className="h-full">
+      <ScrollArea className="h-full" ref={scrollAreaRef}>
+        <div className="space-y-4 p-4">
           {messages.map((message) => (
             <Message
               key={message.id}
