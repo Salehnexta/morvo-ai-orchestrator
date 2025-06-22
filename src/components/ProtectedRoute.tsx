@@ -18,30 +18,45 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [checkingSetup, setCheckingSetup] = useState(true);
+  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
-    console.log('🔒 ProtectedRoute check:', { 
+    console.log('🔒 ProtectedRoute useEffect triggered:', { 
       user: !!user, 
       session: !!session, 
       loading, 
       path: location.pathname,
       userId: user?.id,
-      userEmail: user?.email
+      userEmail: user?.email,
+      hasChecked
     });
+    
+    // Prevent multiple checks
+    if (hasChecked) {
+      console.log('🔒 Already checked, skipping...');
+      return;
+    }
     
     if (!loading && (!user || !session)) {
       console.log('🔒 Redirecting to login - no authentication');
       navigate(redirectTo, { replace: true });
+      setCheckingSetup(false);
       return;
     }
 
     // Check if user needs first-time setup (only if authenticated and not already on setup page)
     if (user && session && location.pathname !== '/first-time-setup') {
+      console.log('🔒 Starting first-time setup check...');
       checkFirstTimeSetup();
+    } else if (location.pathname === '/first-time-setup') {
+      console.log('🔒 Already on setup page, allowing access');
+      setCheckingSetup(false);
+      setHasChecked(true);
     } else {
+      console.log('🔒 Conditions not met for setup check, setting checkingSetup to false');
       setCheckingSetup(false);
     }
-  }, [user, session, loading, navigate, redirectTo, location.pathname]);
+  }, [user, session, loading, navigate, redirectTo, location.pathname, hasChecked]);
 
   const checkFirstTimeSetup = async () => {
     if (!user) {
@@ -51,26 +66,26 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
 
     try {
-      console.log('🔒 Checking first-time setup for user:', user.email, 'ID:', user.id);
+      console.log('🔒 Fetching user profile for setup check...');
       
       const profile = await UserProfileService.getUserProfile(user.id);
       
       if (!profile) {
         console.log('🔒 No profile found - redirecting to first-time setup');
+        setHasChecked(true);
         navigate('/first-time-setup', { replace: true });
         return;
       }
 
-      console.log('🔒 User profile found:', { 
-        profileExists: true, 
-        setupCompleted: profile.first_time_setup_completed,
-        companyName: profile.company_name,
-        industry: profile.industry,
-        marketingExperience: profile.marketing_experience,
-        monthlyBudget: profile.monthly_marketing_budget
+      console.log('🔒 Profile found, checking completion status:', {
+        first_time_setup_completed: profile.first_time_setup_completed,
+        company_name: !!profile.company_name,
+        industry: !!profile.industry,
+        marketing_experience: !!profile.marketing_experience,
+        monthly_marketing_budget: !!profile.monthly_marketing_budget
       });
       
-      // Fixed boolean logic - ensure we get a proper boolean result
+      // Check essential fields
       const hasEssentialInfo = !!(
         profile.company_name && 
         profile.industry && 
@@ -78,26 +93,30 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         profile.monthly_marketing_budget
       );
       
-      // Simplified setup completion logic
+      // Setup is complete if flag is true AND essential info exists
       const setupComplete = profile.first_time_setup_completed === true && hasEssentialInfo;
       
-      console.log('🔒 Setup completion check:', {
-        first_time_setup_completed: profile.first_time_setup_completed,
+      console.log('🔒 Setup completion result:', {
         hasEssentialInfo,
-        setupComplete
+        setupComplete,
+        flagValue: profile.first_time_setup_completed
       });
       
       if (!setupComplete) {
-        console.log('🔒 Setup not complete - redirecting to first-time setup');
+        console.log('🔒 Setup incomplete - redirecting to first-time setup');
+        setHasChecked(true);
         navigate('/first-time-setup', { replace: true });
         return;
       }
       
       console.log('🔒 Setup complete - allowing access to protected route');
+      setHasChecked(true);
+      
     } catch (error) {
       console.error('🔒 Error checking first-time setup:', error);
-      // On error, allow access but log the issue
-      console.log('🔒 Error occurred, allowing access but logging issue');
+      // On error, allow access but mark as checked to prevent loops
+      console.log('🔒 Error occurred, allowing access and marking as checked');
+      setHasChecked(true);
     } finally {
       setCheckingSetup(false);
     }
