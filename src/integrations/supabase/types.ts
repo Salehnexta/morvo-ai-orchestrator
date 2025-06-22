@@ -929,6 +929,7 @@ export type Database = {
           customer_acquisition_cost: number | null
           data_completeness_score: number | null
           expansion_plans: string[] | null
+          first_time_setup_completed: boolean | null
           full_name: string | null
           greeting_preference: string | null
           id: string
@@ -969,6 +970,7 @@ export type Database = {
           customer_acquisition_cost?: number | null
           data_completeness_score?: number | null
           expansion_plans?: string[] | null
+          first_time_setup_completed?: boolean | null
           full_name?: string | null
           greeting_preference?: string | null
           id?: string
@@ -1009,6 +1011,7 @@ export type Database = {
           customer_acquisition_cost?: number | null
           data_completeness_score?: number | null
           expansion_plans?: string[] | null
+          first_time_setup_completed?: boolean | null
           full_name?: string | null
           greeting_preference?: string | null
           id?: string
