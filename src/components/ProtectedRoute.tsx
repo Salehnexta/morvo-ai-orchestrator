@@ -53,22 +53,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     try {
       console.log('🔒 Checking first-time setup for user:', user.email, 'ID:', user.id);
       
-      // Debug the profile status
-      await UserProfileService.debugUserProfile(user.id);
-      
       const profile = await UserProfileService.getUserProfile(user.id);
-      
-      console.log('🔒 User profile check result:', { 
-        profileExists: !!profile, 
-        setupCompleted: profile?.first_time_setup_completed,
-        onboardingCompleted: profile?.onboarding_completed,
-        completenessScore: profile?.data_completeness_score,
-        companyName: profile?.company_name,
-        greetingPreference: profile?.greeting_preference,
-        marketingExperience: profile?.marketing_experience,
-        monthlyBudget: profile?.monthly_marketing_budget,
-        fullProfile: profile
-      });
       
       if (!profile) {
         console.log('🔒 No profile found - redirecting to first-time setup');
@@ -76,30 +61,30 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return;
       }
 
-      // Calculate completeness score if not already calculated
-      let completenessScore = profile?.data_completeness_score || 0;
-      if (!completenessScore) {
-        completenessScore = await UserProfileService.calculateCompleteness(profile);
-        console.log('🔒 Calculated completeness score:', completenessScore);
-      }
+      console.log('🔒 User profile found:', { 
+        profileExists: true, 
+        setupCompleted: profile.first_time_setup_completed,
+        companyName: profile.company_name,
+        industry: profile.industry,
+        marketingExperience: profile.marketing_experience,
+        monthlyBudget: profile.monthly_marketing_budget
+      });
       
-      // Check if setup is truly complete
-      const hasEssentialInfo = profile.company_name && 
-                              profile.industry && 
-                              profile.marketing_experience && 
-                              profile.monthly_marketing_budget;
+      // Fixed boolean logic - ensure we get a proper boolean result
+      const hasEssentialInfo = !!(
+        profile.company_name && 
+        profile.industry && 
+        profile.marketing_experience && 
+        profile.monthly_marketing_budget
+      );
       
+      // Simplified setup completion logic
       const setupComplete = profile.first_time_setup_completed === true && hasEssentialInfo;
       
       console.log('🔒 Setup completion check:', {
         first_time_setup_completed: profile.first_time_setup_completed,
         hasEssentialInfo,
-        setupComplete,
-        completenessScore,
-        company_name: profile.company_name,
-        industry: profile.industry,
-        marketing_experience: profile.marketing_experience,
-        monthly_marketing_budget: profile.monthly_marketing_budget
+        setupComplete
       });
       
       if (!setupComplete) {
@@ -111,9 +96,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       console.log('🔒 Setup complete - allowing access to protected route');
     } catch (error) {
       console.error('🔒 Error checking first-time setup:', error);
-      // On error, redirect to setup to be safe
-      console.log('🔒 Error occurred, redirecting to setup as fallback');
-      navigate('/first-time-setup', { replace: true });
+      // On error, allow access but log the issue
+      console.log('🔒 Error occurred, allowing access but logging issue');
     } finally {
       setCheckingSetup(false);
     }
