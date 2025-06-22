@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { SEOAnalysisService } from '@/services/seRankingService';
+import { SERankingService } from '@/services/seRankingService';
 import { 
   Search, 
   TrendingUp, 
@@ -127,13 +127,13 @@ export const SERankingProfileSlide: React.FC<SERankingProfileSlideProps> = ({
     setLoading(true);
     try {
       console.log('🔍 Loading SE Ranking analysis for:', domain);
-      const data = await SEOAnalysisService.analyzeDomain(domain);
+      const data = await SERankingService.analyzeDomain(domain);
       
       // Transform the data to match our mock structure
       if (data) {
         const mockSeoData: MockSEOData = {
           site_audit: {
-            overall_score: data.technical_audit?.page_speed_score || 75,
+            overall_score: data.technical_score || 75,
             pages_crawled: 150,
             errors: 12,
             warnings: 8,
@@ -146,9 +146,9 @@ export const SERankingProfileSlide: React.FC<SERankingProfileSlideProps> = ({
             { keyword: 'تحليل المنافسين', position: 15, volume: 650, difficulty: 55, trend: 'up' }
           ],
           backlinks: {
-            total_backlinks: data.backlink_metrics?.total_backlinks || 850,
-            referring_domains: data.backlink_metrics?.referring_domains || 120,
-            domain_authority: data.domain_analysis?.domain_authority || 45,
+            total_backlinks: data.backlinks || 850,
+            referring_domains: 120,
+            domain_authority: data.domain_authority || 45,
             new_links_last_month: 23
           },
           competitors: [

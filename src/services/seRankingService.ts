@@ -42,7 +42,7 @@ export interface SeoDataSnapshot {
 export class SERankingService {
   private static API_BASE_URL = 'https://api4.seranking.com/';
   
-  static async analyzeDomain(domain: string, userId: string): Promise<SeoDataSnapshot | null> {
+  static async analyzeDomain(domain: string, userId?: string): Promise<SeoDataSnapshot | null> {
     try {
       // Mock data for demonstration since SE Ranking requires API key
       const mockData: SeoDataSnapshot = {
@@ -101,14 +101,16 @@ export class SERankingService {
         timestamp: new Date().toISOString()
       };
 
-      // Save to user profile
-      await UserProfileService.saveUserProfile(userId, {
-        seo_data: mockData as any,
-        last_seo_update: new Date().toISOString()
-      });
+      // Save to user profile if userId provided
+      if (userId) {
+        await UserProfileService.saveUserProfile(userId, {
+          seo_data: mockData as any,
+          last_seo_update: new Date().toISOString()
+        });
 
-      // Also save to seo_data table
-      await this.saveSeoDataSnapshot(userId, domain, mockData);
+        // Also save to seo_data table
+        await this.saveSeoDataSnapshot(userId, domain, mockData);
+      }
 
       return mockData;
     } catch (error) {
@@ -151,13 +153,19 @@ export class SERankingService {
         .eq('data_type', 'se_ranking_analysis')
         .order('collected_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         return null;
       }
 
-      return data.data_snapshot as SeoDataSnapshot;
+      // Safe type conversion with validation
+      const snapshot = data.data_snapshot;
+      if (typeof snapshot === 'object' && snapshot !== null && !Array.isArray(snapshot)) {
+        return snapshot as SeoDataSnapshot;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error getting latest analysis:', error);
       return null;
@@ -182,4 +190,17 @@ export class SERankingService {
       ]
     };
   }
+
+  static async updateUserSeoData(userId: string, websiteUrl: string): Promise<boolean> {
+    try {
+      const analysisData = await this.analyzeDomain(websiteUrl, userId);
+      return analysisData !== null;
+    } catch (error) {
+      console.error('Error updating user SEO data:', error);
+      return false;
+    }
+  }
 }
+
+// Export alias for backward compatibility
+export const SEOAnalysisService = SERankingService;

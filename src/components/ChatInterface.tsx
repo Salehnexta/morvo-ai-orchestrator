@@ -8,7 +8,7 @@ import { ChatInitializer } from './chat/ChatInitializer';
 import { useChatInterface } from '@/hooks/useChatInterface';
 import { MorvoAIService } from '@/services/morvoAIService';
 import { UserProfileService } from '@/services/userProfileService';
-import { SEOAnalysisService } from '@/services/seRankingService';
+import { SERankingService } from '@/services/seRankingService';
 import { AgentResponse } from '@/services/agent';
 
 interface MessageData {
@@ -87,7 +87,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       if (websiteUrl && (!userProfile?.website_url || userProfile.website_url !== websiteUrl)) {
         console.log('🔍 New website detected, analyzing...');
         await UserProfileService.saveUserProfile(user.id, { website_url: websiteUrl });
-        await SEOAnalysisService.updateUserSeoData(user.id, websiteUrl);
+        await SERankingService.updateUserSeoData(user.id, websiteUrl);
       }
 
       // Handle profile updates based on message content
