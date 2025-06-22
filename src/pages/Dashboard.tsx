@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { DashboardBackground } from '@/components/dashboard/DashboardBackground';
-import { DashboardContent } from '@/components/DashboardContent';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -25,20 +24,17 @@ const Dashboard = () => {
   const isRTL = language === 'ar';
 
   return (
-    <div className="min-h-screen flex">
-      <DashboardBackground />
-      
-      {/* Main Dashboard Content */}
-      <div className="flex-1 relative">
-        <DashboardContent 
-          data={{}}
-          theme={theme}
-          language={language}
-          isRTL={isRTL}
-          content={{}}
-        />
-      </div>
-    </div>
+    <DashboardLayout
+      isOnboardingComplete={true}
+      contentType="hero"
+      showOnboarding={false}
+      lastUserMessage=""
+      conversationHistory={[]}
+      onContentTypeChange={(type) => console.log('Content type changed:', type)}
+      onMessageSent={(message) => console.log('Message sent:', message)}
+      onPhaseComplete={(phase) => console.log('Phase complete:', phase)}
+      onContentAction={(action) => console.log('Content action:', action)}
+    />
   );
 };
 
