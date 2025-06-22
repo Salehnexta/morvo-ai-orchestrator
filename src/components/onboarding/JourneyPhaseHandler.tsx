@@ -136,23 +136,23 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
     switch (currentPhase) {
       case 'welcome':
         return (
-          <Card className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-white/20">
+          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white text-center flex items-center justify-center gap-2">
-                <Sparkles className="w-6 h-6" />
+                <Sparkles className="w-6 h-6 text-blue-400" />
                 {greetingLoading ? 'مرحباً بك في مورفو!' : `${fullGreeting}، مرحباً بك في مورفو!`}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              <p className="text-blue-200 mb-6">
+              <p className="text-gray-200 mb-6">
                 {displayName !== 'مستخدم' ? 
                   `${displayName}، سنقوم معاً ببناء استراتيجية تسويقية مخصصة لأعمالك في خطوات بسيطة` :
                   'سنقوم معاً ببناء استراتيجية تسويقية مخصصة لأعمالك في خطوات بسيطة'
                 }
               </p>
-              <div className="bg-white/10 rounded-lg p-4 mb-6">
+              <div className="bg-gray-700/60 rounded-lg p-4 mb-6 border border-gray-600/30">
                 <h3 className="text-white font-semibold mb-2">ما ستحصل عليه:</h3>
-                <ul className="text-blue-200 text-sm space-y-1 text-right">
+                <ul className="text-gray-200 text-sm space-y-1 text-right">
                   <li>• استراتيجية تسويقية شاملة مخصصة لأعمالك</li>
                   <li>• خطة محتوى لـ 3-6 أشهر</li>
                   <li>• تحليل منافسين وفرص السوق</li>
@@ -163,7 +163,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
               <Button
                 onClick={() => handlePhaseAction('complete_phase')}
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
               >
                 ابدأ الرحلة <ArrowRight className="w-4 h-4 mr-2" />
               </Button>
@@ -173,10 +173,10 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       case 'greeting_preference':
         return (
-          <Card className="bg-white/10 border-white/20">
+          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
-                <User className="w-5 h-5" />
+                <User className="w-5 h-5 text-blue-400" />
                 {displayName !== 'مستخدم' ? 
                   `${displayName}، كيف تفضل أن أناديك؟` : 
                   'كيف تفضل أن أناديك؟'
@@ -184,13 +184,13 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-blue-200">
+              <p className="text-gray-200">
                 اختر الطريقة التي تفضل أن أخاطبك بها في جميع محادثاتنا المستقبلية
               </p>
               <div className="space-y-3">
                 <label className="text-white block">اختر طريقة المخاطبة المفضلة:</label>
                 <Select onValueChange={(value) => setFormData({...formData, greeting: value})}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectTrigger className="bg-gray-700/60 border-gray-600/50 text-white">
                     <SelectValue placeholder="اختر..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -203,7 +203,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
                 <Button
                   onClick={() => handlePhaseAction('set_greeting', formData)}
                   disabled={loading || !formData.greeting}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
                 >
                   {loading ? 'جاري الحفظ...' : 'حفظ التفضيل'}
                 </Button>
@@ -222,23 +222,23 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       case 'analysis_review':
         return (
-          <Card className="bg-white/10 border-white/20">
+          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white">مراجعة نتائج التحليل</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-blue-200">
+              <p className="text-gray-200">
                 تم تحليل موقعك بنجاح. يمكنك الآن مراجعة النتائج والمتابعة لإكمال ملفك التجاري.
               </p>
               {websiteAnalysisData && (
-                <div className="bg-white/5 p-4 rounded-lg">
+                <div className="bg-green-600/20 p-4 rounded-lg border border-green-500/30">
                   <p className="text-green-200">✅ تم تحليل الموقع بنجاح</p>
                 </div>
               )}
               <Button
                 onClick={() => handlePhaseAction('analysis_review_complete')}
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
               >
                 المتابعة لإكمال الملف التجاري
               </Button>
@@ -248,24 +248,24 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       case 'profile_completion':
         return (
-          <Card className="bg-white/10 border-white/20">
+          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white">إكمال ملفك التجاري</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-blue-200">
+              <p className="text-gray-200">
                 الآن سنقوم بجمع معلومات إضافية عن أعمالك لبناء استراتيجية تسويقية دقيقة.
               </p>
-              <div className="bg-white/5 p-4 rounded-lg">
-                <p className="text-yellow-200">🔄 هذه المرحلة قيد التطوير</p>
-                <p className="text-blue-200 text-sm mt-2">
+              <div className="bg-amber-600/20 p-4 rounded-lg border border-amber-500/30">
+                <p className="text-amber-200">🔄 هذه المرحلة قيد التطوير</p>
+                <p className="text-gray-200 text-sm mt-2">
                   سيتم إضافة نموذج تفصيلي لجمع معلومات الأعمال
                 </p>
               </div>
               <Button
                 onClick={() => handlePhaseAction('profile_completion_complete')}
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
               >
                 متابعة للتحليل المتقدم
               </Button>
@@ -275,24 +275,24 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       case 'professional_analysis':
         return (
-          <Card className="bg-white/10 border-white/20">
+          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white">التحليل التسويقي المتقدم</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-blue-200">
+              <p className="text-gray-200">
                 سنقوم الآن بتحليل شامل لوضعك التسويقي الحالي باستخدام الذكاء الاصطناعي.
               </p>
-              <div className="bg-white/5 p-4 rounded-lg">
-                <p className="text-yellow-200">🔄 التحليل المتقدم قيد التطوير</p>
-                <p className="text-blue-200 text-sm mt-2">
+              <div className="bg-amber-600/20 p-4 rounded-lg border border-amber-500/30">
+                <p className="text-amber-200">🔄 التحليل المتقدم قيد التطوير</p>
+                <p className="text-gray-200 text-sm mt-2">
                   سيتم دمج تحليلات متقدمة من مصادر متعددة
                 </p>
               </div>
               <Button
                 onClick={() => handlePhaseAction('professional_analysis_complete')}
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
               >
                 المتابعة لتوليد الاستراتيجية
               </Button>
@@ -302,10 +302,10 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       case 'strategy_generation':
         return (
-          <Card className="bg-gradient-to-r from-green-500/20 to-blue-500/20 border-white/20">
+          <Card className="bg-gradient-to-r from-green-600/20 to-blue-600/20 border-green-500/30 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
-                <CheckCircle className="w-5 h-5" />
+                <CheckCircle className="w-5 h-5 text-green-400" />
                 {greetingLoading ? 
                   'تحضير استراتيجيتك الخاصة' : 
                   `${fullGreeting}، تحضير استراتيجيتك الخاصة`
@@ -313,17 +313,17 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
-              <p className="text-blue-200">
+              <p className="text-gray-200">
                 الآن سأقوم بإنشاء استراتيجية تسويقية مخصصة لك باستخدام أحدث تقنيات الذكاء الاصطناعي
               </p>
               <p className="text-green-200">
                 🎯 ستحصل على استراتيجية شاملة مصممة خصيصاً لأعمالك
               </p>
-              <div className="bg-white/5 p-4 rounded-lg text-right">
-                <p className="text-blue-200 text-sm">
+              <div className="bg-gray-700/60 p-4 rounded-lg text-right border border-gray-600/30">
+                <p className="text-gray-200 text-sm">
                   ستتضمن الاستراتيجية:
                 </p>
-                <ul className="text-blue-100 text-sm mt-2 space-y-1">
+                <ul className="text-gray-100 text-sm mt-2 space-y-1">
                   <li>• تحليل السوق والمنافسين</li>
                   <li>• استراتيجية المحتوى</li>
                   <li>• خطة التسويق الرقمي</li>
@@ -334,7 +334,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
               <Button
                 onClick={() => handlePhaseAction('generate_strategy')}
                 disabled={loading}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
               >
                 {loading ? 'جاري توليد الاستراتيجية...' : 'توليد الاستراتيجية'}
                 <Sparkles className="w-4 h-4 mr-2" />
@@ -345,18 +345,18 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       default:
         return (
-          <Card className="bg-white/10 border-white/20">
+          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white">
                 {currentPhaseData.title}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-blue-200 mb-4">{currentPhaseData.description}</p>
+              <p className="text-gray-200 mb-4">{currentPhaseData.description}</p>
               <Button
                 onClick={() => handlePhaseAction('complete_phase')}
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
               >
                 إكمال هذه المرحلة
               </Button>
@@ -384,7 +384,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
       {renderPhaseContent()}
 
       {/* Debug Info */}
-      <div className="bg-black/20 p-3 rounded text-xs text-gray-300">
+      <div className="bg-gray-800/60 p-3 rounded text-xs text-gray-300 border border-gray-600/30">
         <p>Current Phase: {currentPhase}</p>
         <p>Progress: {progress}%</p>
         <p>Journey: {journey ? 'Loaded' : 'Not loaded'}</p>
@@ -392,7 +392,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       {/* Blockers Display */}
       {flowState?.blockers && flowState.blockers.length > 0 && (
-        <Card className="bg-red-500/20 border-red-400/30">
+        <Card className="bg-red-600/20 border-red-400/50 shadow-xl">
           <CardContent className="p-4">
             <h4 className="font-semibold text-red-200 mb-2">متطلبات مفقودة:</h4>
             <ul className="text-red-300 text-sm space-y-1">

@@ -24,9 +24,8 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 }) => {
   return (
     <>
-      {/* Chat Panel - Left side with Journey integration */}
-      <div className="w-1/2 bg-black/30 backdrop-blur-xl border-r border-white/10 relative z-10 shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
+      {/* Chat Panel - Left side with improved visibility */}
+      <div className="w-1/2 bg-gray-900/85 backdrop-blur-md border-r border-white/10 relative z-10 shadow-xl">
         <div className="relative z-10 h-full">
           <ChatInterface 
             onContentTypeChange={onContentTypeChange}
@@ -35,12 +34,11 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
         </div>
       </div>
 
-      {/* Dynamic Content Panel - Right side */}
+      {/* Dynamic Content Panel - Right side with better contrast */}
       <div className="w-1/2 relative z-10">
-        <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent"></div>
-        <div className="relative z-10 h-full bg-white/5 backdrop-blur-sm">
+        <div className="relative z-10 h-full bg-gray-800/90 backdrop-blur-sm">
           {showOnboarding && contentType === 'onboarding' ? (
-            <div className="h-full p-6 overflow-y-auto">
+            <div className="h-full p-6 overflow-y-auto bg-gray-900/50 rounded-lg">
               <JourneyPhaseHandler 
                 onPhaseComplete={onPhaseComplete}
                 className="max-w-2xl mx-auto"
