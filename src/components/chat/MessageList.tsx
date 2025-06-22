@@ -41,14 +41,17 @@ export const MessageList = ({
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
   return (
-    <div className="flex-1 p-4">
-      <ScrollArea className="h-[calc(100vh-200px)]" ref={scrollAreaRef}>
-        <div className="space-y-4 pb-4">
+    <div className="flex-1 overflow-hidden">
+      <ScrollArea className="h-full px-4 pb-4" ref={scrollAreaRef}>
+        <div className="space-y-4 pt-4">
           {messages.map((message) => (
             <Message
               key={message.id}
