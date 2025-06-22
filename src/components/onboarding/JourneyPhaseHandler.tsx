@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useJourney } from '@/contexts/JourneyContext';
 import { useUserGreeting } from '@/hooks/useUserGreeting';
@@ -34,6 +35,15 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [websiteAnalysisData, setWebsiteAnalysisData] = useState<any>(null);
+  const [localCurrentPhase, setLocalCurrentPhase] = useState(currentPhase);
+
+  // Sync local phase with context phase
+  useEffect(() => {
+    console.log('🔄 Phase sync: context phase =', currentPhase, ', local phase =', localCurrentPhase);
+    if (currentPhase !== localCurrentPhase) {
+      setLocalCurrentPhase(currentPhase);
+    }
+  }, [currentPhase]);
 
   // Load journey flow state
   useEffect(() => {
@@ -48,7 +58,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
     };
 
     loadFlowState();
-  }, [journey, currentPhase]);
+  }, [journey, localCurrentPhase]);
 
   const handlePhaseAction = async (action: string, data?: any) => {
     if (!journey) {
@@ -56,41 +66,56 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
       return;
     }
 
+    console.log('🎯 Phase action:', action, 'current phase:', localCurrentPhase);
     setLoading(true);
+    
     try {
       let success = false;
+      let nextPhase = '';
 
       switch (action) {
         case 'set_greeting':
           success = await setGreeting(data.greeting);
           if (success) {
-            updateJourneyPhase('website_analysis');
+            nextPhase = 'website_analysis';
+            updateJourneyPhase(nextPhase);
+            setLocalCurrentPhase(nextPhase);
           }
           break;
 
         case 'website_analysis_complete':
           setWebsiteAnalysisData(data);
-          updateJourneyPhase('analysis_review');
+          nextPhase = 'analysis_review';
+          updateJourneyPhase(nextPhase);
+          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
         case 'skip_website_analysis':
-          updateJourneyPhase('profile_completion');
+          nextPhase = 'profile_completion';
+          updateJourneyPhase(nextPhase);
+          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
         case 'analysis_review_complete':
-          updateJourneyPhase('profile_completion');
+          nextPhase = 'profile_completion';
+          updateJourneyPhase(nextPhase);
+          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
         case 'profile_completion_complete':
-          updateJourneyPhase('professional_analysis');
+          nextPhase = 'professional_analysis';
+          updateJourneyPhase(nextPhase);
+          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
         case 'professional_analysis_complete':
-          updateJourneyPhase('strategy_generation');
+          nextPhase = 'strategy_generation';
+          updateJourneyPhase(nextPhase);
+          setLocalCurrentPhase(nextPhase);
           success = true;
           break;
 
@@ -105,22 +130,28 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
           break;
 
         case 'complete_phase':
-          const nextPhase = flowState?.nextPhase;
+          // Handle welcome phase specifically
+          if (localCurrentPhase === 'welcome') {
+            nextPhase = 'greeting_preference';
+            console.log('✅ Moving from welcome to greeting_preference');
+          } else {
+            const nextPhaseFromFlow = flowState?.nextPhase;
+            if (nextPhaseFromFlow) {
+              nextPhase = nextPhaseFromFlow;
+            }
+          }
+          
           if (nextPhase) {
             updateJourneyPhase(nextPhase);
+            setLocalCurrentPhase(nextPhase);
             success = true;
-          } else {
-            // If no next phase, move to next logical step
-            if (currentPhase === 'welcome') {
-              updateJourneyPhase('greeting_preference');
-              success = true;
-            }
+            console.log('✅ Phase transition successful:', localCurrentPhase, '->', nextPhase);
           }
           break;
       }
 
       if (success && onPhaseComplete && action !== 'generate_strategy') {
-        onPhaseComplete(currentPhase);
+        onPhaseComplete(localCurrentPhase);
       }
     } catch (error) {
       console.error('❌ Phase action failed:', error);
@@ -130,10 +161,14 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
   };
 
   const renderPhaseContent = () => {
-    const currentPhaseData = JourneyFlowService.getPhase(currentPhase);
+    const currentPhaseToRender = localCurrentPhase;
+    const currentPhaseData = JourneyFlowService.getPhase(currentPhaseToRender);
+    
+    console.log('🎨 Rendering phase:', currentPhaseToRender);
+    
     if (!currentPhaseData) return null;
 
-    switch (currentPhase) {
+    switch (currentPhaseToRender) {
       case 'welcome':
         return (
           <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
@@ -165,7 +200,8 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
                 disabled={loading}
                 className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
               >
-                ابدأ الرحلة <ArrowRight className="w-4 h-4 mr-2" />
+                {loading ? 'جاري التحضير...' : 'ابدأ الرحلة'}
+                <ArrowRight className="w-4 h-4 mr-2" />
               </Button>
             </CardContent>
           </Card>
@@ -367,14 +403,14 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
   };
 
   const estimatedTimeRemaining = flowState 
-    ? JourneyFlowService.calculateEstimatedTimeRemaining(currentPhase, flowState.completedPhases)
+    ? JourneyFlowService.calculateEstimatedTimeRemaining(localCurrentPhase, flowState.completedPhases)
     : undefined;
 
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Journey Progress */}
       <JourneyProgress
-        currentPhase={currentPhase}
+        currentPhase={localCurrentPhase}
         completedPhases={flowState?.completedPhases || []}
         progress={progress}
         estimatedTimeRemaining={estimatedTimeRemaining}
@@ -385,7 +421,8 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       {/* Debug Info */}
       <div className="bg-gray-800/60 p-3 rounded text-xs text-gray-300 border border-gray-600/30">
-        <p>Current Phase: {currentPhase}</p>
+        <p>Current Phase: {localCurrentPhase}</p>
+        <p>Context Phase: {currentPhase}</p>
         <p>Progress: {progress}%</p>
         <p>Journey: {journey ? 'Loaded' : 'Not loaded'}</p>
       </div>
