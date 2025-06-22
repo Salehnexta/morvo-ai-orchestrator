@@ -103,8 +103,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
         <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>{t.loading}</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-blue-100">{t.loading}</p>
         </div>
       </div>
     );
@@ -119,7 +119,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
       </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
-        <Card className="w-full max-w-4xl bg-white/10 backdrop-blur-xl border-white/20">
+        <Card className="w-full max-w-4xl bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Sparkles className="w-8 h-8 text-blue-400" />
@@ -127,31 +127,31 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
                 {t.title}
               </CardTitle>
             </div>
-            <p className="text-blue-200 text-lg">{t.subtitle}</p>
+            <p className="text-blue-100 text-lg">{t.subtitle}</p>
             
             {/* Progress Bar */}
             <div className="mt-6">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-white">
+                <span className="text-sm text-white font-medium">
                   {t.step} {currentStepIndex + 1} {t.of} {steps.length}
                 </span>
-                <span className="text-sm text-blue-200">
+                <span className="text-sm text-blue-100 font-medium">
                   {Math.round(progress)}%
                 </span>
               </div>
-              <Progress value={progress} className="h-2" />
+              <Progress value={progress} className="h-3 bg-white/10" />
             </div>
 
             {/* Steps Indicator */}
-            <div className="flex justify-center mt-4 space-x-2">
+            <div className="flex justify-center mt-4 gap-3">
               {steps.map((step, index) => (
                 <div
                   key={step.id}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
                     step.completed
-                      ? 'bg-green-400'
+                      ? 'bg-green-400 shadow-lg shadow-green-400/30'
                       : index === currentStepIndex
-                      ? 'bg-blue-400'
+                      ? 'bg-blue-400 shadow-lg shadow-blue-400/30 animate-pulse'
                       : 'bg-white/20'
                   }`}
                 />

@@ -112,12 +112,12 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, data, onDataCh
     <div className="text-center space-y-8">
       <div>
         <h2 className="text-3xl font-bold text-white mb-4">{t.title}</h2>
-        <p className="text-xl text-blue-200 max-w-2xl mx-auto">{t.subtitle}</p>
+        <p className="text-xl text-blue-100 max-w-2xl mx-auto">{t.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-12">
         {t.features.map((feature, index) => (
-          <div key={index} className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+          <div key={index} className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10">
             <feature.icon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
             <p className="text-blue-200 text-sm">{feature.description}</p>
@@ -125,8 +125,8 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, data, onDataCh
         ))}
       </div>
 
-      <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-6 border border-blue-400/30 space-y-4">
-        <div className="text-left max-w-md mx-auto space-y-3">
+      <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-6 border border-blue-400/30 space-y-4 max-w-md mx-auto">
+        <div className="text-left space-y-3">
           <Label htmlFor="greeting" className="text-blue-100 text-sm font-medium">
             {t.greetingLabel}
           </Label>
@@ -135,17 +135,17 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext, data, onDataCh
             value={greeting}
             onChange={(e) => setGreeting(e.target.value)}
             placeholder={t.greetingPlaceholder}
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40"
+            className="bg-white/10 border-white/20 text-white placeholder:text-blue-300 focus:border-blue-400 focus:bg-white/15 transition-all duration-200"
             dir="rtl"
           />
         </div>
         
-        <p className="text-blue-100 mb-6">{t.promise}</p>
+        <p className="text-blue-100 mb-6 text-sm">{t.promise}</p>
         
         <Button
           onClick={handleGetStarted}
           disabled={isLoading}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg"
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-medium transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <Sparkles className="w-5 h-5 mr-2" />
           {isLoading ? 'جاري التحضير...' : t.getStarted}

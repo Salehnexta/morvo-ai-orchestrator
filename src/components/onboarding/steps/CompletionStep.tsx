@@ -52,7 +52,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border-green-500/20">
+      <Card className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border-green-500/20 shadow-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 p-3 bg-green-500/20 rounded-full w-fit">
             <Trophy className="w-8 h-8 text-green-400" />
@@ -60,7 +60,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
           <CardTitle className="text-2xl text-white mb-2">
             مبروك! اكتمل الإعداد
           </CardTitle>
-          <p className="text-blue-200">
+          <p className="text-blue-100">
             تم إعداد ملفك التسويقي بنجاح، الآن يمكنك البدء في استخدام مورفو AI
           </p>
         </CardHeader>
@@ -68,40 +68,40 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
         <CardContent className="space-y-6">
           {/* Achievement Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-white/5 rounded-lg">
+            <div className="text-center p-4 bg-white/5 rounded-lg border border-green-500/20 hover:bg-green-500/5 transition-all duration-200">
               <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
               <p className="text-sm text-white font-medium">معلومات الشركة</p>
-              <p className="text-xs text-blue-200">مكتملة</p>
+              <p className="text-xs text-green-200">مكتملة</p>
             </div>
-            <div className="text-center p-4 bg-white/5 rounded-lg">
+            <div className="text-center p-4 bg-white/5 rounded-lg border border-green-500/20 hover:bg-green-500/5 transition-all duration-200">
               <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
               <p className="text-sm text-white font-medium">الأهداف التسويقية</p>
-              <p className="text-xs text-blue-200">محددة</p>
+              <p className="text-xs text-green-200">محددة</p>
             </div>
-            <div className="text-center p-4 bg-white/5 rounded-lg">
+            <div className="text-center p-4 bg-white/5 rounded-lg border border-green-500/20 hover:bg-green-500/5 transition-all duration-200">
               <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
               <p className="text-sm text-white font-medium">الجمهور المستهدف</p>
-              <p className="text-xs text-blue-200">معرّف</p>
+              <p className="text-xs text-green-200">معرّف</p>
             </div>
           </div>
 
           {/* Next Steps */}
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
             <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 text-blue-400" />
               الخطوات التالية
             </h4>
-            <ul className="space-y-2 text-sm text-blue-200">
+            <ul className="space-y-2 text-sm text-blue-100">
               <li className="flex items-center gap-2">
-                <ArrowRight className="w-3 h-3" />
+                <ArrowRight className="w-3 h-3 text-blue-400" />
                 استكشف لوحة التحكم الرئيسية
               </li>
               <li className="flex items-center gap-2">
-                <ArrowRight className="w-3 h-3" />
+                <ArrowRight className="w-3 h-3 text-blue-400" />
                 ابدأ محادثة مع مستشارك الذكي
               </li>
               <li className="flex items-center gap-2">
-                <ArrowRight className="w-3 h-3" />
+                <ArrowRight className="w-3 h-3 text-blue-400" />
                 احصل على استراتيجية تسويقية مخصصة
               </li>
             </ul>
@@ -112,7 +112,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
             <Button
               onClick={handleComplete}
               disabled={completing}
-              className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+              className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {completing ? (
                 <>
