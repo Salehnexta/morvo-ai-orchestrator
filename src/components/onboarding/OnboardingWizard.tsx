@@ -22,8 +22,7 @@ interface OnboardingWizardProps {
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, onSkip }) => {
   const { language, isRTL } = useLanguage();
-  const { steps, currentStep, completionPercentage, updateStep, skipStep, loading } = useOnboarding();
-  const [localStep, setLocalStep] = useState(currentStep);
+  const { steps, currentStep, currentStepIndex, progress, loading, nextStep, previousStep, saveStepData } = useOnboarding();
   const [stepData, setStepData] = useState<Record<string, any>>({});
 
   const content = {
@@ -54,55 +53,50 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
   const t = content[language];
 
   const getCurrentStepComponent = () => {
-    const currentStepInfo = steps.find(step => step.id === localStep);
-    if (!currentStepInfo) return null;
+    if (!currentStep) return null;
 
     const commonProps = {
       onNext: handleNext,
       onPrevious: handlePrevious,
-      onSkip: currentStepInfo.required ? undefined : handleSkip,
-      data: stepData[localStep] || {},
-      onDataChange: (data: any) => setStepData(prev => ({ ...prev, [localStep]: data }))
+      onSkip: handleSkip,
+      data: stepData[currentStep.id] || {},
+      onDataChange: (data: any) => setStepData(prev => ({ ...prev, [currentStep.id]: data }))
     };
 
-    switch (currentStepInfo.component) {
-      case 'Welcome':
+    // Map step types to components
+    switch (currentStep.id) {
+      case 'welcome':
         return <WelcomeStep {...commonProps} />;
-      case 'CompanyInfo':
+      case 'company-info':
         return <CompanyInfoStep {...commonProps} />;
-      case 'MarketingGoals':
+      case 'marketing-goals':
         return <MarketingGoalsStep {...commonProps} />;
-      case 'TargetAudience':
+      case 'target-audience':
         return <TargetAudienceStep {...commonProps} />;
-      case 'Budget':
+      case 'budget':
         return <BudgetStep {...commonProps} />;
-      case 'Channels':
+      case 'website-analysis':
         return <ChannelsStep {...commonProps} />;
-      case 'Experience':
-        return <ExperienceStep {...commonProps} />;
-      case 'Completion':
+      case 'completion':
         return <CompletionStep {...commonProps} onComplete={onComplete} />;
       default:
-        return null;
+        return <WelcomeStep {...commonProps} />;
     }
   };
 
   const handleNext = async () => {
-    const success = await updateStep(localStep, stepData[localStep] || {});
+    const success = await saveStepData(currentStep.id, stepData[currentStep.id] || {});
     if (success) {
-      setLocalStep(prev => Math.min(prev + 1, steps.length));
+      nextStep();
     }
   };
 
   const handlePrevious = () => {
-    setLocalStep(prev => Math.max(prev - 1, 1));
+    previousStep();
   };
 
   const handleSkip = async () => {
-    const success = await skipStep(localStep);
-    if (success) {
-      setLocalStep(prev => Math.min(prev + 1, steps.length));
-    }
+    nextStep();
   };
 
   if (loading) {
@@ -139,24 +133,24 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
             <div className="mt-6">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-white">
-                  {t.step} {localStep} {t.of} {steps.length}
+                  {t.step} {currentStepIndex + 1} {t.of} {steps.length}
                 </span>
                 <span className="text-sm text-blue-200">
-                  {Math.round((localStep / steps.length) * 100)}%
+                  {Math.round(progress)}%
                 </span>
               </div>
-              <Progress value={(localStep / steps.length) * 100} className="h-2" />
+              <Progress value={progress} className="h-2" />
             </div>
 
             {/* Steps Indicator */}
             <div className="flex justify-center mt-4 space-x-2">
-              {steps.map((step) => (
+              {steps.map((step, index) => (
                 <div
                   key={step.id}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    step.id < localStep
+                    step.completed
                       ? 'bg-green-400'
-                      : step.id === localStep
+                      : index === currentStepIndex
                       ? 'bg-blue-400'
                       : 'bg-white/20'
                   }`}

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export class DatabaseCleanupService {
@@ -7,11 +6,11 @@ export class DatabaseCleanupService {
     try {
       console.log('🧹 Starting database cleanup for customer:', customerId);
       
-      // Get all profiles for this customer
+      // Get all profiles for this customer from user_profiles table
       const { data: profiles, error } = await supabase
-        .from('customer_profiles')
+        .from('user_profiles')
         .select('*')
-        .eq('customer_id', customerId)
+        .eq('user_id', customerId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -32,18 +31,14 @@ export class DatabaseCleanupService {
       
       // Merge profile data from all profiles
       const mergedProfileData = profiles.reduce((merged, profile) => {
-        if (profile.profile_data && typeof profile.profile_data === 'object') {
-          const profileData = profile.profile_data as Record<string, any>;
-          return { ...merged, ...profileData };
-        }
-        return merged;
+        return { ...merged, ...profile };
       }, {} as Record<string, any>);
 
       // Update the kept profile with merged data
       const { error: updateError } = await supabase
-        .from('customer_profiles')
+        .from('user_profiles')
         .update({
-          profile_data: mergedProfileData,
+          ...mergedProfileData,
           updated_at: new Date().toISOString()
         })
         .eq('id', keepProfile.id);
@@ -54,14 +49,16 @@ export class DatabaseCleanupService {
       }
 
       // Delete duplicate profiles
-      const { error: deleteError } = await supabase
-        .from('customer_profiles')
-        .delete()
-        .in('id', duplicateIds);
+      if (duplicateIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('user_profiles')
+          .delete()
+          .in('id', duplicateIds);
 
-      if (deleteError) {
-        console.error('❌ Error deleting duplicates:', deleteError);
-        return;
+        if (deleteError) {
+          console.error('❌ Error deleting duplicates:', deleteError);
+          return;
+        }
       }
 
       console.log(`✅ Cleaned up ${duplicateIds.length} duplicate profiles`);
@@ -71,60 +68,45 @@ export class DatabaseCleanupService {
     }
   }
 
-  static async ensureJourneyRecord(customerId: string): Promise<string | null> {
+  static async ensureUserProfile(userId: string): Promise<string | null> {
     try {
-      // Check if user has any journey record
-      const { data: existingJourney } = await supabase
-        .from('onboarding_journeys')
+      // Check if user has a profile
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
         .select('*')
-        .eq('client_id', customerId)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('user_id', userId)
         .maybeSingle();
 
-      if (existingJourney) {
-        console.log('✅ Journey record exists:', existingJourney.journey_id);
-        return existingJourney.journey_id;
+      if (existingProfile) {
+        console.log('✅ User profile exists:', existingProfile.id);
+        return existingProfile.id;
       }
 
-      // Check if user has completed profile
-      const { data: profile } = await supabase
-        .from('customer_profiles')
-        .select('profile_data')
-        .eq('customer_id', customerId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      const hasCompletedProfile = profile?.profile_data && 
-        typeof profile.profile_data === 'object' && 
-        Object.keys(profile.profile_data).length > 3;
-
-      // Create journey record for user with completed profile
-      const journeyId = `journey_${customerId}_${Date.now()}`;
-      
-      const { error } = await supabase
-        .from('onboarding_journeys')
+      // Create initial profile for user
+      const { data: newProfile, error } = await supabase
+        .from('user_profiles')
         .insert({
-          journey_id: journeyId,
-          client_id: customerId,
-          current_phase: hasCompletedProfile ? 'strategy_generation' : 'welcome',
-          profile_progress: hasCompletedProfile ? 100 : 0,
-          is_completed: hasCompletedProfile,
+          user_id: userId,
+          preferred_language: 'ar',
+          greeting_preference: 'أستاذ',
+          data_completeness_score: 0,
+          onboarding_completed: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
-        console.error('❌ Error creating journey record:', error);
+        console.error('❌ Error creating user profile:', error);
         return null;
       }
 
-      console.log('✅ Created journey record:', journeyId);
-      return journeyId;
+      console.log('✅ Created user profile:', newProfile.id);
+      return newProfile.id;
       
     } catch (error) {
-      console.error('❌ Error ensuring journey record:', error);
+      console.error('❌ Error ensuring user profile:', error);
       return null;
     }
   }

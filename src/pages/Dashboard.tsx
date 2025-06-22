@@ -29,12 +29,35 @@ const Dashboard = () => {
     );
   }
 
+  const dashboardProps = {
+    isOnboardingComplete,
+    contentType: 'default' as const,
+    showOnboarding: !isOnboardingComplete,
+    lastUserMessage: '',
+    conversationHistory: [],
+    onContentTypeChange: () => {},
+    onMessageSent: () => {},
+    onContentAction: () => {}
+  };
+
   return (
-    <DashboardLayout>
+    <DashboardLayout {...dashboardProps}>
       {isOnboardingComplete ? (
-        <PostOnboardingLayout />
+        <PostOnboardingLayout
+          lastUserMessage=""
+          conversationHistory={[]}
+          onContentTypeChange={() => {}}
+          onMessageSent={() => {}}
+          onContentAction={() => {}}
+        />
       ) : (
-        <OnboardingLayout />
+        <OnboardingLayout
+          contentType="default"
+          showOnboarding={true}
+          onContentTypeChange={() => {}}
+          onMessageSent={() => {}}
+          onContentAction={() => {}}
+        />
       )}
     </DashboardLayout>
   );

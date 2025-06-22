@@ -14,11 +14,16 @@ export interface UserProfile {
   company_name?: string;
   business_type?: string;
   industry?: string;
+  company_size?: string;
   
   // Marketing Profile (USER INPUT ONLY)
   marketing_experience?: string;
   primary_marketing_goals?: string[];
   monthly_marketing_budget?: string;
+  marketing_budget?: string;
+  current_marketing_tools?: string[];
+  main_competitors?: string[];
+  competitor_analysis?: any;
   
   // Target Audience (USER INPUT ONLY)
   target_audience?: {

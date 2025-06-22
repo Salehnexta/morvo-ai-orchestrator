@@ -1,256 +1,168 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SERankingService } from "./seRankingService";
-import { UserProfileService } from "./userProfileService";
+import { UserProfileService, UserProfile } from "./userProfileService";
 
-export interface BasicCompetitorInfo {
+export interface CompetitorProfile {
   name: string;
-  website?: string;
+  domain?: string;
   industry?: string;
-  notes?: string;
+  strengths?: string[];
+  weaknesses?: string[];
+  marketShare?: number;
+  keyProducts?: string[];
 }
 
-export interface EnhancedCompetitorData {
-  basic_info: BasicCompetitorInfo;
-  se_ranking_data?: {
-    domain_analysis: {
-      traffic_estimate: number;
-      visibility_score: number;
-      keyword_count: number;
-      top_keywords: string[];
-    };
-    backlink_profile: {
-      total_backlinks: number;
-      referring_domains: number;
-      authority_score: number;
-      anchor_text_distribution: Record<string, number>;
-    };
-    technical_seo: {
-      crawl_issues: number;
-      page_speed_score: number;
-      mobile_friendly: boolean;
-      technical_errors: string[];
-    };
-  };
-  analysis_date?: string;
-  competitive_gaps?: string[];
-  opportunities?: string[];
+export interface CompetitorAnalysis {
+  competitors: CompetitorProfile[];
+  marketPosition: string;
+  opportunities: string[];
+  threats: string[];
+  recommendations: string[];
+  lastUpdated: string;
 }
 
 export class CompetitorAnalysisService {
-  // Save basic competitor info during profile setup
   static async saveBasicCompetitors(userId: string, competitors: string[]): Promise<boolean> {
     try {
-      const basicCompetitorData = competitors.map(name => ({
+      const competitorProfiles: CompetitorProfile[] = competitors.map(name => ({
         name: name.trim(),
-        website: `https://${name.toLowerCase().replace(/\s+/g, '')}.com`, // Smart guess
-        industry: 'unknown',
-        notes: 'Added during initial profile setup'
+        strengths: [],
+        weaknesses: [],
+        keyProducts: []
       }));
 
-      return await UserProfileService.saveUserProfile(userId, {
+      const analysisData: CompetitorAnalysis = {
+        competitors: competitorProfiles,
+        marketPosition: 'analysis_pending',
+        opportunities: [],
+        threats: [],
+        recommendations: [],
+        lastUpdated: new Date().toISOString()
+      };
+
+      const success = await UserProfileService.saveUserProfile(userId, {
         main_competitors: competitors,
-        competitor_analysis: {
-          basic_competitors: basicCompetitorData,
-          analysis_phase: 'basic',
-          last_updated: new Date().toISOString()
-        }
+        competitor_analysis: analysisData
       });
+
+      return success;
     } catch (error) {
       console.error('Error saving basic competitors:', error);
       return false;
     }
   }
 
-  // Enhance competitor analysis with SE Ranking data
-  static async enhanceWithSERanking(userId: string): Promise<boolean> {
-    try {
-      console.log('🔍 Starting SE Ranking competitor enhancement for user:', userId);
-      
-      const profile = await UserProfileService.getUserProfile(userId);
-      if (!profile?.main_competitors?.length) {
-        console.log('⚠️ No competitors found to analyze');
-        return false;
-      }
-
-      const userDomain = this.extractDomain(profile.website_url || '');
-      const enhancedCompetitors: EnhancedCompetitorData[] = [];
-
-      for (const competitor of profile.main_competitors) {
-        try {
-          const competitorDomain = this.guessCompetitorDomain(competitor);
-          console.log(`🔍 Analyzing competitor: ${competitor} (${competitorDomain})`);
-
-          // Get SE Ranking data for competitor
-          const seRankingData = await SERankingService.getFullSEOAnalysis(competitorDomain);
-          
-          // Perform competitive gap analysis
-          const gaps = await this.identifyCompetitiveGaps(userDomain, competitorDomain, seRankingData);
-          
-          const enhancedData: EnhancedCompetitorData = {
-            basic_info: {
-              name: competitor,
-              website: `https://${competitorDomain}`,
-              industry: profile.industry || 'unknown'
-            },
-            se_ranking_data: {
-              domain_analysis: {
-                traffic_estimate: this.estimateTraffic(seRankingData),
-                visibility_score: this.calculateVisibility(seRankingData),
-                keyword_count: seRankingData.keywords?.length || 0,
-                top_keywords: seRankingData.keywords?.slice(0, 10).map(k => k.keyword) || []
-              },
-              backlink_profile: {
-                total_backlinks: seRankingData.backlinks?.total_backlinks || 0,
-                referring_domains: seRankingData.backlinks?.referring_domains || 0,
-                authority_score: seRankingData.backlinks?.domain_authority || 0,
-                anchor_text_distribution: this.analyzeAnchorText(seRankingData)
-              },
-              technical_seo: {
-                crawl_issues: seRankingData.site_audit?.errors || 0,
-                page_speed_score: seRankingData.site_audit?.overall_score || 0,
-                mobile_friendly: seRankingData.site_audit?.overall_score > 70,
-                technical_errors: seRankingData.site_audit?.issues?.map(i => i.type) || []
-              }
-            },
-            analysis_date: new Date().toISOString(),
-            competitive_gaps: gaps.gaps,
-            opportunities: gaps.opportunities
-          };
-
-          enhancedCompetitors.push(enhancedData);
-        } catch (error) {
-          console.error(`❌ Failed to analyze competitor ${competitor}:`, error);
-        }
-      }
-
-      // Save enhanced competitor analysis
-      const success = await UserProfileService.saveUserProfile(userId, {
-        competitor_analysis: {
-          ...profile.competitor_analysis,
-          enhanced_competitors: enhancedCompetitors,
-          analysis_phase: 'enhanced',
-          se_ranking_enhanced_at: new Date().toISOString(),
-          last_updated: new Date().toISOString()
-        }
-      });
-
-      console.log(`✅ Enhanced competitor analysis complete. Analyzed ${enhancedCompetitors.length} competitors`);
-      return success;
-
-    } catch (error) {
-      console.error('❌ Error enhancing competitor analysis:', error);
-      return false;
-    }
-  }
-
-  // Get enhanced competitor analysis
-  static async getEnhancedCompetitorAnalysis(userId: string): Promise<EnhancedCompetitorData[] | null> {
+  static async getCompetitorAnalysis(userId: string): Promise<CompetitorAnalysis | null> {
     try {
       const profile = await UserProfileService.getUserProfile(userId);
-      return profile?.competitor_analysis?.enhanced_competitors || null;
+      if (!profile) return null;
+
+      return profile.competitor_analysis || null;
     } catch (error) {
-      console.error('Error getting enhanced competitor analysis:', error);
+      console.error('Error getting competitor analysis:', error);
       return null;
     }
   }
 
-  // Check if competitor analysis needs enhancement
-  static async needsEnhancement(userId: string): Promise<boolean> {
+  static async getBasicCompetitors(userId: string): Promise<string[]> {
     try {
       const profile = await UserProfileService.getUserProfile(userId);
-      const analysis = profile?.competitor_analysis;
-      
-      if (!analysis || analysis.analysis_phase !== 'enhanced') {
-        return true;
-      }
-
-      // Check if analysis is older than 30 days
-      const lastEnhanced = new Date(analysis.se_ranking_enhanced_at || 0);
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      return lastEnhanced < thirtyDaysAgo;
+      return profile?.main_competitors || [];
     } catch (error) {
-      console.error('Error checking enhancement needs:', error);
-      return true;
+      console.error('Error getting basic competitors:', error);
+      return [];
     }
   }
 
-  // Helper methods
-  private static extractDomain(url: string): string {
+  static async analyzeCompetitors(userId: string, businessContext?: any): Promise<CompetitorAnalysis | null> {
     try {
-      const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
-      return urlObj.hostname.replace('www.', '');
-    } catch {
-      return url.replace(/^https?:\/\//, '').replace('www.', '').split('/')[0];
-    }
-  }
-
-  private static guessCompetitorDomain(competitorName: string): string {
-    // Smart domain guessing logic
-    const cleaned = competitorName.toLowerCase()
-      .replace(/\s+/g, '')
-      .replace(/[^a-z0-9]/g, '');
-    return `${cleaned}.com`;
-  }
-
-  private static estimateTraffic(seData: any): number {
-    // Estimate traffic based on keywords and positions
-    if (!seData.keywords) return 0;
-    
-    return seData.keywords.reduce((total: number, keyword: any) => {
-      const positionMultiplier = keyword.position <= 3 ? 0.3 : 
-                               keyword.position <= 10 ? 0.1 : 0.02;
-      return total + (keyword.volume * positionMultiplier);
-    }, 0);
-  }
-
-  private static calculateVisibility(seData: any): number {
-    // Calculate visibility score based on keyword positions
-    if (!seData.keywords?.length) return 0;
-    
-    const totalKeywords = seData.keywords.length;
-    const topPositions = seData.keywords.filter((k: any) => k.position <= 10).length;
-    
-    return Math.round((topPositions / totalKeywords) * 100);
-  }
-
-  private static analyzeAnchorText(seData: any): Record<string, number> {
-    // Mock anchor text analysis - would come from actual SE Ranking data
-    return {
-      'brand': 40,
-      'generic': 30,
-      'exact_match': 20,
-      'partial_match': 10
-    };
-  }
-
-  private static async identifyCompetitiveGaps(userDomain: string, competitorDomain: string, competitorData: any): Promise<{gaps: string[], opportunities: string[]}> {
-    const gaps: string[] = [];
-    const opportunities: string[] = [];
-
-    // Analyze keyword gaps
-    if (competitorData.keywords?.length > 0) {
-      const topCompetitorKeywords = competitorData.keywords.filter((k: any) => k.position <= 10);
-      if (topCompetitorKeywords.length > 5) {
-        gaps.push(`Competitor ranks for ${topCompetitorKeywords.length} top keywords`);
-        opportunities.push('Target competitor\'s top-ranking keywords');
+      const profile = await UserProfileService.getUserProfile(userId);
+      if (!profile || !profile.main_competitors || profile.main_competitors.length === 0) {
+        return null;
       }
+
+      // Enhanced analysis with business context
+      const enhancedAnalysis: CompetitorAnalysis = {
+        competitors: profile.main_competitors.map(name => ({
+          name,
+          domain: `${name.toLowerCase().replace(/\s+/g, '')}.com`,
+          industry: profile.industry || 'Unknown',
+          strengths: ['Market presence', 'Brand recognition'],
+          weaknesses: ['Analysis pending'],
+          marketShare: 0,
+          keyProducts: []
+        })),
+        marketPosition: this.determineMarketPosition(profile),
+        opportunities: this.generateOpportunities(profile),
+        threats: this.generateThreats(profile),
+        recommendations: this.generateRecommendations(profile),
+        lastUpdated: new Date().toISOString()
+      };
+
+      // Save enhanced analysis
+      await UserProfileService.saveUserProfile(userId, {
+        competitor_analysis: enhancedAnalysis
+      });
+
+      return enhancedAnalysis;
+    } catch (error) {
+      console.error('Error analyzing competitors:', error);
+      return null;
+    }
+  }
+
+  private static determineMarketPosition(profile: UserProfile): string {
+    if (profile.company_size === '1-10') return 'startup';
+    if (profile.company_size === '11-50') return 'small_business';
+    if (profile.company_size === '51-200') return 'mid_market';
+    return 'enterprise';
+  }
+
+  private static generateOpportunities(profile: UserProfile): string[] {
+    const opportunities = [];
+    
+    if (profile.marketing_experience === 'beginner') {
+      opportunities.push('Digital marketing automation opportunities');
+    }
+    
+    if (profile.primary_marketing_goals?.includes('brand_awareness')) {
+      opportunities.push('Content marketing expansion');
+    }
+    
+    if (!profile.website_url) {
+      opportunities.push('Establish strong online presence');
     }
 
-    // Analyze backlink gaps
-    if (competitorData.backlinks?.referring_domains > 100) {
-      gaps.push(`Competitor has ${competitorData.backlinks.referring_domains} referring domains`);
-      opportunities.push('Build authority through strategic link building');
-    }
+    return opportunities;
+  }
 
-    // Technical SEO gaps
-    if (competitorData.site_audit?.overall_score > 80) {
-      gaps.push('Competitor has superior technical SEO');
-      opportunities.push('Improve site technical performance');
+  private static generateThreats(profile: UserProfile): string[] {
+    const threats = [];
+    
+    if (profile.marketing_budget === 'less_than_1000') {
+      threats.push('Limited marketing budget vs competitors');
     }
+    
+    threats.push('Competitive market positioning');
+    threats.push('Digital marketing gaps');
 
-    return { gaps, opportunities };
+    return threats;
+  }
+
+  private static generateRecommendations(profile: UserProfile): string[] {
+    const recommendations = [];
+    
+    if (profile.marketing_experience === 'beginner') {
+      recommendations.push('Focus on fundamental digital marketing strategies');
+    }
+    
+    if (!profile.website_url) {
+      recommendations.push('Develop professional website presence');
+    }
+    
+    recommendations.push('Monitor competitor marketing activities');
+    recommendations.push('Identify unique value propositions');
+
+    return recommendations;
   }
 }
