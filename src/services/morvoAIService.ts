@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface ChatResponse {
@@ -19,50 +20,6 @@ interface ChatResponse {
   confidence_score?: number;
 }
 
-interface TokenBalance {
-  balance: number;
-  package: {
-    name: string;
-    token_amount: number;
-    price_sar: number;
-    bonus_tokens: number;
-  };
-}
-
-interface BusinessAnalysis {
-  analysis: {
-    business_overview: {
-      business_type: string;
-      main_products: string[];
-      target_audience: string;
-      unique_value: string;
-    };
-    digital_presence: {
-      website_health: {
-        seo_score: number;
-        speed_score: number;
-        mobile_friendly: boolean;
-        ssl_secure: boolean;
-      };
-      social_media: Record<string, any>;
-    };
-    competitors: Array<{
-      name: string;
-      market_share: number;
-      strengths: string[];
-      weaknesses: string[];
-    }>;
-    opportunities: {
-      quick_wins: string[];
-      strategic: string[];
-    };
-    roi_prediction: Record<string, any>;
-  };
-  tokens_used: number;
-  analysis_time: number;
-  confidence_score: number;
-}
-
 interface ConnectionHealth {
   status: 'healthy' | 'degraded' | 'down';
   latency: number;
@@ -72,23 +29,27 @@ interface ConnectionHealth {
 export class MorvoAIService {
   private static readonly API_URL = 'https://morvo-production.up.railway.app';
   private static readonly API_VERSION = 'v1';
-  private static readonly TIMEOUT = 45000; // Increased timeout for analysis
+  private static readonly TIMEOUT = 45000;
   private static healthStatus: ConnectionHealth | null = null;
+  private static conversationId: string | null = sessionStorage.getItem('morvo_conversation_id');
 
-  private static async getAuthToken(): Promise<string> {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('User not authenticated');
+  private static async getAuthToken(): Promise<string | null> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || null;
+    } catch (error) {
+      console.warn('Could not get auth token:', error);
+      return null;
     }
-    return session.access_token;
   }
 
-  private static async getClientId(): Promise<string> {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) {
-      throw new Error('User not authenticated');
+  private static getClientId(): string {
+    let clientId = localStorage.getItem('morvo_client_id');
+    if (!clientId) {
+      clientId = `lovable-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('morvo_client_id', clientId);
     }
-    return session.user.id;
+    return clientId;
   }
 
   private static async checkHealth(): Promise<ConnectionHealth> {
@@ -132,25 +93,113 @@ export class MorvoAIService {
     }
   }
 
-  static async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    // Check health if we haven't in the last 30 seconds
-    if (!this.healthStatus || Date.now() - this.healthStatus.lastChecked.getTime() > 30000) {
-      await this.checkHealth();
-    }
+  // Use the working test endpoint that doesn't require authentication
+  static async processMessage(message: string, context?: any): Promise<ChatResponse> {
+    try {
+      console.log('🚀 Sending message to Railway test endpoint:', message);
+      
+      // Try authenticated endpoint first if we have a token
+      const token = await this.getAuthToken();
+      if (token) {
+        try {
+          const authResponse = await this.sendAuthenticatedMessage(message, token, context);
+          return authResponse;
+        } catch (authError) {
+          console.warn('⚠️ Auth endpoint failed, falling back to test endpoint:', authError);
+        }
+      }
 
-    const token = await this.getAuthToken();
-    
-    return fetch(`${this.API_URL}/${this.API_VERSION}${endpoint}`, {
-      ...options,
+      // Use test endpoint as primary method
+      const response = await fetch(`${this.API_URL}/v1/chat/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          message: message.trim(),
+          client_id: this.getClientId(),
+          conversation_id: this.conversationId || `conv-${Date.now()}`
+        }),
+        signal: AbortSignal.timeout(this.TIMEOUT)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Test endpoint error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Test endpoint response:', data);
+      
+      // Save conversation ID for context
+      if (data.conversation_id) {
+        this.conversationId = data.conversation_id;
+        sessionStorage.setItem('morvo_conversation_id', data.conversation_id);
+      }
+      
+      return {
+        response: data.message || data.response || 'No response',
+        personality_traits: data.personality_traits,
+        tokens_used: data.tokens_used || 0,
+        emotion_detected: data.emotion_detected,
+        suggested_actions: data.suggested_actions || [],
+        processing_time: data.processing_time_ms,
+        confidence_score: data.confidence_score || 0.9
+      };
+    } catch (error) {
+      console.error('❌ Chat service error:', error);
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('فشل الاتصال بالشبكة. يرجى التحقق من اتصال الإنترنت.');
+      }
+      
+      throw error;
+    }
+  }
+
+  // Try authenticated endpoint with proper format
+  private static async sendAuthenticatedMessage(message: string, token: string, context?: any): Promise<ChatResponse> {
+    const response = await fetch(`${this.API_URL}/v1/chat/message`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
-        'X-Client-Info': 'morvo-ai-frontend',
-        'X-Health-Status': this.healthStatus?.status || 'unknown',
-        ...options.headers
+        'X-Client-Info': 'morvo-ai-frontend'
       },
+      body: JSON.stringify({
+        message: message.trim(),
+        conversation_id: this.conversationId,
+        project_context: context?.project_context || {},
+        metadata: context?.metadata || {},
+        stream: false
+      }),
       signal: AbortSignal.timeout(this.TIMEOUT)
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Auth endpoint failed: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    // Save conversation ID
+    if (data.conversation_id) {
+      this.conversationId = data.conversation_id;
+      sessionStorage.setItem('morvo_conversation_id', data.conversation_id);
+    }
+
+    return {
+      response: data.message || data.response || 'No response',
+      personality_traits: data.personality_traits,
+      tokens_used: data.tokens_used || 0,
+      emotion_detected: data.emotion_detected,
+      suggested_actions: data.suggested_actions || [],
+      processing_time: data.processing_time_ms,
+      confidence_score: data.confidence_score || 0.9
+    };
   }
 
   // Health Check
@@ -176,186 +225,47 @@ export class MorvoAIService {
     }
   }
 
-  // Process Message - Fixed endpoint and payload
-  static async processMessage(message: string, context?: any): Promise<ChatResponse> {
+  // Test connection with detailed diagnostics
+  static async testConnection(): Promise<boolean> {
     try {
-      console.log('🚀 Sending message to Railway backend:', message);
+      console.log('🔗 Testing Morvo AI Railway connection...');
       
-      const response = await this.makeRequest('/chat/message', {
+      const health = await this.checkHealth();
+      console.log('✅ Health Check result:', health);
+      
+      // Test the working endpoint
+      const testResponse = await fetch(`${this.API_URL}/v1/chat/test`, {
         method: 'POST',
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          message: message.trim(),
-          conversation_id: context?.conversation_id,
-          project_context: context?.project_context || {},
-          metadata: context?.metadata || {},
-          stream: false
+          message: 'Connection test',
+          client_id: this.getClientId(),
+          conversation_id: 'test-connection'
         })
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Backend error:', response.status, errorText);
-        
-        if (response.status === 422) {
-          let errorData;
-          try {
-            errorData = JSON.parse(errorText);
-          } catch {
-            errorData = { detail: errorText };
-          }
-          
-          const validationError = errorData.errors?.[0]?.msg || errorData.detail || 'Validation error';
-          throw new Error(`Validation error: ${validationError}`);
-        }
-        
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Backend response:', data);
       
-      return {
-        response: data.message || data.response || 'No response',
-        personality_traits: data.personality_traits,
-        tokens_used: data.tokens_used || 0,
-        emotion_detected: data.emotion_detected,
-        suggested_actions: data.suggested_actions || [],
-        processing_time: data.processing_time_ms,
-        confidence_score: data.confidence_score || 0.9
-      };
+      const testWorking = testResponse.ok;
+      console.log('🧪 Test endpoint result:', testWorking);
+      
+      return health.status === 'healthy' || health.status === 'degraded';
     } catch (error) {
-      console.error('❌ Chat service error:', error);
-      
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error('فشل الاتصال بالشبكة. يرجى التحقق من اتصال الإنترنت.');
-      }
-      
-      throw error;
-    }
-  }
-
-  // Check Journey Status - New method
-  static async checkJourneyStatus(clientId: string): Promise<any> {
-    try {
-      const response = await this.makeRequest(`/onboarding/journey-status/${clientId}`);
-      
-      if (response.status === 404) {
-        return null; // No journey found
-      }
-      
-      if (!response.ok) {
-        throw new Error(`Failed to check journey status: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Error checking journey status:', error);
-      return null;
-    }
-  }
-
-  // Start Journey - Fixed payload
-  static async startJourneyWithWebsite(websiteUrl: string): Promise<any> {
-    try {
-      console.log('🚀 Starting journey with website:', websiteUrl);
-      
-      const response = await this.makeRequest('/onboarding/start', {
-        method: 'POST',
-        body: JSON.stringify({
-          website_url: websiteUrl
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Journey start error:', response.status, errorText);
-        
-        if (response.status === 422) {
-          let errorData;
-          try {
-            errorData = JSON.parse(errorText);
-          } catch {
-            errorData = { detail: errorText };
-          }
-          
-          const validationError = errorData.errors?.[0]?.msg || errorData.detail || 'Validation error';
-          throw new Error(`Validation error: ${validationError}`);
-        }
-        
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Journey started:', data);
-      return data;
-    } catch (error) {
-      console.error('❌ Start journey error:', error);
-      throw error;
-    }
-  }
-
-  // Set Greeting Preference - Fixed endpoint
-  static async setGreetingPreference(journeyId: string, greeting: string): Promise<boolean> {
-    try {
-      console.log('💾 Setting greeting preference:', greeting);
-      
-      const response = await this.makeRequest('/onboarding/greeting-preference', {
-        method: 'POST',
-        body: JSON.stringify({
-          journey_id: journeyId,
-          greeting_preference: greeting
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Greeting preference error:', response.status, errorText);
-        return false;
-      }
-
-      const data = await response.json();
-      console.log('✅ Greeting preference set:', data);
-      return true;
-    } catch (error) {
-      console.error('❌ Set greeting preference error:', error);
+      console.error('❌ Connection test failed:', error);
       return false;
     }
   }
 
-  // Website Analysis - Fixed endpoint
-  static async startWebsiteAnalysis(journeyId: string, websiteUrl: string): Promise<boolean> {
-    try {
-      console.log('🔍 Starting website analysis:', websiteUrl);
-      
-      const response = await this.makeRequest('/onboarding/website-analysis', {
-        method: 'POST',
-        body: JSON.stringify({
-          journey_id: journeyId,
-          website_url: websiteUrl
-        })
-      });
-
-      return response.ok;
-    } catch (error) {
-      console.error('❌ Website analysis error:', error);
-      return false;
-    }
+  static getHealthStatus(): ConnectionHealth | null {
+    return this.healthStatus;
   }
 
-  // Get Customer Profile
-  static async getCustomerProfile(userId: string): Promise<any> {
-    try {
-      const response = await this.makeRequest(`/customer/profile/${userId}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to get customer profile: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Error getting customer profile:', error);
-      throw error;
-    }
+  static getConversationId(): string | null {
+    return this.conversationId;
+  }
+
+  static resetConversation(): void {
+    this.conversationId = null;
+    sessionStorage.removeItem('morvo_conversation_id');
+    console.log('🔄 Conversation reset');
   }
 
   // Legacy methods for backward compatibility
@@ -363,7 +273,7 @@ export class MorvoAIService {
     return this.processMessage(message, context);
   }
 
-  static async sendMessageWithRetry(message: string, context?: any, maxRetries = 3): Promise<ChatResponse> {
+  static async sendMessageWithRetry(message: string, context?: any, maxRetries = 2): Promise<ChatResponse> {
     let lastError;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -382,33 +292,16 @@ export class MorvoAIService {
     throw lastError;
   }
 
-  // Test connection
-  static async testConnection(): Promise<boolean> {
-    try {
-      console.log('🔗 Testing Morvo AI Railway connection...');
-      
-      const health = await this.checkHealth();
-      console.log('✅ Health Check result:', health);
-      
-      return health.status === 'healthy' || health.status === 'degraded';
-    } catch (error) {
-      console.error('❌ Connection test failed:', error);
-      return false;
-    }
-  }
-
-  static getHealthStatus(): ConnectionHealth | null {
-    return this.healthStatus;
-  }
-
   // Token Management - Fallback to local client data
   static async getTokenBalance(): Promise<any> {
     try {
-      const clientId = await this.getClientId();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { data: clientData } = await supabase
         .from('clients')
         .select('quota_limit, quota_used')
-        .eq('user_id', clientId)
+        .eq('user_id', user.id)
         .single();
 
       if (!clientData) {

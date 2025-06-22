@@ -1,15 +1,17 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
 import { ChatHeader } from './chat/ChatHeader';
 import { ActionButtons } from './chat/ActionButtons';
 import { ChatInitializer } from './chat/ChatInitializer';
+import { DebugPanel } from './chat/DebugPanel';
 import { useChatInterface } from '@/hooks/useChatInterface';
 import { MorvoAIService } from '@/services/morvoAIService';
 import { UserProfileService } from '@/services/userProfileService';
 import { SERankingService } from '@/services/seRankingService';
 import { AgentResponse } from '@/services/agent';
+import { Bug } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface MessageData {
   id: string;
@@ -30,6 +32,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onContentTypeChange,
   onMessageSent
 }) => {
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  
   const {
     messages,
     setMessages,
@@ -80,7 +84,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     handleSidebarContentChange(messageText);
 
     try {
-      console.log('🤖 Processing message with clean system');
+      console.log('🤖 Processing message with enhanced system');
       
       // Check for website URL and analyze if provided
       const websiteUrl = extractUrlFromMessage(messageText);
@@ -100,29 +104,35 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
 
       let botResponse: string;
+      let processingTime: number = 0;
+      const startTime = Date.now();
 
-      if (isConnected) {
-        try {
-          const context = {
-            conversation_history: messages.slice(-3).map(m => ({
-              role: m.sender === 'user' ? 'user' : 'assistant',
-              content: m.content
-            })),
-            user_profile: userProfile,
-            emotional_context: emotionalContext,
-            conversation_state: conversationState,
-            user_id: user.id
-          };
+      try {
+        // Use the enhanced MorvoAIService
+        const context = {
+          conversation_history: messages.slice(-3).map(m => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.content
+          })),
+          user_profile: userProfile,
+          emotional_context: emotionalContext,
+          conversation_state: conversationState,
+          user_id: user.id
+        };
 
-          const aiResponse = await MorvoAIService.processMessage(messageText, context);
-          botResponse = aiResponse.response;
-          console.log('✅ AI response received');
-        } catch (backendError) {
-          console.warn('⚠️ Backend failed, using local response:', backendError);
-          botResponse = generateContextualResponse(messageText);
-        }
-      } else {
+        const aiResponse = await MorvoAIService.processMessage(messageText, context);
+        botResponse = aiResponse.response;
+        processingTime = aiResponse.processing_time || (Date.now() - startTime);
+        
+        console.log('✅ Enhanced AI response received', {
+          processingTime,
+          confidence: aiResponse.confidence_score,
+          tokensUsed: aiResponse.tokens_used
+        });
+      } catch (backendError) {
+        console.warn('⚠️ Backend failed, using local response:', backendError);
         botResponse = generateContextualResponse(messageText);
+        processingTime = Date.now() - startTime;
       }
 
       const enhancement = await enhanceConversation(messageText, botResponse);
@@ -132,10 +142,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         content: enhancement.personalizedResponse,
         sender: 'agent',
         timestamp: new Date(),
-        processing_time: Date.now() - userMessage.timestamp.getTime(),
+        processing_time: processingTime,
         metadata: {
           contextualInsights: enhancement.contextualInsights,
-          emotionalContext: emotionalContext
+          emotionalContext: emotionalContext,
+          conversationId: MorvoAIService.getConversationId(),
+          isEnhanced: true
         }
       };
 
@@ -155,15 +167,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
 
     } catch (error) {
-      console.error('❌ Chat error:', error);
+      console.error('❌ Enhanced chat error:', error);
       
       const errorMessage: MessageData = {
         id: (Date.now() + 1).toString(),
         content: language === 'ar' 
-          ? 'عذراً، حدث خطأ في معالجة رسالتك. يرجى المحاولة مرة أخرى.'
-          : 'Sorry, there was an error processing your message. Please try again.',
+          ? 'عذراً، حدث خطأ في معالجة رسالتك. تم تشغيل وضع الطوارئ - يرجى المحاولة مرة أخرى.'
+          : 'Sorry, there was an error processing your message. Emergency mode activated - please try again.',
         sender: 'agent',
         timestamp: new Date(),
+        metadata: {
+          isError: true,
+          errorMode: true
+        }
       };
 
       setMessages(prev => [...prev, errorMessage]);
@@ -171,8 +187,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       toast({
         title: language === 'ar' ? 'خطأ في المعالجة' : 'Processing Error',
         description: language === 'ar' 
-          ? 'تعذر معالجة الرسالة. يرجى المحاولة مرة أخرى.'
-          : 'Unable to process message. Please try again.',
+          ? 'تعذر معالجة الرسالة. تم تفعيل وضع الطوارئ.'
+          : 'Unable to process message. Emergency mode activated.',
         variant: "destructive",
       });
     } finally {
@@ -211,21 +227,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         userProfile={userProfile}
       />
 
-      {/* Fixed Header */}
+      {/* Fixed Header with Debug Button */}
       <div className="flex-shrink-0">
-        <ChatHeader 
-          theme={theme}
-          isRTL={isRTL}
-          content={{
-            masterAgent: t.masterAgent,
-            clientAgent: '',
-            connecting: t.connecting,
-            connected: t.connected
-          }}
-          isConnecting={!connectionChecked}
-          clientId={user?.id || ''}
-          onToggleTheme={() => {}}
-        />
+        <div className="flex items-center justify-between p-2">
+          <ChatHeader 
+            theme={theme}
+            isRTL={isRTL}
+            content={{
+              masterAgent: t.masterAgent,
+              clientAgent: '',
+              connecting: t.connecting,
+              connected: t.connected
+            }}
+            isConnecting={!connectionChecked}
+            clientId={user?.id || ''}
+            onToggleTheme={() => {}}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDebugPanel(!showDebugPanel)}
+            className="opacity-50 hover:opacity-100"
+          >
+            <Bug className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
       
       {/* Scrollable Messages Area */}
@@ -270,7 +296,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           />
         </div>
       </div>
+      
       <div ref={messagesEndRef} />
+      
+      {/* Debug Panel */}
+      <DebugPanel 
+        isVisible={showDebugPanel}
+        onClose={() => setShowDebugPanel(false)}
+      />
     </div>
   );
 };

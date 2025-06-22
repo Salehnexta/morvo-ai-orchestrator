@@ -41,18 +41,24 @@ export const ChatInitializer = ({
       }
 
       try {
-        console.log('🚀 Initializing clean chat system...');
+        console.log('🚀 Initializing enhanced chat system...');
+        
+        // Test connection with comprehensive diagnostics
         const isHealthy = await MorvoAIService.testConnection();
         setIsConnected(isHealthy);
+        
+        console.log('🔍 Connection test result:', isHealthy);
+        console.log('📊 Health status:', MorvoAIService.getHealthStatus());
+        console.log('💬 Conversation ID:', MorvoAIService.getConversationId());
         
         if (messages.length === 0) {
           let welcomeContent: string;
           
           if (userProfile?.onboarding_completed) {
             const greeting = userProfile?.greeting_preference || 'أستاذ';
-            welcomeContent = `مرحباً بك مرة أخرى ${greeting}! 🎯 أنا مورفو، مساعدك الذكي للتسويق الرقمي. كيف يمكنني مساعدتك اليوم؟`;
+            welcomeContent = `مرحباً بك مرة أخرى ${greeting}! 🎯 أنا مورفو، مساعدك الذكي للتسويق الرقمي المحدث بـ GPT-4o. كيف يمكنني مساعدتك اليوم؟`;
           } else {
-            welcomeContent = 'مرحباً بك في مورفو! 🚀 أنا مساعدك الذكي للتسويق الرقمي. دعني أتعرف عليك أولاً لأقدم لك أفضل خدمة. ما هو اسم شركتك؟';
+            welcomeContent = 'مرحباً بك في مورفو المحدث! 🚀 أنا مساعدك الذكي للتسويق الرقمي المدعوم بـ GPT-4o. دعني أتعرف عليك أولاً لأقدم لك أفضل خدمة. ما هو اسم شركتك؟';
           }
 
           const welcomeMessage: MessageData = {
@@ -62,12 +68,14 @@ export const ChatInitializer = ({
             timestamp: new Date(),
             metadata: {
               isWelcome: true,
-              profileComplete: userProfile?.onboarding_completed || false
+              profileComplete: userProfile?.onboarding_completed || false,
+              connectionHealthy: isHealthy,
+              conversationId: MorvoAIService.getConversationId()
             }
           };
           
           setMessages([welcomeMessage]);
-          console.log('✅ Clean chat system initialized');
+          console.log('✅ Enhanced chat system initialized successfully');
         }
       } catch (error) {
         console.error('❌ Chat initialization failed:', error);
@@ -76,9 +84,12 @@ export const ChatInitializer = ({
         if (messages.length === 0) {
           const fallbackMessage: MessageData = {
             id: Date.now().toString(),
-            content: 'مرحباً بك في مورفو! أعمل حالياً في وضع محدود. سأحاول مساعدتك قدر الإمكان.',
+            content: 'مرحباً بك في مورفو! نظام الدردشة يعمل حالياً في وضع الاختبار. قد تكون الاستجابات أبطأ قليلاً، لكنني سأبذل قصارى جهدي لمساعدتك.',
             sender: 'agent',
             timestamp: new Date(),
+            metadata: {
+              isOfflineMode: true
+            }
           };
           setMessages([fallbackMessage]);
         }
