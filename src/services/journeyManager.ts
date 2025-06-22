@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { MorvoAIService } from "./morvoAIService";
 import { DatabaseCleanupService } from "./databaseCleanupService";
@@ -42,24 +43,14 @@ export class JourneyManager {
       // Clean up any duplicate profiles first
       await DatabaseCleanupService.cleanupDuplicateProfiles(clientId);
       
-      // First check backend for journey status using correct client-based lookup
+      // Try backend first with better error handling
       try {
         const backendJourney = await MorvoAIService.checkJourneyStatus(clientId);
         if (backendJourney && backendJourney.status !== 'completed') {
           console.log('✅ Found active backend journey:', backendJourney);
           
           // Save/update local record
-          await this.saveJourneyLocally({
-            journey_id: backendJourney.journey_id,
-            client_id: clientId,
-            current_phase: backendJourney.current_phase || 'welcome',
-            profile_progress: backendJourney.completion_percentage || 0,
-            is_completed: backendJourney.status === 'completed',
-            created_at: backendJourney.created_at || new Date().toISOString(),
-            updated_at: backendJourney.updated_at || new Date().toISOString()
-          });
-          
-          return {
+          const localJourney = {
             journey_id: backendJourney.journey_id,
             client_id: clientId,
             current_phase: backendJourney.current_phase || 'welcome',
@@ -68,6 +59,9 @@ export class JourneyManager {
             created_at: backendJourney.created_at || new Date().toISOString(),
             updated_at: backendJourney.updated_at || new Date().toISOString()
           };
+          
+          await this.saveJourneyLocally(localJourney);
+          return localJourney;
         }
       } catch (backendError) {
         console.warn('⚠️ Backend journey check failed, using local fallback:', backendError);
@@ -98,7 +92,7 @@ export class JourneyManager {
       // Ensure journey record exists for users with profiles
       const journeyId = await DatabaseCleanupService.ensureJourneyRecord(clientId);
       if (journeyId) {
-        return await this.checkExistingJourney(clientId); // Recursive call to get the created journey
+        return await this.checkExistingJourney(clientId);
       }
 
       return null;
@@ -137,7 +131,6 @@ export class JourneyManager {
               updated_at: backendJourney.updated_at || new Date().toISOString()
             };
             
-            // Save to local database
             await this.saveJourneyLocally(journey);
             return journey;
           }
@@ -146,7 +139,7 @@ export class JourneyManager {
         }
       }
 
-      // Fallback: Create journey locally
+      // Create journey locally
       const localJourney: OnboardingJourney = {
         journey_id: `journey_${clientId}_${Date.now()}`,
         client_id: clientId,
@@ -195,12 +188,9 @@ export class JourneyManager {
       // Extract client ID from journey ID for backend lookup
       const clientId = journeyId.includes('_') ? journeyId.split('_')[1] : journeyId;
       
-      // Try backend first with exponential backoff retry
+      // Try backend first
       try {
-        const backendStatus = await this.retryWithBackoff(
-          () => MorvoAIService.checkJourneyStatus(clientId),
-          3
-        );
+        const backendStatus = await MorvoAIService.checkJourneyStatus(clientId);
         
         if (backendStatus) {
           return {
@@ -241,39 +231,13 @@ export class JourneyManager {
     }
   }
 
-  private static async retryWithBackoff<T>(
-    fn: () => Promise<T>,
-    maxRetries: number,
-    baseDelay: number = 1000
-  ): Promise<T> {
-    let lastError;
-    
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        return await fn();
-      } catch (error) {
-        lastError = error;
-        if (attempt < maxRetries - 1) {
-          const delay = baseDelay * Math.pow(2, attempt);
-          console.log(`Retry attempt ${attempt + 1} in ${delay}ms`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    }
-    
-    throw lastError;
-  }
-
   static async setGreetingPreference(journeyId: string, greeting: string): Promise<boolean> {
     try {
       console.log('🔄 Setting greeting preference:', greeting, 'for journey:', journeyId);
       
-      // Try backend first with retry
+      // Try backend first
       try {
-        const success = await this.retryWithBackoff(
-          () => MorvoAIService.setGreetingPreference(journeyId, greeting),
-          3
-        );
+        const success = await MorvoAIService.setGreetingPreference(journeyId, greeting);
         if (success) {
           console.log('✅ Greeting preference set on backend');
         }
@@ -284,14 +248,13 @@ export class JourneyManager {
       // Extract client ID from journey ID
       const clientId = journeyId.includes('_') ? journeyId.split('_')[1] : journeyId;
       
-      // Always save locally - first check if profile exists
+      // Save locally
       const { data: existingProfile } = await supabase
         .from('customer_profiles')
         .select('profile_data')
         .eq('customer_id', clientId)
         .maybeSingle();
 
-      // Fix the spread operator issue by ensuring we have a proper object
       const existingData = (existingProfile?.profile_data && typeof existingProfile.profile_data === 'object') 
         ? existingProfile.profile_data as Record<string, any>
         : {};
@@ -311,7 +274,7 @@ export class JourneyManager {
         console.error('❌ Error saving greeting to profile:', profileError);
       }
 
-      // Update journey phase
+      // Update journey phase to move to next step
       const { error: journeyError } = await supabase
         .from('onboarding_journeys')
         .update({
@@ -337,48 +300,12 @@ export class JourneyManager {
     try {
       console.log('🔍 Starting website analysis for:', websiteUrl);
       
-      const success = await this.retryWithBackoff(
-        () => MorvoAIService.startWebsiteAnalysis(journeyId, websiteUrl),
-        3
-      );
+      const success = await MorvoAIService.startWebsiteAnalysis(journeyId, websiteUrl);
       
       console.log('✅ Website analysis started:', success);
       return success;
     } catch (error) {
       console.error('❌ Error starting website analysis:', error);
-      return false;
-    }
-  }
-
-  static async getAnalysisResults(journeyId: string): Promise<any> {
-    try {
-      const response = await MorvoAIService.makeRequest(`/onboarding/analysis-results/${journeyId}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to get analysis results: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('❌ Error getting analysis results:', error);
-      return null;
-    }
-  }
-
-  static async saveProfileAnswer(journeyId: string, questionId: string, answer: string): Promise<boolean> {
-    try {
-      const response = await MorvoAIService.makeRequest('/onboarding/profile-answer', {
-        method: 'POST',
-        body: JSON.stringify({
-          journey_id: journeyId,
-          question_id: questionId,
-          answer: answer
-        })
-      });
-
-      return response.ok;
-    } catch (error) {
-      console.error('❌ Error saving profile answer:', error);
       return false;
     }
   }
