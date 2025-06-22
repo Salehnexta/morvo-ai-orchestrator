@@ -68,6 +68,8 @@ export interface UserProfile {
 export class UserProfileService {
   static async getUserProfile(userId: string): Promise<UserProfile | null> {
     try {
+      console.log('📊 Fetching user profile for ID:', userId);
+      
       const { data: profile, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -75,25 +77,40 @@ export class UserProfileService {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('❌ Error fetching user profile:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          code: error.code,
+          hint: error.hint,
+          details: error.details
+        });
         return null;
       }
 
+      console.log('✅ User profile fetched successfully:', profile);
       return profile;
     } catch (error) {
-      console.error('Error in getUserProfile:', error);
+      console.error('❌ Unexpected error in getUserProfile:', error);
       return null;
     }
   }
 
   static async saveUserProfile(userId: string, profileData: Partial<UserProfile>): Promise<boolean> {
     try {
+      console.log('💾 Saving user profile for ID:', userId);
+      console.log('💾 Profile data to save:', profileData);
+
       // First check if profile exists
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: fetchError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
+
+      if (fetchError) {
+        console.error('❌ Error checking existing profile:', fetchError);
+        return false;
+      }
 
       const now = new Date().toISOString();
       const dataToSave = {
@@ -101,19 +118,28 @@ export class UserProfileService {
         updated_at: now
       };
 
+      console.log('💾 Data to save after processing:', dataToSave);
+
       if (existingProfile) {
-        // Update existing profile
+        console.log('🔄 Updating existing profile...');
         const { error } = await supabase
           .from('user_profiles')
           .update(dataToSave)
           .eq('user_id', userId);
 
         if (error) {
-          console.error('Error updating user profile:', error);
+          console.error('❌ Error updating user profile:', error);
+          console.error('❌ Update error details:', {
+            message: error.message,
+            code: error.code,
+            hint: error.hint,
+            details: error.details
+          });
           return false;
         }
+        console.log('✅ Profile updated successfully');
       } else {
-        // Create new profile
+        console.log('➕ Creating new profile...');
         const { error } = await supabase
           .from('user_profiles')
           .insert({
@@ -123,14 +149,21 @@ export class UserProfileService {
           });
 
         if (error) {
-          console.error('Error creating user profile:', error);
+          console.error('❌ Error creating user profile:', error);
+          console.error('❌ Insert error details:', {
+            message: error.message,
+            code: error.code,
+            hint: error.hint,
+            details: error.details
+          });
           return false;
         }
+        console.log('✅ Profile created successfully');
       }
 
       return true;
     } catch (error) {
-      console.error('Error in saveUserProfile:', error);
+      console.error('❌ Unexpected error in saveUserProfile:', error);
       return false;
     }
   }
@@ -225,16 +258,55 @@ export class UserProfileService {
 
   static async updateCompleteness(userId: string): Promise<void> {
     try {
+      console.log('📊 Updating completeness for user:', userId);
       const profile = await this.getUserProfile(userId);
-      if (!profile) return;
+      if (!profile) {
+        console.log('❌ No profile found to update completeness');
+        return;
+      }
 
       const completeness = await this.calculateCompleteness(profile);
+      console.log('📊 Calculated completeness:', completeness);
       
-      await this.saveUserProfile(userId, {
+      const success = await this.saveUserProfile(userId, {
         data_completeness_score: completeness
       });
+      
+      if (success) {
+        console.log('✅ Completeness updated successfully');
+      } else {
+        console.log('❌ Failed to update completeness');
+      }
     } catch (error) {
-      console.error('Error updating completeness:', error);
+      console.error('❌ Error updating completeness:', error);
+    }
+  }
+
+  // Debug method to check profile status
+  static async debugUserProfile(userId: string): Promise<void> {
+    try {
+      console.log('🔍 DEBUG: Checking user profile status for:', userId);
+      
+      // Check if user exists in auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('🔍 DEBUG: Current auth user:', user?.id, user?.email);
+      
+      if (authError) {
+        console.error('🔍 DEBUG: Auth error:', authError);
+      }
+
+      // Check profile in database
+      const profile = await this.getUserProfile(userId);
+      console.log('🔍 DEBUG: Profile from database:', profile);
+      
+      if (profile) {
+        const completeness = await this.calculateCompleteness(profile);
+        console.log('🔍 DEBUG: Profile completeness:', completeness);
+        console.log('🔍 DEBUG: Setup completed?', profile.first_time_setup_completed);
+        console.log('🔍 DEBUG: Onboarding completed?', profile.onboarding_completed);
+      }
+    } catch (error) {
+      console.error('🔍 DEBUG: Error in debug method:', error);
     }
   }
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileService, UserProfile } from '@/services/userProfileService';
@@ -56,8 +55,42 @@ const FirstTimeSetup: React.FC = () => {
   });
 
   useEffect(() => {
+    if (user) {
+      loadExistingProfile();
+    }
     calculateCompleteness();
-  }, [profile]);
+  }, [profile, user]);
+
+  const loadExistingProfile = async () => {
+    if (!user) return;
+
+    try {
+      console.log('📋 Loading existing profile for user:', user.id);
+      const existingProfile = await UserProfileService.getUserProfile(user.id);
+      
+      if (existingProfile) {
+        console.log('📋 Found existing profile, pre-filling form:', existingProfile);
+        setProfile(prev => ({
+          ...prev,
+          ...existingProfile,
+          // Ensure contact_info structure is maintained
+          contact_info: {
+            email: user?.email || '',
+            phone: '',
+            address: '',
+            social_media: {
+              twitter: '',
+              linkedin: '',
+              instagram: ''
+            },
+            ...existingProfile.contact_info
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('📋 Error loading existing profile:', error);
+    }
+  };
 
   const calculateCompleteness = () => {
     const requiredFields = [
@@ -135,7 +168,10 @@ const FirstTimeSetup: React.FC = () => {
   };
 
   const handleComplete = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error('❌ No user found for completion');
+      return;
+    }
 
     if (completeness < 70) {
       toast({
@@ -148,6 +184,9 @@ const FirstTimeSetup: React.FC = () => {
 
     setSaving(true);
     try {
+      console.log('🎯 Completing first-time setup for user:', user.id);
+      console.log('🎯 Final profile data:', profile);
+
       const profileData = {
         ...profile,
         first_time_setup_completed: true,
@@ -155,8 +194,17 @@ const FirstTimeSetup: React.FC = () => {
         onboarding_completed_at: new Date().toISOString()
       };
 
+      console.log('🎯 Saving final profile data:', profileData);
       const success = await UserProfileService.saveUserProfile(user.id, profileData);
+      
       if (success) {
+        // Update completeness score
+        await UserProfileService.updateCompleteness(user.id);
+        
+        // Verify the data was saved
+        const savedProfile = await UserProfileService.getUserProfile(user.id);
+        console.log('✅ Verification - saved profile:', savedProfile);
+        
         toast({
           title: 'مرحباً بك في مورفو! 🎉',
           description: 'تم حفظ معلوماتك بنجاح. سيتم توجيهك إلى لوحة التحكم',
@@ -165,12 +213,12 @@ const FirstTimeSetup: React.FC = () => {
         // Small delay for better UX
         setTimeout(() => {
           navigate('/dashboard');
-        }, 1500);
+        }, 2000);
       } else {
         throw new Error('Failed to save profile');
       }
     } catch (error) {
-      console.error('Error completing setup:', error);
+      console.error('❌ Error completing setup:', error);
       toast({
         title: 'خطأ',
         description: 'حدث خطأ في حفظ البيانات. يرجى المحاولة مرة أخرى',

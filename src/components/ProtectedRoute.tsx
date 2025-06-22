@@ -52,38 +52,58 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     try {
       console.log('🔒 Checking first-time setup for user:', user.email, 'ID:', user.id);
+      
+      // Debug the profile status
+      await UserProfileService.debugUserProfile(user.id);
+      
       const profile = await UserProfileService.getUserProfile(user.id);
       
       console.log('🔒 User profile check result:', { 
         profileExists: !!profile, 
         setupCompleted: profile?.first_time_setup_completed,
+        onboardingCompleted: profile?.onboarding_completed,
         completenessScore: profile?.data_completeness_score,
         companyName: profile?.company_name,
         greetingPreference: profile?.greeting_preference,
+        marketingExperience: profile?.marketing_experience,
+        monthlyBudget: profile?.monthly_marketing_budget,
         fullProfile: profile
       });
       
+      if (!profile) {
+        console.log('🔒 No profile found - redirecting to first-time setup');
+        navigate('/first-time-setup', { replace: true });
+        return;
+      }
+
       // Calculate completeness score if not already calculated
       let completenessScore = profile?.data_completeness_score || 0;
-      if (profile && !completenessScore) {
+      if (!completenessScore) {
         completenessScore = await UserProfileService.calculateCompleteness(profile);
         console.log('🔒 Calculated completeness score:', completenessScore);
       }
       
-      // If no profile exists OR setup not completed OR completeness is too low, redirect to first-time setup
-      const minimumCompleteness = 50; // Require at least 50% completeness
-      const needsSetup = !profile || 
-                        profile.first_time_setup_completed !== true || 
-                        completenessScore < minimumCompleteness;
+      // Check if setup is truly complete
+      const hasEssentialInfo = profile.company_name && 
+                              profile.industry && 
+                              profile.marketing_experience && 
+                              profile.monthly_marketing_budget;
       
-      if (needsSetup) {
-        console.log('🔒 Redirecting to first-time setup - reasons:', {
-          noProfile: !profile,
-          setupNotCompleted: profile?.first_time_setup_completed !== true,
-          lowCompleteness: completenessScore < minimumCompleteness,
-          currentCompleteness: completenessScore,
-          minimumRequired: minimumCompleteness
-        });
+      const setupComplete = profile.first_time_setup_completed === true && hasEssentialInfo;
+      
+      console.log('🔒 Setup completion check:', {
+        first_time_setup_completed: profile.first_time_setup_completed,
+        hasEssentialInfo,
+        setupComplete,
+        completenessScore,
+        company_name: profile.company_name,
+        industry: profile.industry,
+        marketing_experience: profile.marketing_experience,
+        monthly_marketing_budget: profile.monthly_marketing_budget
+      });
+      
+      if (!setupComplete) {
+        console.log('🔒 Setup not complete - redirecting to first-time setup');
         navigate('/first-time-setup', { replace: true });
         return;
       }
