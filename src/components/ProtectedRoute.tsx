@@ -57,15 +57,33 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       console.log('🔒 User profile check result:', { 
         profileExists: !!profile, 
         setupCompleted: profile?.first_time_setup_completed,
+        completenessScore: profile?.data_completeness_score,
         companyName: profile?.company_name,
         greetingPreference: profile?.greeting_preference,
         fullProfile: profile
       });
       
-      // If no profile exists OR setup not completed, redirect to first-time setup
-      if (!profile || profile.first_time_setup_completed !== true) {
-        console.log('🔒 Redirecting to first-time setup - profile incomplete or setup not completed');
-        console.log('🔒 Setup status:', profile?.first_time_setup_completed);
+      // Calculate completeness score if not already calculated
+      let completenessScore = profile?.data_completeness_score || 0;
+      if (profile && !completenessScore) {
+        completenessScore = await UserProfileService.calculateCompleteness(profile);
+        console.log('🔒 Calculated completeness score:', completenessScore);
+      }
+      
+      // If no profile exists OR setup not completed OR completeness is too low, redirect to first-time setup
+      const minimumCompleteness = 50; // Require at least 50% completeness
+      const needsSetup = !profile || 
+                        profile.first_time_setup_completed !== true || 
+                        completenessScore < minimumCompleteness;
+      
+      if (needsSetup) {
+        console.log('🔒 Redirecting to first-time setup - reasons:', {
+          noProfile: !profile,
+          setupNotCompleted: profile?.first_time_setup_completed !== true,
+          lowCompleteness: completenessScore < minimumCompleteness,
+          currentCompleteness: completenessScore,
+          minimumRequired: minimumCompleteness
+        });
         navigate('/first-time-setup', { replace: true });
         return;
       }
