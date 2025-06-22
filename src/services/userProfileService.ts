@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface UserProfile {
@@ -136,17 +135,63 @@ export class UserProfileService {
 
   static async calculateCompleteness(profile: UserProfile): Promise<number> {
     const requiredFields = [
-      'full_name', 'company_name', 'industry', 'website_url', 
-      'business_type', 'marketing_experience', 'primary_marketing_goals',
-      'target_audience', 'monthly_marketing_budget'
+      'greeting_preference',
+      'company_name', 
+      'industry', 
+      'company_size',
+      'company_overview',
+      'core_offerings',
+      'contact_email',
+      'contact_phone'
     ];
 
-    const completedFields = requiredFields.filter(field => {
+    const optionalFields = [
+      'website_url',
+      'technical_products',
+      'business_focus',
+      'product_descriptions',
+      'team_members'
+    ];
+
+    let completedRequired = 0;
+    let completedOptional = 0;
+
+    // Check required fields
+    requiredFields.forEach(field => {
       const value = profile[field as keyof UserProfile];
-      return value !== null && value !== undefined && value !== '';
+      if (value !== null && value !== undefined && value !== '') {
+        if (field === 'team_members' && Array.isArray(value)) {
+          if (value.length > 0 && value.some(member => member && member.trim())) {
+            completedRequired++;
+          }
+        } else {
+          completedRequired++;
+        }
+      }
     });
 
-    return Math.round((completedFields.length / requiredFields.length) * 100);
+    // Check optional fields
+    optionalFields.forEach(field => {
+      const value = profile[field as keyof UserProfile];
+      if (value !== null && value !== undefined && value !== '') {
+        if (field === 'team_members' && Array.isArray(value)) {
+          if (value.length > 0 && value.some(member => member && member.trim())) {
+            completedOptional++;
+          }
+        } else {
+          completedOptional++;
+        }
+      }
+    });
+
+    // Calculate weighted score (required fields worth more)
+    const requiredWeight = 0.7;
+    const optionalWeight = 0.3;
+    
+    const requiredScore = (completedRequired / requiredFields.length) * requiredWeight;
+    const optionalScore = (completedOptional / optionalFields.length) * optionalWeight;
+    
+    return Math.round((requiredScore + optionalScore) * 100);
   }
 
   static async updateCompleteness(userId: string): Promise<void> {

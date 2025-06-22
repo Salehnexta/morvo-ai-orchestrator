@@ -130,6 +130,9 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
       // Update local state
       setJourney(prev => ({ ...prev, greeting_preference: greeting }));
       setGreetingPreference(greeting);
+      
+      // Update progress
+      await updateProgress();
       return true;
     } catch (error) {
       console.error('Error saving greeting:', error);
@@ -142,11 +145,15 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     
     try {
       await UserProfileService.saveUserProfile(user.id, {
-        website_url: url
+        website_url: url,
+        website_analysis_complete: true
       });
       
       // Update local state
-      setJourney(prev => ({ ...prev, website_url: url }));
+      setJourney(prev => ({ ...prev, website_url: url, website_analysis_complete: true }));
+      
+      // Update progress
+      await updateProgress();
       return true;
     } catch (error) {
       console.error('Error saving website:', error);
@@ -154,16 +161,24 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     }
   };
 
-  const saveAnswer = async (key: string, value: string): Promise<boolean> => {
+  const saveAnswer = async (key: string, value: any): Promise<boolean> => {
     if (!user) return false;
     
     try {
-      await UserProfileService.saveUserProfile(user.id, {
-        [key]: value
-      });
+      const updateData = { [key]: value };
+      
+      // Handle special data types
+      if (key === 'team_members' && Array.isArray(value)) {
+        updateData[key] = value.filter(member => member && member.trim().length > 0);
+      }
+      
+      await UserProfileService.saveUserProfile(user.id, updateData);
       
       // Update local state
       setJourney(prev => ({ ...prev, [key]: value }));
+      
+      // Update progress
+      await updateProgress();
       return true;
     } catch (error) {
       console.error('Error saving answer:', error);
@@ -171,10 +186,31 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     }
   };
 
+  const updateProgress = async () => {
+    if (!user) return;
+    
+    try {
+      const profile = await UserProfileService.getUserProfile(user.id);
+      if (profile) {
+        const completeness = await UserProfileService.calculateCompleteness(profile);
+        setProgress(completeness);
+        
+        // Save completeness score
+        await UserProfileService.saveUserProfile(user.id, {
+          data_completeness_score: completeness
+        });
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error);
+    }
+  };
+
   const updateJourneyPhase = async (phase: string) => {
     if (!user) return;
     
     try {
+      console.log('🔄 Updating journey phase to:', phase);
+      
       // Save phase to database immediately
       await UserProfileService.saveUserProfile(user.id, {
         current_phase: phase,
@@ -187,6 +223,9 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
       setCurrentPhase(phase);
       setCurrentStep(phase);
       setJourney(prev => ({ ...prev, current_phase: phase }));
+      
+      // Update progress
+      await updateProgress();
     } catch (error) {
       console.error('Error updating journey phase:', error);
     }
@@ -196,8 +235,9 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
     if (!user) return null;
     
     try {
-      // Mark onboarding as completed
+      // Mark strategy as generated and onboarding as completed
       await UserProfileService.saveUserProfile(user.id, {
+        strategy_generated: true,
         onboarding_completed: true,
         onboarding_completed_at: new Date().toISOString(),
         current_phase: 'completed'
@@ -205,6 +245,12 @@ export const JourneyProvider: React.FC<JourneyProviderProps> = ({ children }) =>
       
       setProgress(100);
       setCurrentPhase('completed');
+      
+      // Update journey status
+      setJourneyStatus(prev => ({
+        ...prev,
+        onboarding_completed: true
+      }));
       
       return { success: true, message: 'Strategy generated successfully' };
     } catch (error) {

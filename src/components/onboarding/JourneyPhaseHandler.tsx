@@ -1,14 +1,14 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useJourney } from '@/contexts/JourneyContext';
 import { useUserGreeting } from '@/hooks/useUserGreeting';
 import { JourneyFlowService, JourneyFlowState } from '@/services/journeyFlowService';
 import { JourneyProgress } from './JourneyProgress';
 import { WebsiteAnalysisStep } from './steps/WebsiteAnalysisStep';
+import { GreetingPreferenceStep } from './steps/GreetingPreferenceStep';
+import { ProfileCompletionStep } from './steps/ProfileCompletionStep';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowRight, User, CheckCircle, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle, Sparkles } from 'lucide-react';
 
 interface JourneyPhaseHandlerProps {
   onPhaseComplete?: (phase: string) => void;
@@ -26,37 +26,15 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
     setGreeting, 
     analyzeWebsite, 
     updateJourneyPhase,
-    generateStrategy
+    generateStrategy,
+    saveAnswer
   } = useJourney();
   
   const { fullGreeting, displayName, loading: greetingLoading } = useUserGreeting();
   
   const [flowState, setFlowState] = useState<JourneyFlowState | null>(null);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<Record<string, any>>({});
   const [websiteAnalysisData, setWebsiteAnalysisData] = useState<any>(null);
-  const [localCurrentPhase, setLocalCurrentPhase] = useState(currentPhase);
-  
-  // Add ref to track if we're in a transition to prevent sync conflicts
-  const isTransitioningRef = useRef(false);
-  const lastTransitionRef = useRef<string>('');
-
-  // Sync local phase with context phase - but prevent conflicts during transitions
-  useEffect(() => {
-    console.log('🔄 Phase sync: context phase =', currentPhase, ', local phase =', localCurrentPhase, ', transitioning =', isTransitioningRef.current);
-    
-    // Only sync if we're not in the middle of a transition and the phases are actually different
-    if (!isTransitioningRef.current && currentPhase !== localCurrentPhase) {
-      // Add a small delay to avoid conflicts with rapid state changes
-      const timeoutId = setTimeout(() => {
-        if (!isTransitioningRef.current) {
-          setLocalCurrentPhase(currentPhase);
-        }
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [currentPhase]);
 
   // Load journey flow state
   useEffect(() => {
@@ -71,7 +49,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
     };
 
     loadFlowState();
-  }, [journey, localCurrentPhase]);
+  }, [journey, currentPhase]);
 
   const handlePhaseAction = async (action: string, data?: any) => {
     if (!journey) {
@@ -79,10 +57,8 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
       return;
     }
 
-    console.log('🎯 Phase action:', action, 'current phase:', localCurrentPhase);
+    console.log('🎯 Phase action:', action, 'current phase:', currentPhase);
     
-    // Set transition flag to prevent sync conflicts
-    isTransitioningRef.current = true;
     setLoading(true);
     
     try {
@@ -114,6 +90,19 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
           break;
 
         case 'profile_completion_complete':
+          // Save all profile data
+          const profileKeys = [
+            'company_name', 'industry', 'company_size', 'company_overview',
+            'core_offerings', 'technical_products', 'business_focus', 'product_descriptions',
+            'contact_email', 'contact_phone', 'contact_address', 'team_members', 'social_media'
+          ];
+          
+          for (const key of profileKeys) {
+            if (data[key] !== undefined) {
+              await saveAnswer(key, data[key]);
+            }
+          }
+          
           nextPhase = 'professional_analysis';
           success = true;
           break;
@@ -134,8 +123,7 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
           break;
 
         case 'complete_phase':
-          // Handle welcome phase specifically
-          if (localCurrentPhase === 'welcome') {
+          if (currentPhase === 'welcome') {
             nextPhase = 'greeting_preference';
             console.log('✅ Moving from welcome to greeting_preference');
           } else {
@@ -149,40 +137,24 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
       }
 
       if (success && nextPhase) {
-        // Prevent the sync effect from interfering
-        const transitionId = `${localCurrentPhase}->${nextPhase}`;
-        lastTransitionRef.current = transitionId;
-        
-        // Update both local and context state
-        setLocalCurrentPhase(nextPhase);
         updateJourneyPhase(nextPhase);
-        
-        console.log('✅ Phase transition successful:', localCurrentPhase, '->', nextPhase);
+        console.log('✅ Phase transition successful:', currentPhase, '->', nextPhase);
         
         if (onPhaseComplete && action !== 'generate_strategy') {
-          onPhaseComplete(localCurrentPhase);
+          onPhaseComplete(currentPhase);
         }
       }
     } catch (error) {
       console.error('❌ Phase action failed:', error);
     } finally {
       setLoading(false);
-      // Clear transition flag after a delay to ensure state has settled
-      setTimeout(() => {
-        isTransitioningRef.current = false;
-      }, 500);
     }
   };
 
   const renderPhaseContent = () => {
-    const currentPhaseToRender = localCurrentPhase;
-    const currentPhaseData = JourneyFlowService.getPhase(currentPhaseToRender);
+    console.log('🎨 Rendering phase:', currentPhase);
     
-    console.log('🎨 Rendering phase:', currentPhaseToRender);
-    
-    if (!currentPhaseData) return null;
-
-    switch (currentPhaseToRender) {
+    switch (currentPhase) {
       case 'welcome':
         return (
           <Card className="bg-gray-800/95 border-gray-600/50 shadow-xl">
@@ -223,43 +195,11 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       case 'greeting_preference':
         return (
-          <Card className="bg-gray-800/95 border-gray-600/50 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-400" />
-                {displayName !== 'مستخدم' ? 
-                  `${displayName}، كيف تفضل أن أناديك؟` : 
-                  'كيف تفضل أن أناديك؟'
-                }
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-gray-200">
-                اختر الطريقة التي تفضل أن أخاطبك بها في جميع محادثاتنا المستقبلية
-              </p>
-              <div className="space-y-3">
-                <label className="text-white block">اختر طريقة المخاطبة المفضلة:</label>
-                <Select onValueChange={(value) => setFormData({...formData, greeting: value})}>
-                  <SelectTrigger className="bg-gray-700/80 border-gray-600/50 text-white">
-                    <SelectValue placeholder="اختر..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="أستاذ">أستاذ</SelectItem>
-                    <SelectItem value="دكتور">دكتور</SelectItem>
-                    <SelectItem value="مهندس">مهندس</SelectItem>
-                    <SelectItem value="الاسم فقط">الاسم فقط</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={() => handlePhaseAction('set_greeting', formData)}
-                  disabled={loading || !formData.greeting}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-                >
-                  {loading ? 'جاري الحفظ...' : 'حفظ التفضيل'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <GreetingPreferenceStep
+            onComplete={(greeting) => handlePhaseAction('set_greeting', { greeting })}
+            loading={loading}
+            currentGreeting={journey?.greeting_preference}
+          />
         );
 
       case 'website_analysis':
@@ -298,29 +238,12 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       case 'profile_completion':
         return (
-          <Card className="bg-gray-800/90 border-gray-600/50 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-white">إكمال ملفك التجاري</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-gray-200">
-                الآن سنقوم بجمع معلومات إضافية عن أعمالك لبناء استراتيجية تسويقية دقيقة.
-              </p>
-              <div className="bg-amber-600/20 p-4 rounded-lg border border-amber-500/30">
-                <p className="text-amber-200">🔄 هذه المرحلة قيد التطوير</p>
-                <p className="text-gray-200 text-sm mt-2">
-                  سيتم إضافة نموذج تفصيلي لجمع معلومات الأعمال
-                </p>
-              </div>
-              <Button
-                onClick={() => handlePhaseAction('profile_completion_complete')}
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-              >
-                متابعة للتحليل المتقدم
-              </Button>
-            </CardContent>
-          </Card>
+          <ProfileCompletionStep
+            onComplete={(data) => handlePhaseAction('profile_completion_complete', data)}
+            onSkip={() => handlePhaseAction('professional_analysis_complete')}
+            loading={loading}
+            initialData={journey}
+          />
         );
 
       case 'professional_analysis':
@@ -366,9 +289,6 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
               <p className="text-gray-200">
                 الآن سأقوم بإنشاء استراتيجية تسويقية مخصصة لك باستخدام أحدث تقنيات الذكاء الاصطناعي
               </p>
-              <p className="text-green-200">
-                🎯 ستحصل على استراتيجية شاملة مصممة خصيصاً لأعمالك
-              </p>
               <div className="bg-gray-700/60 p-4 rounded-lg text-right border border-gray-600/30">
                 <p className="text-gray-200 text-sm">
                   ستتضمن الاستراتيجية:
@@ -397,18 +317,16 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
         return (
           <Card className="bg-gray-800/95 border-gray-600/50 shadow-xl">
             <CardHeader>
-              <CardTitle className="text-white">
-                {currentPhaseData.title}
-              </CardTitle>
+              <CardTitle className="text-white">مرحلة غير معرّفة</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-200 mb-4">{currentPhaseData.description}</p>
+              <p className="text-gray-200 mb-4">حدث خطأ في تحديد المرحلة الحالية</p>
               <Button
                 onClick={() => handlePhaseAction('complete_phase')}
                 disabled={loading}
                 className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
               >
-                إكمال هذه المرحلة
+                المتابعة
               </Button>
             </CardContent>
           </Card>
@@ -417,14 +335,14 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
   };
 
   const estimatedTimeRemaining = flowState 
-    ? JourneyFlowService.calculateEstimatedTimeRemaining(localCurrentPhase, flowState.completedPhases)
+    ? JourneyFlowService.calculateEstimatedTimeRemaining(currentPhase, flowState.completedPhases)
     : undefined;
 
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Journey Progress */}
       <JourneyProgress
-        currentPhase={localCurrentPhase}
+        currentPhase={currentPhase}
         completedPhases={flowState?.completedPhases || []}
         progress={progress}
         estimatedTimeRemaining={estimatedTimeRemaining}
@@ -435,11 +353,10 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       {/* Debug Info */}
       <div className="bg-gray-800/80 p-3 rounded text-xs text-gray-300 border border-gray-600/50">
-        <p>Current Phase: {localCurrentPhase}</p>
-        <p>Context Phase: {currentPhase}</p>
+        <p>Current Phase: {currentPhase}</p>
         <p>Progress: {progress}%</p>
         <p>Journey: {journey ? 'Loaded' : 'Not loaded'}</p>
-        <p>Transitioning: {isTransitioningRef.current ? 'Yes' : 'No'}</p>
+        <p>Loading: {loading ? 'Yes' : 'No'}</p>
       </div>
 
       {/* Blockers Display */}
