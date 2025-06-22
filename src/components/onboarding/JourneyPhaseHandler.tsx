@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useJourney } from '@/contexts/JourneyContext';
 import { JourneyFlowService, JourneyFlowState } from '@/services/journeyFlowService';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowRight, Globe, User, Target } from 'lucide-react';
+import { ArrowRight, Globe, User, Target, CheckCircle } from 'lucide-react';
 
 interface JourneyPhaseHandlerProps {
   onPhaseComplete?: (phase: string) => void;
@@ -117,6 +118,9 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
             );
             updateJourneyPhase(nextPhase);
             success = true;
+          } else if (currentPhase === 'strategy_generation') {
+            // This is the final phase, mark journey as complete
+            success = true;
           }
           break;
       }
@@ -209,6 +213,29 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
             onComplete={(data) => handlePhaseAction('business_review_complete', data)}
             onBack={() => handlePhaseAction('back_to_website_analysis')}
           />
+        );
+
+      case 'strategy_generation':
+        return (
+          <Card className="bg-gradient-to-r from-green-500/20 to-blue-500/20 border-white/20">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" />
+                {currentPhaseData.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-blue-200 mb-6">{currentPhaseData.description}</p>
+              <p className="text-green-200 mb-6">تهانينا! لقد أكملت رحلة الإعداد بنجاح. سيتم الآن توليد استراتيجيتك التسويقية المخصصة.</p>
+              <Button
+                onClick={() => handlePhaseAction('complete_phase')}
+                disabled={loading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                إنهاء الرحلة والانتقال للدردشة <CheckCircle className="w-4 h-4 mr-2" />
+              </Button>
+            </CardContent>
+          </Card>
         );
 
       default:

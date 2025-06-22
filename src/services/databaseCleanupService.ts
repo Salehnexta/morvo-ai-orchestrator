@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export class DatabaseCleanupService {
@@ -107,7 +108,7 @@ export class DatabaseCleanupService {
         .insert({
           journey_id: journeyId,
           client_id: customerId,
-          current_phase: hasCompletedProfile ? 'commitment_activation' : 'welcome',
+          current_phase: hasCompletedProfile ? 'strategy_generation' : 'welcome',
           profile_progress: hasCompletedProfile ? 100 : 0,
           is_completed: hasCompletedProfile,
           created_at: new Date().toISOString(),

@@ -32,8 +32,7 @@ export class JourneyManager {
     'analysis_review',
     'profile_completion',
     'professional_analysis',
-    'strategy_generation',
-    'commitment_activation'
+    'strategy_generation'
   ];
 
   static async checkExistingJourney(clientId: string): Promise<OnboardingJourney | null> {
@@ -398,23 +397,22 @@ export class JourneyManager {
 
       const data = await response.json();
       console.log('✅ Strategy generated:', data);
+      
+      // Mark journey as completed after strategy generation
+      const clientId = journeyId.includes('_') ? journeyId.split('_')[1] : journeyId;
+      await supabase
+        .from('onboarding_journeys')
+        .update({
+          is_completed: true,
+          profile_progress: 100,
+          updated_at: new Date().toISOString()
+        })
+        .eq('journey_id', journeyId);
+      
       return data;
     } catch (error) {
       console.error('❌ Error generating strategy:', error);
       return null;
-    }
-  }
-
-  static async activateCommitment(journeyId: string): Promise<boolean> {
-    try {
-      const response = await MorvoAIService.makeRequest(`/onboarding/activate-commitment/${journeyId}`, {
-        method: 'POST'
-      });
-
-      return response.ok;
-    } catch (error) {
-      console.error('❌ Error activating commitment:', error);
-      return false;
     }
   }
 

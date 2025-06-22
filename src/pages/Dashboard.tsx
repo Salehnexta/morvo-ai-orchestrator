@@ -12,7 +12,7 @@ const Dashboard = () => {
   const { language, isRTL } = useLanguage();
   const { 
     loading, 
-    isOnboardingComplete, 
+    isOnboardingComplete,
     currentPhase, 
     startJourney, 
     hasExistingJourney,
@@ -113,7 +113,8 @@ const Dashboard = () => {
 
   const handlePhaseComplete = (phase: string) => {
     console.log('✅ Phase completed:', phase);
-    if (phase === 'commitment_activation') {
+    // After strategy generation (final phase), move to main dashboard
+    if (phase === 'strategy_generation') {
       setShowOnboarding(false);
       setContentType('hero');
     }

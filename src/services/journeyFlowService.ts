@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { JourneyManager } from "./journeyManager";
 import { MorvoAIService } from "./morvoAIService";
@@ -85,15 +84,6 @@ export class JourneyFlowService {
       required: true,
       estimatedDuration: 15,
       prerequisites: ['professional_analysis']
-    },
-    {
-      id: 'commitment_activation',
-      name: 'تفعيل الخطة',
-      title: 'تفعيل خطتك التسويقية',
-      description: 'ابدأ تنفيذ استراتيجيتك التسويقية',
-      required: true,
-      estimatedDuration: 5,
-      prerequisites: ['strategy_generation']
     }
   ];
 
