@@ -4,7 +4,6 @@ import { useUserGreeting } from '@/hooks/useUserGreeting';
 import { JourneyFlowService, JourneyFlowState } from '@/services/journeyFlowService';
 import { JourneyProgress } from './JourneyProgress';
 import { WebsiteAnalysisStep } from './steps/WebsiteAnalysisStep';
-import { BusinessReviewStep } from './steps/BusinessReviewStep';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -52,7 +51,10 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
   }, [journey, currentPhase]);
 
   const handlePhaseAction = async (action: string, data?: any) => {
-    if (!journey) return;
+    if (!journey) {
+      console.log('No journey found, initializing...');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -62,13 +64,6 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
         case 'set_greeting':
           success = await setGreeting(data.greeting);
           if (success) {
-            await JourneyFlowService.recordPhaseTransition(
-              journey.journey_id,
-              journey.client_id,
-              'greeting_preference',
-              'website_analysis',
-              { greeting_selected: data.greeting }
-            );
             updateJourneyPhase('website_analysis');
           }
           break;
@@ -103,7 +98,6 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
           const strategy = await generateStrategy();
           if (strategy) {
             success = true;
-            // Journey is now complete, trigger completion
             if (onPhaseComplete) {
               onPhaseComplete('strategy_generation');
             }
@@ -113,15 +107,14 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
         case 'complete_phase':
           const nextPhase = flowState?.nextPhase;
           if (nextPhase) {
-            await JourneyFlowService.recordPhaseTransition(
-              journey.journey_id,
-              journey.client_id,
-              currentPhase,
-              nextPhase,
-              data
-            );
             updateJourneyPhase(nextPhase);
             success = true;
+          } else {
+            // If no next phase, move to next logical step
+            if (currentPhase === 'welcome') {
+              updateJourneyPhase('greeting_preference');
+              success = true;
+            }
           }
           break;
       }
@@ -389,6 +382,13 @@ export const JourneyPhaseHandler: React.FC<JourneyPhaseHandlerProps> = ({
 
       {/* Current Phase Content */}
       {renderPhaseContent()}
+
+      {/* Debug Info */}
+      <div className="bg-black/20 p-3 rounded text-xs text-gray-300">
+        <p>Current Phase: {currentPhase}</p>
+        <p>Progress: {progress}%</p>
+        <p>Journey: {journey ? 'Loaded' : 'Not loaded'}</p>
+      </div>
 
       {/* Blockers Display */}
       {flowState?.blockers && flowState.blockers.length > 0 && (
