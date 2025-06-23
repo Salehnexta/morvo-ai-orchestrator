@@ -4,9 +4,9 @@ import { ChatInput } from './chat/ChatInput';
 import { ChatHeader } from './chat/ChatHeader';
 import { ActionButtons } from './chat/ActionButtons';
 import { ChatInitializer } from './chat/ChatInitializer';
-import { DebugPanel } from './chat/DebugPanel';
+import { EnhancedDebugPanel } from './chat/EnhancedDebugPanel';
 import { useChatInterface } from '@/hooks/useChatInterface';
-import { MorvoAIService } from '@/services/morvoAIService';
+import { EnhancedMorvoAIService } from '@/services/enhancedMorvoAIService';
 import { UserProfileService } from '@/services/userProfileService';
 import { SERankingService } from '@/services/seRankingService';
 import { AgentResponse } from '@/services/agent';
@@ -84,7 +84,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     handleSidebarContentChange(messageText);
 
     try {
-      console.log('🤖 Processing message with enhanced system');
+      console.log('🤖 Processing message with enhanced diagnostic system');
       
       // Check for website URL and analyze if provided
       const websiteUrl = extractUrlFromMessage(messageText);
@@ -105,10 +105,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       let botResponse: string;
       let processingTime: number = 0;
-      const startTime = Date.now();
+      let endpointUsed: string = 'unknown';
+      let diagnosticInfo: any = null;
 
       try {
-        // Use the enhanced MorvoAIService
+        // Use the enhanced service with full diagnostics
         const context = {
           conversation_history: messages.slice(-3).map(m => ({
             role: m.sender === 'user' ? 'user' : 'assistant',
@@ -120,19 +121,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           user_id: user.id
         };
 
-        const aiResponse = await MorvoAIService.processMessage(messageText, context);
-        botResponse = aiResponse.response;
-        processingTime = aiResponse.processing_time || (Date.now() - startTime);
+        const enhancedResponse = await EnhancedMorvoAIService.processMessageWithDiagnostics(messageText, context);
+        botResponse = enhancedResponse.response;
+        processingTime = enhancedResponse.processing_time || 0;
+        endpointUsed = enhancedResponse.endpoint_used;
+        diagnosticInfo = enhancedResponse.diagnostic_info;
         
         console.log('✅ Enhanced AI response received', {
           processingTime,
-          confidence: aiResponse.confidence_score,
-          tokensUsed: aiResponse.tokens_used
+          confidence: enhancedResponse.confidence_score,
+          tokensUsed: enhancedResponse.tokens_used,
+          endpointUsed,
+          diagnosticInfo
         });
+
+        // Update connection status based on diagnostic
+        if (diagnosticInfo?.overall_status === 'healthy' || diagnosticInfo?.overall_status === 'degraded') {
+          setIsConnected(true);
+        }
+        
       } catch (backendError) {
-        console.warn('⚠️ Backend failed, using local response:', backendError);
+        console.warn('⚠️ Enhanced backend failed, using local response:', backendError);
         botResponse = generateContextualResponse(messageText);
-        processingTime = Date.now() - startTime;
+        processingTime = 100;
+        endpointUsed = 'local_fallback';
+        setIsConnected(false);
       }
 
       const enhancement = await enhanceConversation(messageText, botResponse);
@@ -146,8 +159,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         metadata: {
           contextualInsights: enhancement.contextualInsights,
           emotionalContext: emotionalContext,
-          conversationId: MorvoAIService.getConversationId(),
-          isEnhanced: true
+          endpointUsed,
+          diagnosticInfo,
+          isEnhanced: true,
+          connectionHealth: diagnosticInfo?.overall_status || 'unknown'
         }
       };
 
@@ -172,23 +187,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       const errorMessage: MessageData = {
         id: (Date.now() + 1).toString(),
         content: language === 'ar' 
-          ? 'عذراً، حدث خطأ في معالجة رسالتك. تم تشغيل وضع الطوارئ - يرجى المحاولة مرة أخرى.'
-          : 'Sorry, there was an error processing your message. Emergency mode activated - please try again.',
+          ? 'عذراً، حدث خطأ في معالجة رسالتك. تم تشغيل التشخيص المتقدم - يرجى المحاولة مرة أخرى.'
+          : 'Sorry, there was an error processing your message. Advanced diagnostics activated - please try again.',
         sender: 'agent',
         timestamp: new Date(),
         metadata: {
           isError: true,
-          errorMode: true
+          errorMode: true,
+          advancedDiagnostics: true
         }
       };
 
       setMessages(prev => [...prev, errorMessage]);
 
       toast({
-        title: language === 'ar' ? 'خطأ في المعالجة' : 'Processing Error',
+        title: language === 'ar' ? 'خطأ في المعالجة المحسنة' : 'Enhanced Processing Error',
         description: language === 'ar' 
-          ? 'تعذر معالجة الرسالة. تم تفعيل وضع الطوارئ.'
-          : 'Unable to process message. Emergency mode activated.',
+          ? 'تعذر معالجة الرسالة. تم تفعيل التشخيص المتقدم.'
+          : 'Unable to process message. Advanced diagnostics activated.',
         variant: "destructive",
       });
     } finally {
@@ -227,7 +243,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         userProfile={userProfile}
       />
 
-      {/* Fixed Header with Debug Button */}
+      {/* Fixed Header with Enhanced Debug Button */}
       <div className="flex-shrink-0">
         <div className="flex items-center justify-between p-2">
           <ChatHeader 
@@ -250,6 +266,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             className="opacity-50 hover:opacity-100"
           >
             <Bug className="w-4 h-4" />
+            <span className="ml-1 text-xs">Enhanced</span>
           </Button>
         </div>
       </div>
@@ -299,8 +316,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       
       <div ref={messagesEndRef} />
       
-      {/* Debug Panel */}
-      <DebugPanel 
+      {/* Enhanced Debug Panel */}
+      <EnhancedDebugPanel 
         isVisible={showDebugPanel}
         onClose={() => setShowDebugPanel(false)}
       />

@@ -20,8 +20,8 @@ export const PostOnboardingLayout: React.FC<PostOnboardingLayoutProps> = ({
 }) => {
   return (
     <>
-      {/* Smart Dynamic Sidebar - Left side */}
-      <div className="w-80 relative z-10 border-r border-gray-200 dark:border-gray-700">
+      {/* Smart Dynamic Sidebar - 60% width */}
+      <div className="w-[60%] relative z-10 border-r border-gray-200 dark:border-gray-700">
         <SidebarContentManager 
           lastMessage={lastUserMessage}
           conversationHistory={conversationHistory}
@@ -29,8 +29,8 @@ export const PostOnboardingLayout: React.FC<PostOnboardingLayoutProps> = ({
         />
       </div>
 
-      {/* Chat Interface - Right side (takes remaining space) */}
-      <div className="flex-1 bg-black/30 backdrop-blur-xl border-l border-white/10 relative z-10 shadow-2xl">
+      {/* Chat Interface - 40% width */}
+      <div className="w-[40%] bg-black/30 backdrop-blur-xl border-l border-white/10 relative z-10 shadow-2xl">
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
         <div className="relative z-10 h-full">
           <ChatInterface 
