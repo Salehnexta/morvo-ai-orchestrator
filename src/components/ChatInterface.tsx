@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
@@ -10,8 +9,9 @@ import { SimpleRailwayAuth } from '@/services/simpleRailwayAuth';
 import { UserProfileService } from '@/services/userProfileService';
 import { SERankingService } from '@/services/seRankingService';
 import { AgentResponse } from '@/services/agent';
-import { CheckCircle, AlertCircle, Wifi } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Wifi, Bug } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface MessageData {
   id: string;
@@ -32,7 +32,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onContentTypeChange,
   onMessageSent
 }) => {
-  const [processingStatus, setProcessingStatus] = useState<'idle' | 'sending'>('idle');
+  const [processingStatus, setProcessingStatus] = useState<'idle' | 'sending' | 'diagnosing'>('idle');
+  const [diagnosticResults, setDiagnosticResults] = useState<any[]>([]);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   
   const {
     messages,
@@ -63,8 +65,44 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     generateContextualResponse
   } = useChatInterface(onContentTypeChange, onMessageSent);
 
+  const runDiagnostics = async () => {
+    setProcessingStatus('diagnosing');
+    try {
+      console.log('🧪 Running comprehensive diagnostic tests...');
+      const results = await SimpleRailwayAuth.runDiagnosticTests();
+      setDiagnosticResults(results);
+      setShowDiagnostics(true);
+      
+      const successfulTest = results.find(r => r.success);
+      if (successfulTest) {
+        setIsConnected(true);
+        toast({
+          title: language === 'ar' ? 'تم إيجاد تنسيق عمل!' : 'Working Format Found!',
+          description: language === 'ar' 
+            ? `تنسيق "${successfulTest.format}" يعمل بنجاح` 
+            : `Format "${successfulTest.format}" is working`,
+          variant: "default",
+        });
+      } else {
+        setIsConnected(false);
+        toast({
+          title: language === 'ar' ? 'فشل جميع الاختبارات' : 'All Tests Failed',
+          description: language === 'ar' 
+            ? 'يرجى التحقق من إعدادات الخادم'
+            : 'Please check server configuration',
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('❌ Diagnostic tests failed:', error);
+    } finally {
+      setProcessingStatus('idle');
+      setConnectionChecked(true);
+    }
+  };
+
   const handleSendMessage = async () => {
-    if (!input.trim() || !user) {
+    if (!input.trim() || !user || isLoading) {
       return;
     }
 
@@ -102,7 +140,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }
 
-      // Send message using simplified Railway service
+      // Phase 4: Enhanced message sending with auto-retry
       const context = {
         conversation_history: messages.slice(-3).map(m => ({
           role: m.sender === 'user' ? 'user' : 'assistant',
@@ -134,6 +172,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         
       } else {
         console.warn('⚠️ Railway service failed, using local response:', railwayResponse.error);
+        
+        // If it's a 422 error, suggest running diagnostics
+        if (railwayResponse.error?.includes('422') || railwayResponse.error?.includes('Unprocessable')) {
+          toast({
+            title: language === 'ar' ? 'خطأ في التنسيق' : 'Format Error',
+            description: language === 'ar' 
+              ? 'تشغيل التشخيص التلقائي...'
+              : 'Running automatic diagnostics...',
+            variant: "destructive",
+          });
+          
+          // Auto-run diagnostics on 422 errors
+          setTimeout(() => runDiagnostics(), 1000);
+        }
+        
         botResponse = await generateContextualResponse(messageText);
         processingTime = 150;
         setIsConnected(false);
@@ -191,8 +244,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       const errorMessage: MessageData = {
         id: (Date.now() + 1).toString(),
         content: language === 'ar' 
-          ? 'أعتذر، حدث خطأ مؤقت. يرجى المحاولة مرة أخرى.' 
-          : 'Sorry, a temporary error occurred. Please try again.',
+          ? 'أعتذر، حدث خطأ مؤقt. يرجى المحاولة مرة أخرى أو تشغيل التشخيص.' 
+          : 'Sorry, a temporary error occurred. Please try again or run diagnostics.',
         sender: 'agent',
         timestamp: new Date(),
         metadata: {
@@ -207,8 +260,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       toast({
         title: language === 'ar' ? 'خطأ مؤقت' : 'Temporary Error',
         description: language === 'ar' 
-          ? 'يرجى المحاولة مرة أخرى'
-          : 'Please try again',
+          ? 'يرجى المحاولة مرة أخرى أو تشغيل التشخيص'
+          : 'Please try again or run diagnostics',
         variant: "destructive",
       });
     } finally {
@@ -216,6 +269,46 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setProcessingStatus('idle');
       setConnectionChecked(true);
     }
+  };
+
+  const getConnectionBadge = () => {
+    if (!connectionChecked) {
+      return (
+        <Badge variant="outline" className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
+          <Wifi className="w-3 h-3" />
+          <span className="text-xs">جاري الاتصال...</span>
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge variant="outline" className="flex items-center gap-1">
+        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+        {isConnected ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+        <span className="text-xs">{isConnected ? 'متصل' : 'غير متصل'}</span>
+      </Badge>
+    );
+  };
+
+  const getProcessingBadge = () => {
+    if (processingStatus === 'sending') {
+      return (
+        <Badge variant="secondary" className="text-xs animate-pulse">
+          جاري الإرسال...
+        </Badge>
+      );
+    }
+    
+    if (processingStatus === 'diagnosing') {
+      return (
+        <Badge variant="outline" className="text-xs animate-pulse">
+          جاري التشخيص...
+        </Badge>
+      );
+    }
+    
+    return null;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -236,26 +329,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     console.log('Agent command response:', response);
   };
 
-  const getConnectionBadge = () => {
-    if (!connectionChecked) {
-      return (
-        <Badge variant="outline" className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
-          <Wifi className="w-3 h-3" />
-          <span className="text-xs">جاري الاتصال...</span>
-        </Badge>
-      );
-    }
-
-    return (
-      <Badge variant="outline" className="flex items-center gap-1">
-        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
-        {isConnected ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-        <span className="text-xs">{isConnected ? 'متصل' : 'غير متصل'}</span>
-      </Badge>
-    );
-  };
-
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800" dir={isRTL ? 'rtl' : 'ltr'}>
       <ChatInitializer
@@ -269,7 +342,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         userProfile={userProfile}
       />
 
-      {/* Simplified Header */}
+      {/* Enhanced Header with Diagnostics */}
       <div className="flex-shrink-0">
         <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
@@ -287,13 +360,53 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               onToggleTheme={() => {}}
             />
             {getConnectionBadge()}
-            {processingStatus === 'sending' && (
-              <Badge variant="secondary" className="text-xs animate-pulse">
-                جاري الإرسال...
-              </Badge>
+            {getProcessingBadge()}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={runDiagnostics}
+              disabled={processingStatus === 'diagnosing'}
+              className="text-xs"
+            >
+              <Bug className="w-3 h-3 mr-1" />
+              تشخيص
+            </Button>
+            
+            {showDiagnostics && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowDiagnostics(false)}
+                className="text-xs"
+              >
+                إخفاء
+              </Button>
             )}
           </div>
         </div>
+        
+        {/* Diagnostic Results Panel */}
+        {showDiagnostics && diagnosticResults.length > 0 && (
+          <div className="p-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div className="text-sm font-medium mb-2">نتائج التشخيص:</div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {diagnosticResults.map((result, i) => (
+                <div key={i} className={`p-2 rounded ${
+                  result.success ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'
+                }`}>
+                  <div className="font-medium">{result.format}</div>
+                  <div className={result.success ? 'text-green-600' : 'text-red-600'}>
+                    {result.success ? '✅ نجح' : `❌ فشل: ${result.error?.substring(0, 30)}...`}
+                  </div>
+                  {result.latency && <div className="text-gray-500">{result.latency}ms</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Messages Area */}
@@ -303,7 +416,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           isLoading={isLoading}
           theme={theme}
           isRTL={isRTL}
-          thinkingText={processingStatus === 'sending' ? 'جاري الإرسال...' : t.thinking}
+          thinkingText={processingStatus === 'sending' ? 'جاري الإرسال...' : processingStatus === 'diagnosing' ? 'جاري التشخيص...' : t.thinking}
           onCommandResponse={handleCommandResponse}
           language={language}
           onActionClick={handleActionClick}
@@ -327,10 +440,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           
           <ChatInput
             input={input}
-            isLoading={isLoading}
+            isLoading={isLoading || processingStatus !== 'idle'}
             theme={theme}
             isRTL={isRTL}
-            placeholder={processingStatus === 'sending' ? 'جاري الإرسال...' : t.placeholder}
+            placeholder={
+              processingStatus === 'sending' ? 'جاري الإرسال...' : 
+              processingStatus === 'diagnosing' ? 'جاري التشخيص...' : 
+              t.placeholder
+            }
             onInputChange={setInput}
             onSend={handleSendMessage}
             onKeyPress={handleKeyPress}
