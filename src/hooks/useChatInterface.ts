@@ -6,7 +6,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAdvancedConversation } from '@/hooks/useAdvancedConversation';
 import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
-import { EnhancedMorvoAIService } from '@/services/enhancedMorvoAIService';
 import { UserProfileService } from '@/services/userProfileService';
 import { IntelligentAgentService } from '@/services/intelligentAgentService';
 
@@ -31,8 +30,6 @@ export const useChatInterface = (
   const [connectionChecked, setConnectionChecked] = useState(false);
   const [chatInitialized, setChatInitialized] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'excellent' | 'slow' | 'down'>('down');
-  const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAuth();
@@ -51,24 +48,14 @@ export const useChatInterface = (
       connecting: 'جاري الاتصال...',
       connected: 'متصل',
       thinking: 'مورفو يفكر...',
-      placeholder: 'اكتب رسالتك هنا...',
-      connectionStatus: {
-        excellent: 'ممتاز',
-        slow: 'بطيء', 
-        down: 'معطل'
-      }
+      placeholder: 'اكتب رسالتك هنا...'
     },
     en: {
       masterAgent: 'Morvo AI',
       connecting: 'Connecting...',
       connected: 'Connected',
       thinking: 'Morvo is thinking...',
-      placeholder: 'Type your message here...',
-      connectionStatus: {
-        excellent: 'Excellent',
-        slow: 'Slow',
-        down: 'Down'
-      }
+      placeholder: 'Type your message here...'
     }
   };
 
@@ -82,67 +69,16 @@ export const useChatInterface = (
     scrollToBottom();
   }, [messages]);
 
-  // Load user profile and perform initial diagnostics
+  // Load user profile
   useEffect(() => {
     const loadUserProfile = async () => {
       if (user) {
         const profile = await UserProfileService.getUserProfile(user.id);
         setUserProfile(profile);
-        
-        // Perform initial health check
-        try {
-          const healthCheck = await EnhancedMorvoAIService.performHealthCheck();
-          setDiagnosticInfo(healthCheck);
-          updateConnectionStatus(healthCheck);
-        } catch (error) {
-          console.warn('Initial health check failed:', error);
-          setConnectionStatus('down');
-        }
       }
     };
     loadUserProfile();
   }, [user]);
-
-  // Periodic health checks
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const healthCheck = await EnhancedMorvoAIService.performHealthCheck();
-        setDiagnosticInfo(healthCheck);
-        updateConnectionStatus(healthCheck);
-      } catch (error) {
-        console.warn('Periodic health check failed:', error);
-        setConnectionStatus('down');
-      }
-    }, 30000); // Every 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const updateConnectionStatus = (diagnostic: any) => {
-    if (!diagnostic) {
-      setConnectionStatus('down');
-      setIsConnected(false);
-      return;
-    }
-
-    if (diagnostic.overallStatus === 'healthy') {
-      const avgLatency = (diagnostic.testEndpoint?.latency + (diagnostic.authEndpoint?.latency || 0)) / 2;
-      if (avgLatency < 2000) {
-        setConnectionStatus('excellent');
-      } else {
-        setConnectionStatus('slow');
-      }
-      setIsConnected(true);
-    } else if (diagnostic.overallStatus === 'degraded') {
-      setConnectionStatus('slow');
-      setIsConnected(true);
-    } else {
-      setConnectionStatus('down');
-      setIsConnected(false);
-    }
-    setConnectionChecked(true);
-  };
 
   const handleSidebarContentChange = (message: string) => {
     if (onContentTypeChange) {
@@ -183,16 +119,14 @@ export const useChatInterface = (
     }
 
     try {
-      // Use intelligent agent service for profile-aware responses
       return await IntelligentAgentService.generateContextualResponse(
         user.id, 
         message, 
-        messages.slice(-3) // Last 3 messages for context
+        messages.slice(-3)
       );
     } catch (error) {
       console.error('❌ Error generating intelligent response:', error);
       
-      // Fallback to basic contextual response
       const isOnboardingComplete = userProfile?.onboarding_completed || false;
       const lowerMessage = message.toLowerCase();
       
@@ -254,8 +188,6 @@ ${isOnboardingComplete ?
     emotionalContext,
     conversationState,
     t,
-    connectionStatus,
-    diagnosticInfo,
     scrollToBottom,
     handleSidebarContentChange,
     extractUrlFromMessage,

@@ -1,17 +1,16 @@
+
 import React, { useState } from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
 import { ChatHeader } from './chat/ChatHeader';
 import { ActionButtons } from './chat/ActionButtons';
 import { ChatInitializer } from './chat/ChatInitializer';
-import { EnhancedDebugPanel } from './chat/EnhancedDebugPanel';
 import { useChatInterface } from '@/hooks/useChatInterface';
-import { EnhancedMorvoAIService } from '@/services/enhancedMorvoAIService';
+import { SimpleRailwayAuth } from '@/services/simpleRailwayAuth';
 import { UserProfileService } from '@/services/userProfileService';
 import { SERankingService } from '@/services/seRankingService';
 import { AgentResponse } from '@/services/agent';
-import { Bug, Wifi, WifiOff, Activity, CheckCircle, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { CheckCircle, AlertCircle, Wifi } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface MessageData {
@@ -33,8 +32,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onContentTypeChange,
   onMessageSent
 }) => {
-  const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [processingStatus, setProcessingStatus] = useState<'idle' | 'analyzing' | 'generating' | 'finalizing'>('idle');
+  const [processingStatus, setProcessingStatus] = useState<'idle' | 'sending'>('idle');
   
   const {
     messages,
@@ -60,8 +58,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     emotionalContext,
     conversationState,
     t,
-    connectionStatus,
-    diagnosticInfo,
     handleSidebarContentChange,
     extractUrlFromMessage,
     generateContextualResponse
@@ -83,24 +79,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const messageText = input;
     setInput('');
     setIsLoading(true);
-    setProcessingStatus('analyzing');
+    setProcessingStatus('sending');
 
     onMessageSent?.(messageText);
     handleSidebarContentChange(messageText);
 
     try {
-      console.log('🤖 Processing message with enhanced diagnostic system');
-      
-      // Check for website URL and analyze if provided
+      // Handle website URL analysis if provided
       const websiteUrl = extractUrlFromMessage(messageText);
       if (websiteUrl && (!userProfile?.website_url || userProfile.website_url !== websiteUrl)) {
         console.log('🔍 New website detected, analyzing...');
-        setProcessingStatus('analyzing');
         await UserProfileService.saveUserProfile(user.id, { website_url: websiteUrl });
         await SERankingService.updateUserSeoData(user.id, websiteUrl);
       }
 
-      // Handle profile updates based on message content
+      // Handle profile updates for onboarding
       if (!userProfile?.onboarding_completed) {
         if (!userProfile?.company_name && messageText.trim()) {
           await UserProfileService.saveUserProfile(user.id, { 
@@ -109,54 +102,44 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }
 
-      setProcessingStatus('generating');
+      // Send message using simplified Railway service
+      const context = {
+        conversation_history: messages.slice(-3).map(m => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.content
+        })),
+        user_profile: userProfile,
+        emotional_context: emotionalContext,
+        conversation_state: conversationState,
+        user_id: user.id
+      };
+
+      const railwayResponse = await SimpleRailwayAuth.sendMessage(messageText, context);
+      
       let botResponse: string;
       let processingTime: number = 0;
-      let endpointUsed: string = 'unknown';
-      let diagnosticInfo: any = null;
+      let tokensUsed: number = 0;
 
-      try {
-        // Use the enhanced service with full diagnostics
-        const context = {
-          conversation_history: messages.slice(-3).map(m => ({
-            role: m.sender === 'user' ? 'user' : 'assistant',
-            content: m.content
-          })),
-          user_profile: userProfile,
-          emotional_context: emotionalContext,
-          conversation_state: conversationState,
-          user_id: user.id
-        };
-
-        const enhancedResponse = await EnhancedMorvoAIService.processMessageWithDiagnostics(messageText, context);
-        botResponse = enhancedResponse.response;
-        processingTime = enhancedResponse.processing_time || 0;
-        endpointUsed = enhancedResponse.endpoint_used;
-        diagnosticInfo = enhancedResponse.diagnostic_info;
+      if (railwayResponse.success) {
+        botResponse = railwayResponse.message;
+        processingTime = railwayResponse.processing_time_ms || 0;
+        tokensUsed = railwayResponse.tokens_used || 0;
+        setIsConnected(true);
         
-        console.log('✅ Enhanced AI response received', {
+        console.log('✅ Railway authenticated response received', {
           processingTime,
-          confidence: enhancedResponse.confidence_score,
-          tokensUsed: enhancedResponse.tokens_used,
-          endpointUsed,
-          diagnosticInfo
+          tokensUsed,
+          conversationId: railwayResponse.conversation_id
         });
-
-        // Update connection status based on diagnostic
-        if (diagnosticInfo?.overall_status === 'healthy' || diagnosticInfo?.overall_status === 'degraded') {
-          setIsConnected(true);
-        }
         
-      } catch (backendError) {
-        console.warn('⚠️ Enhanced backend failed, using local response:', backendError);
-        setProcessingStatus('finalizing');
+      } else {
+        console.warn('⚠️ Railway service failed, using local response:', railwayResponse.error);
         botResponse = await generateContextualResponse(messageText);
         processingTime = 150;
-        endpointUsed = 'arabic_local_fallback';
         setIsConnected(false);
       }
 
-      setProcessingStatus('finalizing');
+      // Enhance the conversation
       const enhancement = await enhanceConversation(messageText, botResponse);
       
       const botMessage: MessageData = {
@@ -165,20 +148,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         sender: 'agent',
         timestamp: new Date(),
         processing_time: processingTime,
+        tokens_used: tokensUsed,
         metadata: {
           contextualInsights: enhancement.contextualInsights,
           emotionalContext: emotionalContext,
-          endpointUsed,
-          diagnosticInfo,
-          isEnhanced: true,
-          connectionHealth: diagnosticInfo?.overall_status || 'unknown',
-          processingSteps: ['analyzed', 'generated', 'enhanced']
+          isAuthenticated: railwayResponse.success,
+          endpointUsed: railwayResponse.success ? 'railway_auth' : 'local_fallback',
+          processingSteps: ['sent', 'processed', 'enhanced']
         }
       };
 
       setMessages(prev => [...prev, botMessage]);
 
-      // Enhanced sidebar content detection
+      // Handle sidebar content changes
       if (onContentTypeChange) {
         const lowerMessage = messageText.toLowerCase();
         if (lowerMessage.includes('تحليل') || lowerMessage.includes('افحص') || lowerMessage.includes('موقع')) {
@@ -192,46 +174,47 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }
 
-      // Success feedback
-      if (processingTime > 0) {
+      // Success notification
+      if (railwayResponse.success && processingTime > 0) {
         toast({
           title: language === 'ar' ? 'تم بنجاح!' : 'Success!',
           description: language === 'ar' 
-            ? `تمت المعالجة في ${processingTime}ms عبر ${endpointUsed}` 
-            : `Processed in ${processingTime}ms via ${endpointUsed}`,
+            ? `تمت المعالجة في ${processingTime}ms` 
+            : `Processed in ${processingTime}ms`,
           variant: "default",
         });
       }
 
     } catch (error) {
-      console.error('❌ Enhanced chat error:', error);
+      console.error('❌ Chat error:', error);
       
       const errorMessage: MessageData = {
         id: (Date.now() + 1).toString(),
         content: language === 'ar' 
-          ? 'أعتذر، حدث خطأ تقني مؤقت. النظام يعمل في الوضع المحلي - جودة عالية مضمونة! يرجى المحاولة مرة أخرى. 🚀'
-          : 'Sorry, a temporary technical error occurred. System running in local mode - high quality guaranteed! Please try again. 🚀',
+          ? 'أعتذر، حدث خطأ مؤقت. يرجى المحاولة مرة أخرى.' 
+          : 'Sorry, a temporary error occurred. Please try again.',
         sender: 'agent',
         timestamp: new Date(),
         metadata: {
           isError: true,
-          errorMode: 'local_enhanced',
-          hasRecovery: true
+          errorHandled: true
         }
       };
 
       setMessages(prev => [...prev, errorMessage]);
+      setIsConnected(false);
 
       toast({
-        title: language === 'ar' ? 'تم التعامل مع الخطأ' : 'Error Handled',
+        title: language === 'ar' ? 'خطأ مؤقت' : 'Temporary Error',
         description: language === 'ar' 
-          ? 'النظام يعمل بالوضع المحلي المحسن - جودة مضمونة'
-          : 'System running in enhanced local mode - quality guaranteed',
-        variant: "default",
+          ? 'يرجى المحاولة مرة أخرى'
+          : 'Please try again',
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
       setProcessingStatus('idle');
+      setConnectionChecked(true);
     }
   };
 
@@ -253,47 +236,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     console.log('Agent command response:', response);
   };
 
-  const getConnectionStatusBadge = () => {
-    const statusConfig = {
-      excellent: { 
-        color: 'bg-green-500', 
-        text: t.connectionStatus.excellent, 
-        icon: <CheckCircle className="w-3 h-3" />,
-        description: 'أداء ممتاز'
-      },
-      slow: { 
-        color: 'bg-yellow-500', 
-        text: t.connectionStatus.slow, 
-        icon: <Activity className="w-3 h-3" />,
-        description: 'أداء بطيء'
-      },
-      down: { 
-        color: 'bg-blue-500', 
-        text: 'محلي محسن', 
-        icon: <AlertCircle className="w-3 h-3" />,
-        description: 'وضع محلي عالي الجودة'
-      }
-    };
+  const getConnectionBadge = () => {
+    if (!connectionChecked) {
+      return (
+        <Badge variant="outline" className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
+          <Wifi className="w-3 h-3" />
+          <span className="text-xs">جاري الاتصال...</span>
+        </Badge>
+      );
+    }
 
-    const config = statusConfig[connectionStatus] || statusConfig.down;
-    
     return (
-      <Badge variant="outline" className="flex items-center gap-1" title={config.description}>
-        <div className={`w-2 h-2 rounded-full ${config.color} animate-pulse`}></div>
-        {config.icon}
-        <span className="text-xs">{config.text}</span>
+      <Badge variant="outline" className="flex items-center gap-1">
+        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+        {isConnected ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+        <span className="text-xs">{isConnected ? 'متصل' : 'غير متصل'}</span>
       </Badge>
     );
-  };
-
-  const getProcessingStatusText = () => {
-    const statusTexts = {
-      idle: '',
-      analyzing: 'جاري التحليل...',
-      generating: 'إنشاء الرد...',
-      finalizing: 'اللمسة الأخيرة...'
-    };
-    return statusTexts[processingStatus];
   };
 
   return (
@@ -309,7 +269,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         userProfile={userProfile}
       />
 
-      {/* Enhanced Header with Connection Status */}
+      {/* Simplified Header */}
       <div className="flex-shrink-0">
         <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
@@ -326,48 +286,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               clientId={user?.id || ''}
               onToggleTheme={() => {}}
             />
-            {getConnectionStatusBadge()}
-            {processingStatus !== 'idle' && (
+            {getConnectionBadge()}
+            {processingStatus === 'sending' && (
               <Badge variant="secondary" className="text-xs animate-pulse">
-                {getProcessingStatusText()}
+                جاري الإرسال...
               </Badge>
             )}
-          </div>
-          <div className="flex items-center gap-2">
-            {diagnosticInfo && (
-              <div className="text-xs text-gray-500 flex items-center gap-1">
-                <Activity className="w-3 h-3" />
-                {diagnosticInfo.test_endpoint_latency || '?'}ms
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDebugPanel(!showDebugPanel)}
-              className="opacity-50 hover:opacity-100"
-            >
-              <Bug className="w-4 h-4" />
-              <span className="ml-1 text-xs">محسن</span>
-            </Button>
           </div>
         </div>
       </div>
       
-      {/* Scrollable Messages Area */}
+      {/* Messages Area */}
       <div className="flex-1 overflow-hidden">
         <MessageList 
           messages={messages}
           isLoading={isLoading}
           theme={theme}
           isRTL={isRTL}
-          thinkingText={getProcessingStatusText() || t.thinking}
+          thinkingText={processingStatus === 'sending' ? 'جاري الإرسال...' : t.thinking}
           onCommandResponse={handleCommandResponse}
           language={language}
           onActionClick={handleActionClick}
         />
       </div>
       
-      {/* Fixed Input Area */}
+      {/* Input Area */}
       <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
         <div className="p-4">
           {messages.length > 0 && messages[messages.length - 1]?.metadata?.suggested_actions && (
@@ -387,7 +330,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             isLoading={isLoading}
             theme={theme}
             isRTL={isRTL}
-            placeholder={processingStatus !== 'idle' ? getProcessingStatusText() : t.placeholder}
+            placeholder={processingStatus === 'sending' ? 'جاري الإرسال...' : t.placeholder}
             onInputChange={setInput}
             onSend={handleSendMessage}
             onKeyPress={handleKeyPress}
@@ -397,12 +340,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
       
       <div ref={messagesEndRef} />
-      
-      {/* Enhanced Debug Panel */}
-      <EnhancedDebugPanel 
-        isVisible={showDebugPanel}
-        onClose={() => setShowDebugPanel(false)}
-      />
     </div>
   );
 };
