@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface RailwayResponse {
@@ -75,7 +74,7 @@ export class RailwayBackendService {
     }
   }
 
-  // Chat Processing
+  // Chat Processing - Updated to use Railway backend chat endpoint
   static async processMessage(message: string, context: any = {}): Promise<RailwayResponse> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -83,17 +82,24 @@ export class RailwayBackendService {
         return { success: false, error: 'User not authenticated' };
       }
 
-      const response = await this.makeRequest('/v1/chat/process-message', {
+      const response = await this.makeRequest('/v1/chat/message', {
         method: 'POST',
         body: JSON.stringify({
           message: message.trim(),
-          client_id: user.id,
-          context: {
-            ...context,
-            timestamp: new Date().toISOString(),
-            session_id: user.id
+          conversation_id: context.conversation_id || null,
+          project_context: {
+            business_type: context.business_type || user.user_metadata?.business_type || 'unknown',
+            industry: context.industry || user.user_metadata?.industry || 'unknown',
+            ...context
           },
-          language: 'ar'
+          metadata: {
+            source: 'web',
+            user_agent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            session_id: user.id,
+            ...context.metadata
+          },
+          stream: false
         })
       });
 
@@ -106,16 +112,52 @@ export class RailwayBackendService {
       return { 
         success: true, 
         data: {
-          response: data.response || data.message,
-          tokens_used: data.tokens_used || 0,
-          processing_time: data.processing_time,
+          response: data.message || data.response,
+          tokens_used: data.metadata?.tokens_used || 0,
+          processing_time: data.processing_time_ms,
           suggested_actions: data.suggested_actions || [],
-          emotion_detected: data.emotion_detected
+          emotion_detected: data.intent_analysis?.primary_intent,
+          conversation_id: data.conversation_id,
+          agents_involved: data.agents_involved || []
         }
       };
     } catch (error) {
       console.error('Railway message processing failed:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Processing failed' };
+    }
+  }
+
+  // Get conversation history
+  static async getConversations(): Promise<RailwayResponse> {
+    try {
+      const response = await this.makeRequest('/v1/chat/conversations');
+      
+      if (!response.ok) {
+        return { success: false, error: `Failed to get conversations: ${response.status}` };
+      }
+      
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Railway conversations fetch failed:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Conversations fetch failed' };
+    }
+  }
+
+  // Get specific conversation
+  static async getConversation(conversationId: string): Promise<RailwayResponse> {
+    try {
+      const response = await this.makeRequest(`/v1/chat/conversations/${conversationId}`);
+      
+      if (!response.ok) {
+        return { success: false, error: `Failed to get conversation: ${response.status}` };
+      }
+      
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Railway conversation fetch failed:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Conversation fetch failed' };
     }
   }
 
@@ -160,8 +202,7 @@ export class RailwayBackendService {
       const response = await this.makeRequest(`/v1/chat/profile-completeness/${clientId}`);
       
       if (!response.ok) {
-        return { success: false, error: `Faile
-d to get completeness: ${response.status}` };
+        return { success: false, error: `Failed to get completeness: ${response.status}` };
       }
       
       const data = await response.json();
@@ -172,7 +213,44 @@ d to get completeness: ${response.status}` };
     }
   }
 
-  // Onboarding Management
+  // Business Intelligence
+  static async getBusinessInsights(clientId: string): Promise<RailwayResponse> {
+    try {
+      const response = await this.makeRequest(`/v1/business-intelligence/analyze`);
+      
+      if (!response.ok) {
+        return { success: false, error: `Failed to get insights: ${response.status}` };
+      }
+      
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Railway insights fetch failed:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Insights fetch failed' };
+    }
+  }
+
+  // Agent-specific calls
+  static async callAgent(agentName: string, payload: any): Promise<RailwayResponse> {
+    try {
+      const response = await this.makeRequest(`/v1/agents/${agentName}`, {
+        method: 'POST',
+        body: JSON.stringify({ payload })
+      });
+      
+      if (!response.ok) {
+        return { success: false, error: `Failed to call agent: ${response.status}` };
+      }
+      
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Railway agent call failed:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Agent call failed' };
+    }
+  }
+
+  // Keep existing methods for backward compatibility
   static async getOnboardingQuestions(language: string = 'ar'): Promise<RailwayResponse> {
     try {
       const response = await this.makeRequest(`/v1/onboarding/questions?language=${language}`);
@@ -245,23 +323,6 @@ d to get completeness: ${response.status}` };
     }
   }
 
-  // Analytics and Insights
-  static async getBusinessInsights(clientId: string): Promise<RailwayResponse> {
-    try {
-      const response = await this.makeRequest(`/v1/analytics/insights/${clientId}`);
-      
-      if (!response.ok) {
-        return { success: false, error: `Failed to get insights: ${response.status}` };
-      }
-      
-      const data = await response.json();
-      return { success: true, data };
-    } catch (error) {
-      console.error('Railway insights fetch failed:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Insights fetch failed' };
-    }
-  }
-
   // Content Generation
   static async generateContent(prompt: string, contentType: string, userId: string): Promise<RailwayResponse> {
     try {
@@ -296,14 +357,17 @@ d to get completeness: ${response.status}` };
     // Test health
     results.health = await this.checkServerHealth();
     
+    // Test message processing
+    results.messageProcessing = await this.processMessage('مرحبا، كيف يمكنني البدء؟');
+    
+    // Test conversations
+    results.conversations = await this.getConversations();
+    
     // Test token packages
     results.tokenPackages = await this.getTokenPackages();
     
     // Test onboarding questions
     results.onboardingQuestions = await this.getOnboardingQuestions();
-    
-    // Test message processing
-    results.messageProcessing = await this.processMessage('مرحبا، كيف يمكنني البدء؟');
     
     console.log('🧪 Railway backend test results:', results);
     return results;
