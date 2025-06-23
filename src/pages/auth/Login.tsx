@@ -1,28 +1,31 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { RailwayBackendTest } from "@/components/RailwayBackendTest";
+import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
+import { ConnectionStatusIndicator } from "@/components/ConnectionStatusIndicator";
 
 export const Login = () => {
   const { language, isRTL } = useLanguage();
   const { theme } = useTheme();
-  const { signIn } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { handleSignIn, isLoading } = useEnhancedAuth();
+  
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [showBackendTest, setShowBackendTest] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState({
+    isConnected: false,
+    isChecking: false,
+    lastChecked: null as Date | null,
+    error: null as string | null
+  });
 
   const content = {
     ar: {
@@ -38,10 +41,6 @@ export const Login = () => {
       orContinueWith: "أو تابع باستخدام",
       google: "جوجل",
       microsoft: "مايكروسوفت",
-      loginSuccess: "تم تسجيل الدخول بنجاح",
-      loginError: "خطأ في تسجيل الدخول",
-      invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
-      authServiceError: "خطأ في خدمة المصادقة. يرجى المحاولة مرة أخرى",
       fillAllFields: "يرجى ملء جميع الحقول"
     },
     en: {
@@ -57,10 +56,6 @@ export const Login = () => {
       orContinueWith: "Or continue with",
       google: "Google",
       microsoft: "Microsoft",
-      loginSuccess: "Login successful",
-      loginError: "Login error",
-      invalidCredentials: "Invalid email or password",
-      authServiceError: "Authentication service error. Please try again",
       fillAllFields: "Please fill in all fields"
     }
   };
@@ -71,58 +66,39 @@ export const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('📝 Login form submitted for:', email);
-    
     if (!email.trim() || !password.trim()) {
-      toast({
-        title: t.loginError,
-        description: t.fillAllFields,
-        variant: "destructive",
-      });
       return;
     }
 
-    setIsLoading(true);
+    await handleSignIn(email.trim(), password);
+  };
 
+  const testConnection = async () => {
+    setConnectionStatus(prev => ({ ...prev, isChecking: true }));
+    
     try {
-      const { error } = await signIn(email, password);
-
-      if (error) {
-        console.error('❌ Login failed:', error);
-        
-        let errorMessage = error.message;
-        
-        // Handle specific error types
-        if (error.message === "Invalid login credentials") {
-          errorMessage = t.invalidCredentials;
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Please check your email and confirm your account before signing in.";
-        } else {
-          errorMessage = t.authServiceError;
-        }
-        
-        toast({
-          title: t.loginError,
-          description: errorMessage,
-          variant: "destructive",
+      // Simple connection test
+      const response = await fetch('https://morvo-production.up.railway.app/health', {
+        signal: AbortSignal.timeout(5000)
+      });
+      
+      if (response.ok) {
+        setConnectionStatus({
+          isConnected: true,
+          isChecking: false,
+          lastChecked: new Date(),
+          error: null
         });
       } else {
-        console.log('✅ Login successful, redirecting...');
-        toast({
-          title: t.loginSuccess,
-          description: t.subtitle,
-        });
-        navigate("/dashboard");
+        throw new Error(`Server responded with ${response.status}`);
       }
-    } catch (error: any) {
-      console.error('❌ Unexpected login error:', error);
-      toast({
-        title: t.loginError,
-        description: t.authServiceError,
-        variant: "destructive",
+    } catch (error) {
+      setConnectionStatus({
+        isConnected: false,
+        isChecking: false,
+        lastChecked: new Date(),
+        error: error instanceof Error ? error.message : 'Connection failed'
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -140,6 +116,17 @@ export const Login = () => {
           <BackIcon className="w-4 h-4" />
           {t.backToHome}
         </Link>
+
+        {/* Connection Status */}
+        <div className="mb-6">
+          <ConnectionStatusIndicator
+            isConnected={connectionStatus.isConnected}
+            isChecking={connectionStatus.isChecking}
+            lastChecked={connectionStatus.lastChecked}
+            error={connectionStatus.error}
+            onRetry={testConnection}
+          />
+        </div>
 
         {/* Railway Backend Test Panel */}
         <div className="mb-6">
@@ -232,10 +219,11 @@ export const Login = () => {
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                 disabled={isLoading}
               >
-                {isLoading ? "..." : t.login}
+                {isLoading ? "جاري تسجيل الدخول..." : t.login}
               </Button>
             </form>
 
+            
             <div className={`text-center ${isRTL ? 'text-right' : 'text-left'}`}>
               <Link 
                 to="/auth/forgot-password" 
