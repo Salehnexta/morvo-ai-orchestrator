@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-interface ChatResponse {
+export interface ChatResponse {
   response: string;
   personality_traits?: any;
   tokens_used: number;
@@ -12,9 +12,10 @@ interface ChatResponse {
 }
 
 interface ConnectionHealth {
-  status: 'healthy' | 'degraded' | 'down';
+  status: 'healthy' | 'degraded' | 'failed';
   latency: number;
   lastChecked: Date;
+  isConnected?: boolean;
 }
 
 export class MorvoAICore {
@@ -218,13 +219,15 @@ export class MorvoAICore {
         this.healthStatus = {
           status: latency > 2000 ? 'degraded' : 'healthy',
           latency,
-          lastChecked: new Date()
+          lastChecked: new Date(),
+          isConnected: true
         };
       } else {
         this.healthStatus = {
-          status: 'down',
+          status: 'failed',
           latency,
-          lastChecked: new Date()
+          lastChecked: new Date(),
+          isConnected: false
         };
       }
       
@@ -232,9 +235,10 @@ export class MorvoAICore {
     } catch (error) {
       const latency = Date.now() - startTime;
       this.healthStatus = {
-        status: 'down',
+        status: 'failed',
         latency,
-        lastChecked: new Date()
+        lastChecked: new Date(),
+        isConnected: false
       };
       return this.healthStatus;
     }
