@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,10 +18,11 @@ export const useUserAuth = (): UseUserAuthResult => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('🔐 Auth hook initializing...');
+    console.log('🔐 Enhanced Auth hook initializing...');
     
     let mounted = true;
     
+    // Set up auth state listener with enhanced error handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 Auth state changed:', {
@@ -30,7 +30,8 @@ export const useUserAuth = (): UseUserAuthResult => {
           hasSession: !!session,
           hasUser: !!session?.user,
           userEmail: session?.user?.email,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          sessionExpiry: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'N/A'
         });
         
         if (!mounted) return;
@@ -41,24 +42,35 @@ export const useUserAuth = (): UseUserAuthResult => {
       }
     );
 
-    // Get initial session
+    // Get initial session with enhanced error handling
     const getInitialSession = async () => {
       try {
-        console.log('🔐 Getting initial session...');
+        console.log('🔐 Getting initial session with enhanced handling...');
         
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('❌ Error getting session:', error);
+          console.error('❌ Enhanced session error:', {
+            message: error.message,
+            status: error.status,
+            details: error
+          });
         } else {
-          console.log('🔐 Initial session retrieved:', !!session);
+          console.log('🔐 Enhanced initial session retrieved:', {
+            hasSession: !!session,
+            userEmail: session?.user?.email,
+            expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'N/A'
+          });
           if (mounted) {
             setSession(session);
             setUser(session?.user ?? null);
           }
         }
       } catch (error) {
-        console.error('❌ Unexpected error in getInitialSession:', error);
+        console.error('❌ Unexpected error in enhanced getInitialSession:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
       } finally {
         if (mounted) {
           setLoading(false);
@@ -69,7 +81,7 @@ export const useUserAuth = (): UseUserAuthResult => {
     getInitialSession();
 
     return () => {
-      console.log('🔐 Auth hook cleanup');
+      console.log('🔐 Enhanced Auth hook cleanup');
       mounted = false;
       subscription.unsubscribe();
     };
@@ -77,23 +89,34 @@ export const useUserAuth = (): UseUserAuthResult => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('🔐 Attempting sign in for:', email);
+      console.log('🔐 Enhanced sign in attempt for:', email);
       setLoading(true);
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
       
       if (error) {
-        console.error('❌ Sign in error:', error);
+        console.error('❌ Enhanced sign in error:', {
+          message: error.message,
+          status: error.status,
+          details: error
+        });
       } else {
-        console.log('✅ Sign in successful for:', email);
+        console.log('✅ Enhanced sign in successful:', {
+          userEmail: email,
+          hasSession: !!data.session,
+          hasUser: !!data.user
+        });
       }
       
       return { error };
     } catch (error) {
-      console.error('❌ Unexpected sign in error:', error);
+      console.error('❌ Unexpected enhanced sign in error:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return { error: error as AuthError };
     } finally {
       setLoading(false);
@@ -102,10 +125,10 @@ export const useUserAuth = (): UseUserAuthResult => {
 
   const signUp = async (email: string, password: string) => {
     try {
-      console.log('🔐 Attempting sign up:', { email, timestamp: new Date().toISOString() });
+      console.log('🔐 Enhanced sign up attempt:', { email, timestamp: new Date().toISOString() });
       
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`
@@ -113,13 +136,13 @@ export const useUserAuth = (): UseUserAuthResult => {
       });
       
       if (error) {
-        console.error('❌ Sign up error:', {
+        console.error('❌ Enhanced sign up error:', {
           message: error.message,
           status: error.status,
           details: error
         });
       } else {
-        console.log('✅ Sign up successful:', {
+        console.log('✅ Enhanced sign up successful:', {
           hasUser: !!data.user,
           hasSession: !!data.session,
           userEmail: data.user?.email,
@@ -129,29 +152,31 @@ export const useUserAuth = (): UseUserAuthResult => {
       
       return { error };
     } catch (error) {
-      console.error('❌ Unexpected sign up error:', error);
+      console.error('❌ Unexpected enhanced sign up error:', {
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
       return { error: error as AuthError };
     }
   };
 
   const signOut = async () => {
     try {
-      console.log('🔐 Signing out user');
+      console.log('🔐 Enhanced signing out user');
       setLoading(true);
       
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('❌ Sign out error:', error.message);
+        console.error('❌ Enhanced sign out error:', error.message);
         setLoading(false);
       } else {
-        console.log('✅ Sign out successful');
+        console.log('✅ Enhanced sign out successful');
         localStorage.removeItem('sb-teniefzxdikestahdnur-auth-token');
       }
       
       return { error };
     } catch (error) {
-      console.error('❌ Unexpected sign out error:', error);
+      console.error('❌ Unexpected enhanced sign out error:', error);
       setLoading(false);
       return { error: error as AuthError };
     }
@@ -159,20 +184,20 @@ export const useUserAuth = (): UseUserAuthResult => {
 
   const resetPassword = async (email: string) => {
     try {
-      console.log('🔐 Resetting password for:', email);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      console.log('🔐 Enhanced password reset for:', email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       });
       
       if (error) {
-        console.error('❌ Reset password error:', error.message);
+        console.error('❌ Enhanced reset password error:', error.message);
       } else {
-        console.log('✅ Password reset email sent');
+        console.log('✅ Enhanced password reset email sent');
       }
       
       return { error };
     } catch (error) {
-      console.error('❌ Unexpected reset password error:', error);
+      console.error('❌ Unexpected enhanced reset password error:', error);
       return { error: error as AuthError };
     }
   };

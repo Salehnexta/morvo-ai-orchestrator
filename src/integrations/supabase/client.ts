@@ -9,7 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL and anon key are required');
 }
 
-console.log('🔧 Supabase client initializing...');
+console.log('🔧 Supabase client initializing with proper config...');
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -21,21 +21,40 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'x-client-info': 'morvo-web-app'
+      'x-client-info': 'morvo-web-app',
+      'apikey': supabaseAnonKey
+    }
+  },
+  db: {
+    schema: 'public'
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
     }
   }
 })
 
-// Test connection
-console.log('🔗 Testing Supabase connection...');
+// Enhanced connection test with better error handling
+console.log('🔗 Testing enhanced Supabase connection...');
 supabase.auth.getSession()
   .then(({ data, error }) => {
     if (error) {
-      console.error('❌ Connection test failed:', error);
+      console.error('❌ Supabase connection test failed:', {
+        message: error.message,
+        status: error.status,
+        details: error
+      });
     } else {
-      console.log('✅ Supabase client connected successfully');
+      console.log('✅ Supabase client connected successfully', {
+        hasSession: !!data.session,
+        sessionValid: data.session ? 'Yes' : 'No'
+      });
     }
   })
   .catch(err => {
-    console.error('❌ Connection test error:', err);
+    console.error('❌ Supabase connection test error:', {
+      message: err.message,
+      stack: err.stack
+    });
   });
