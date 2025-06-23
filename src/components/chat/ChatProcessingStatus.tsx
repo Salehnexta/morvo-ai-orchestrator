@@ -2,11 +2,12 @@
 import React from 'react';
 import { CheckCircle, AlertTriangle, Wifi } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ProcessingStatus } from '@/types/chat';
 
 interface ChatProcessingStatusProps {
   connectionChecked: boolean;
   isConnected: boolean;
-  processingStatus: 'idle' | 'sending' | 'diagnosing';
+  processingStatus: ProcessingStatus;
 }
 
 export const ChatProcessingStatus: React.FC<ChatProcessingStatusProps> = ({

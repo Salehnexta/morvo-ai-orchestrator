@@ -1,34 +1,15 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { DiagnosticResult, ConnectionStatus, ChatResponse, ChatContextData } from '@/types/chat';
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-interface SimpleRailwayResponse {
-  message: string;
-  conversation_id?: string;
-  processing_time_ms?: number;
-  tokens_used?: number;
-  success: boolean;
-  error?: string;
-}
-
-interface TestResult {
-  format: string;
-  success: boolean;
-  status?: number;
-  error?: string;
-  response?: any;
-  latency: number;
-}
-
-export class SimpleRailwayAuth {
+export class UnifiedDiagnostics {
   private static readonly API_URL = 'https://morvo-production.up.railway.app';
   private static conversationId: string | null = sessionStorage.getItem('morvo_conversation_id');
   private static lastSuccessfulFormat: string | null = localStorage.getItem('morvo_successful_format');
+  private static diagnosticHistory: DiagnosticResult[] = [];
+  private static lastHealthCheck: ConnectionStatus | null = null;
 
+  // Authentication
   private static async getAuthToken(): Promise<string | null> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -48,13 +29,13 @@ export class SimpleRailwayAuth {
     return clientId;
   }
 
-  // Phase 1: Test different request formats systematically
-  static async runDiagnosticTests(): Promise<TestResult[]> {
-    console.log('🧪 Starting comprehensive diagnostic tests...');
+  // Comprehensive diagnostic testing
+  static async runComprehensiveDiagnostics(): Promise<DiagnosticResult[]> {
+    console.log('🧪 Starting unified comprehensive diagnostics...');
     const token = await this.getAuthToken();
-    const results: TestResult[] = [];
+    const results: DiagnosticResult[] = [];
 
-    // Test Format 1: Ultra-simplified (third-party suggestion)
+    // Test Format 1: Ultra-simplified
     const format1Result = await this.testRequestFormat('ultra-simple', {
       message: 'Test message',
       client_id: this.getClientId(),
@@ -62,7 +43,7 @@ export class SimpleRailwayAuth {
     }, token);
     results.push(format1Result);
 
-    // Test Format 2: Add language and stream params
+    // Test Format 2: With basic parameters
     const format2Result = await this.testRequestFormat('basic-params', {
       message: 'Test message',
       client_id: this.getClientId(),
@@ -82,7 +63,7 @@ export class SimpleRailwayAuth {
     }, token, '?func=chat');
     results.push(format3Result);
 
-    // Test Format 4: Current format but simplified metadata
+    // Test Format 4: Simplified metadata
     const format4Result = await this.testRequestFormat('simplified-metadata', {
       message: 'Test message',
       conversation_id: this.conversationId || 'test-conv',
@@ -95,9 +76,7 @@ export class SimpleRailwayAuth {
     }, token);
     results.push(format4Result);
 
-    console.log('🧪 Diagnostic test results:', results);
-    
-    // Save successful format for future use
+    // Save successful format
     const successfulTest = results.find(r => r.success);
     if (successfulTest) {
       localStorage.setItem('morvo_successful_format', successfulTest.format);
@@ -105,6 +84,9 @@ export class SimpleRailwayAuth {
       console.log('✅ Found working format:', successfulTest.format);
     }
 
+    // Update diagnostic history
+    this.diagnosticHistory = results;
+    
     return results;
   }
 
@@ -113,7 +95,7 @@ export class SimpleRailwayAuth {
     requestBody: any, 
     token: string | null,
     urlSuffix: string = ''
-  ): Promise<TestResult> {
+  ): Promise<DiagnosticResult> {
     const startTime = Date.now();
     
     try {
@@ -147,7 +129,8 @@ export class SimpleRailwayAuth {
           success: true,
           status: response.status,
           response: responseData,
-          latency
+          latency,
+          timestamp: new Date()
         };
       } else {
         const errorText = await response.text();
@@ -158,7 +141,8 @@ export class SimpleRailwayAuth {
           success: false,
           status: response.status,
           error: errorText,
-          latency
+          latency,
+          timestamp: new Date()
         };
       }
     } catch (error) {
@@ -169,13 +153,14 @@ export class SimpleRailwayAuth {
         format: formatName,
         success: false,
         error: error instanceof Error ? error.message : 'Network error',
-        latency
+        latency,
+        timestamp: new Date()
       };
     }
   }
 
-  // Phase 2: Hybrid solution using successful format
-  static async sendMessage(message: string, context?: any): Promise<SimpleRailwayResponse> {
+  // Unified message sending
+  static async sendMessage(message: string, context?: ChatContextData): Promise<ChatResponse> {
     const token = await this.getAuthToken();
     
     if (!token) {
@@ -187,12 +172,12 @@ export class SimpleRailwayAuth {
     }
 
     try {
-      console.log('🚀 Sending message with hybrid approach...');
+      console.log('🚀 Sending message with unified approach...');
       
-      // Use successful format if known, otherwise try auto-detection
       let requestBody: any;
       let urlSuffix = '';
 
+      // Use successful format if known
       if (this.lastSuccessfulFormat === 'ultra-simple') {
         requestBody = {
           message: message.trim(),
@@ -221,7 +206,6 @@ export class SimpleRailwayAuth {
           }
         };
       } else {
-        // Default to basic format
         requestBody = {
           message: message.trim(),
           client_id: this.getClientId(),
@@ -247,10 +231,10 @@ export class SimpleRailwayAuth {
         const errorText = await response.text();
         console.error('❌ Railway API error:', response.status, errorText);
         
-        // If this format failed, try running diagnostics again
+        // Auto-retry with diagnostics on 422 errors
         if (response.status === 422) {
           console.log('🔍 422 error detected, running diagnostics...');
-          const diagnosticResults = await this.runDiagnosticTests();
+          const diagnosticResults = await this.runComprehensiveDiagnostics();
           const workingFormat = diagnosticResults.find(r => r.success);
           
           if (workingFormat) {
@@ -268,7 +252,7 @@ export class SimpleRailwayAuth {
 
       const data = await response.json();
       
-      // Save conversation ID for next messages
+      // Save conversation ID
       if (data.conversation_id) {
         this.conversationId = data.conversation_id;
         sessionStorage.setItem('morvo_conversation_id', data.conversation_id);
@@ -281,7 +265,8 @@ export class SimpleRailwayAuth {
         message: data.message || data.response || 'تم استلام رسالتك بنجاح',
         conversation_id: data.conversation_id,
         processing_time_ms: data.processing_time_ms,
-        tokens_used: data.tokens_used || 0
+        tokens_used: data.tokens_used || 0,
+        confidence_score: data.confidence_score
       };
 
     } catch (error) {
@@ -294,20 +279,52 @@ export class SimpleRailwayAuth {
     }
   }
 
-  // Enhanced connection test
+  // Connection testing
   static async testConnection(): Promise<boolean> {
-    console.log('🔗 Testing connection with multiple formats...');
+    console.log('🔗 Testing connection with unified diagnostics...');
     
-    const diagnosticResults = await this.runDiagnosticTests();
+    const diagnosticResults = await this.runComprehensiveDiagnostics();
     const successfulTests = diagnosticResults.filter(r => r.success);
     
     if (successfulTests.length > 0) {
       console.log(`✅ Connection successful with ${successfulTests.length} working formats`);
+      
+      // Update connection status
+      this.lastHealthCheck = {
+        isConnected: true,
+        isHealthy: true,
+        lastChecked: new Date(),
+        status: 'healthy',
+        latency: Math.min(...successfulTests.map(t => t.latency))
+      };
+      
       return true;
     } else {
       console.error('❌ All connection tests failed:', diagnosticResults);
+      
+      this.lastHealthCheck = {
+        isConnected: false,
+        isHealthy: false,
+        lastChecked: new Date(),
+        status: 'failed',
+        error: 'All diagnostic tests failed'
+      };
+      
       return false;
     }
+  }
+
+  // Getters and utilities
+  static getConnectionStatus(): ConnectionStatus | null {
+    return this.lastHealthCheck;
+  }
+
+  static getDiagnosticResults(): DiagnosticResult[] {
+    return this.diagnosticHistory;
+  }
+
+  static getConversationId(): string | null {
+    return this.conversationId;
   }
 
   static resetConversation(): void {
@@ -316,19 +333,10 @@ export class SimpleRailwayAuth {
     console.log('🔄 Conversation reset');
   }
 
-  static getConversationId(): string | null {
-    return this.conversationId;
-  }
-
-  static getLastDiagnosticResults(): TestResult[] | null {
-    const stored = localStorage.getItem('morvo_last_diagnostic');
-    return stored ? JSON.parse(stored) : null;
-  }
-
   static clearDiagnosticCache(): void {
     localStorage.removeItem('morvo_successful_format');
-    localStorage.removeItem('morvo_last_diagnostic');
     this.lastSuccessfulFormat = null;
+    this.diagnosticHistory = [];
     console.log('🧹 Diagnostic cache cleared');
   }
 }

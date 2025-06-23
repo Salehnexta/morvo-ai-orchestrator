@@ -1,25 +1,13 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
 import { ActionButtons } from './chat/ActionButtons';
 import { ChatInitializer } from './chat/ChatInitializer';
 import { ChatConnectionStatus } from './chat/ChatConnectionStatus';
 import { ChatDiagnosticPanel } from './chat/ChatDiagnosticPanel';
-import { useChatInterface } from '@/hooks/useChatInterface';
-import { useChatDiagnostics } from '@/hooks/useChatDiagnostics';
-import { useChatMessageHandler } from '@/hooks/useChatMessageHandler';
+import { useChatSystem } from '@/hooks/useChatSystem';
 import { AgentResponse } from '@/services/agent';
-
-interface MessageData {
-  id: string;
-  content: string;
-  sender: 'user' | 'agent';
-  timestamp: Date;
-  processing_time?: number;
-  tokens_used?: number;
-  metadata?: any;
-}
 
 interface ChatInterfaceProps {
   onContentTypeChange?: (type: string) => void;
@@ -31,56 +19,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onMessageSent
 }) => {
   const {
+    // State
     messages,
     setMessages,
     input,
     setInput,
+    isLoading,
+    processingStatus,
     isConnected,
     setIsConnected,
     connectionChecked,
     setConnectionChecked,
     chatInitialized,
     setChatInitialized,
+    userProfile,
+    diagnosticResults,
+    showDiagnostics,
+    setShowDiagnostics,
+    
+    // Refs and context
     messagesEndRef,
     user,
     language,
     isRTL,
     theme,
-    toast,
-    userProfile,
-    enhanceConversation,
-    emotionalContext,
-    conversationState,
     t,
-    handleSidebarContentChange,
-    extractUrlFromMessage,
-    generateContextualResponse
-  } = useChatInterface(onContentTypeChange, onMessageSent);
-
-  const {
-    processingStatus,
-    setProcessingStatus,
-    diagnosticResults,
-    showDiagnostics,
-    setShowDiagnostics,
+    
+    // Methods
+    handleSendMessage,
     runDiagnostics
-  } = useChatDiagnostics(language, setIsConnected, setConnectionChecked);
-
-  const { isLoading, handleSendMessage } = useChatMessageHandler(
-    user,
-    userProfile,
-    messages,
-    setMessages,
-    setIsConnected,
-    emotionalContext,
-    conversationState,
-    enhanceConversation,
-    generateContextualResponse,
-    extractUrlFromMessage,
-    toast,
-    language,
-    runDiagnostics
-  );
+  } = useChatSystem(onContentTypeChange, onMessageSent);
 
   const handleSendMessageWrapper = async () => {
     if (!input.trim() || !user || isLoading) {
@@ -89,14 +57,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     const messageText = input;
     setInput('');
-
-    await handleSendMessage(
-      messageText,
-      onMessageSent,
-      handleSidebarContentChange,
-      onContentTypeChange,
-      setProcessingStatus
-    );
+    await handleSendMessage(messageText);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

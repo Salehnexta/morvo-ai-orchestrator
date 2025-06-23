@@ -1,9 +1,10 @@
 
 import React from 'react';
+import { DiagnosticResult } from '@/types/chat';
 
 interface ChatDiagnosticPanelProps {
   showDiagnostics: boolean;
-  diagnosticResults: any[];
+  diagnosticResults: DiagnosticResult[];
 }
 
 export const ChatDiagnosticPanel: React.FC<ChatDiagnosticPanelProps> = ({
