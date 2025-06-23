@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { DiagnosticResult } from '@/types/chat';
+import { UnifiedDiagnosticResult } from '@/types/unifiedChat';
 
 interface ChatDiagnosticPanelProps {
   showDiagnostics: boolean;
-  diagnosticResults: DiagnosticResult[];
+  diagnosticResults: UnifiedDiagnosticResult[];
 }
 
 export const ChatDiagnosticPanel: React.FC<ChatDiagnosticPanelProps> = ({

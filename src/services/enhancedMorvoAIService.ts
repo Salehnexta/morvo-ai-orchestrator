@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { UnifiedDiagnostics } from "./unifiedDiagnostics";
+import { UnifiedChatService } from "./unifiedChatService";
 
 interface EnhancedChatResponse {
   response: string;
@@ -16,7 +16,7 @@ interface EnhancedChatResponse {
 
 export class EnhancedMorvoAIService {
   private static readonly API_URL = 'https://morvo-production.up.railway.app';
-  private static readonly TEST_TIMEOUT = 3000; // Reduced from 45000
+  private static readonly TEST_TIMEOUT = 3000;
   private static readonly AUTH_TIMEOUT = 5000;
   private static conversationId: string | null = sessionStorage.getItem('morvo_conversation_id');
   private static lastDiagnostic: any = null;
@@ -43,10 +43,10 @@ export class EnhancedMorvoAIService {
   static async processMessageWithDiagnostics(message: string, context?: any): Promise<EnhancedChatResponse> {
     console.log('🚀 Enhanced message processing started:', message);
     
-    // Use UnifiedDiagnostics for comprehensive testing
+    // Use UnifiedChatService for comprehensive testing
     const token = await this.getAuthToken();
-    const diagnosticResults = await UnifiedDiagnostics.runComprehensiveDiagnostics();
-    const connectionStatus = UnifiedDiagnostics.getConnectionStatus();
+    const diagnosticResults = await UnifiedChatService.runComprehensiveDiagnostics();
+    const connectionStatus = UnifiedChatService.getConnectionStatus();
     
     this.lastDiagnostic = {
       results: diagnosticResults,
@@ -58,8 +58,8 @@ export class EnhancedMorvoAIService {
     console.log('📊 Diagnostic result:', this.lastDiagnostic);
 
     try {
-      // Try to send message using UnifiedDiagnostics
-      const response = await UnifiedDiagnostics.sendMessage(message, context);
+      // Try to send message using UnifiedChatService
+      const response = await UnifiedChatService.sendMessage(message, context);
       
       if (response.success) {
         return {
@@ -67,11 +67,11 @@ export class EnhancedMorvoAIService {
           tokens_used: response.tokens_used || 0,
           processing_time: response.processing_time_ms,
           confidence_score: response.confidence_score || 0.9,
-          endpoint_used: 'unified_diagnostics',
+          endpoint_used: 'unified_service',
           diagnostic_info: this.lastDiagnostic
         };
       } else {
-        throw new Error(response.error || 'Unified diagnostics failed');
+        throw new Error(response.error || 'Unified service failed');
       }
       
     } catch (error) {
@@ -174,8 +174,8 @@ export class EnhancedMorvoAIService {
 
   static async performHealthCheck(): Promise<any> {
     const token = await this.getAuthToken();
-    const results = await UnifiedDiagnostics.runComprehensiveDiagnostics();
-    const status = UnifiedDiagnostics.getConnectionStatus();
+    const results = await UnifiedChatService.runComprehensiveDiagnostics();
+    const status = UnifiedChatService.getConnectionStatus();
     
     return {
       results,
@@ -188,7 +188,7 @@ export class EnhancedMorvoAIService {
   static resetConversation(): void {
     this.conversationId = null;
     sessionStorage.removeItem('morvo_conversation_id');
-    UnifiedDiagnostics.resetConversation();
+    UnifiedChatService.resetConversation();
     console.log('🔄 Enhanced conversation reset');
   }
 }
