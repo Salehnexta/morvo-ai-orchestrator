@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ChatDiagnostics } from "./chatDiagnostics";
 
@@ -134,8 +135,8 @@ export class EnhancedMorvoAIService {
   }
 
   private static async sendAuthenticatedMessage(message: string, token: string, context?: any): Promise<EnhancedChatResponse> {
-    // Remove the func parameter - just use the base endpoint
-    const url = `${this.API_URL}/v1/chat/message`;
+    // Add the required func parameter to the URL
+    const url = `${this.API_URL}/v1/chat/message?func=chat`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -180,6 +181,31 @@ export class EnhancedMorvoAIService {
   }
 
   private static generateOfflineResponse(message: string, context?: any): string {
+    const lowerMessage = message.toLowerCase();
+    
+    // Enhanced contextual Arabic responses for offline mode
+    if (lowerMessage.includes('موقع') || lowerMessage.includes('حللت') || lowerMessage.includes('تحليل')) {
+      return `أعتذر، النظام يعمل حالياً في الوضع المحلي 🔄
+
+لكن يمكنني مساعدتك في:
+• تقديم نصائح عامة لتحليل المواقع 📊
+• اقتراح أدوات مفيدة للتحليل 🛠️
+• خطة عمل لتحسين موقعك 📈
+
+ما هو التحدي الأساسي الذي تواجهه مع موقعك؟`;
+    }
+    
+    if (lowerMessage.includes('مرحبا') || lowerMessage.includes('السلام') || lowerMessage.includes('اهلا')) {
+      return `مرحباً بك! 👋 النظام يعمل حالياً في الوضع المحلي، لكنني متاح لمساعدتك في:
+
+• استراتيجيات التسويق الرقمي 📈
+• نصائح تحسين المواقع 🌐
+• أفكار للمحتوى والحملات ✨
+• تخطيط مشاريعك التسويقية 📋
+
+كيف يمكنني مساعدتك اليوم؟`;
+    }
+    
     const responses = [
       'عذراً، أواجه صعوبة في الاتصال بالخوادم حالياً. تم تفعيل الوضع المحلي. كيف يمكنني مساعدتك؟',
       'نظام الاتصال يواجه تحديات تقنية. سأحاول مساعدتك بأفضل ما يمكنني محلياً.',

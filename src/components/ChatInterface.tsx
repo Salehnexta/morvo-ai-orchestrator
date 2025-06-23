@@ -10,8 +10,9 @@ import { EnhancedMorvoAIService } from '@/services/enhancedMorvoAIService';
 import { UserProfileService } from '@/services/userProfileService';
 import { SERankingService } from '@/services/seRankingService';
 import { AgentResponse } from '@/services/agent';
-import { Bug } from 'lucide-react';
+import { Bug, Wifi, WifiOff, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface MessageData {
   id: string;
@@ -58,6 +59,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     emotionalContext,
     conversationState,
     t,
+    connectionStatus,
+    diagnosticInfo,
     handleSidebarContentChange,
     extractUrlFromMessage,
     generateContextualResponse
@@ -230,6 +233,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     console.log('Agent command response:', response);
   };
 
+  const getConnectionStatusBadge = () => {
+    const statusConfig = {
+      excellent: { color: 'bg-green-500', text: t.connectionStatus.excellent, icon: <Wifi className="w-3 h-3" /> },
+      slow: { color: 'bg-yellow-500', text: t.connectionStatus.slow, icon: <Activity className="w-3 h-3" /> },
+      down: { color: 'bg-red-500', text: t.connectionStatus.down, icon: <WifiOff className="w-3 h-3" /> }
+    };
+
+    const config = statusConfig[connectionStatus];
+    
+    return (
+      <Badge variant="outline" className="flex items-center gap-1">
+        <div className={`w-2 h-2 rounded-full ${config.color} animate-pulse`}></div>
+        {config.icon}
+        <span className="text-xs">{config.text}</span>
+      </Badge>
+    );
+  };
+
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800" dir={isRTL ? 'rtl' : 'ltr'}>
       <ChatInitializer
@@ -243,31 +264,41 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         userProfile={userProfile}
       />
 
-      {/* Fixed Header with Enhanced Debug Button */}
+      {/* Enhanced Header with Connection Status */}
       <div className="flex-shrink-0">
-        <div className="flex items-center justify-between p-2">
-          <ChatHeader 
-            theme={theme}
-            isRTL={isRTL}
-            content={{
-              masterAgent: t.masterAgent,
-              clientAgent: '',
-              connecting: t.connecting,
-              connected: t.connected
-            }}
-            isConnecting={!connectionChecked}
-            clientId={user?.id || ''}
-            onToggleTheme={() => {}}
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowDebugPanel(!showDebugPanel)}
-            className="opacity-50 hover:opacity-100"
-          >
-            <Bug className="w-4 h-4" />
-            <span className="ml-1 text-xs">Enhanced</span>
-          </Button>
+        <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <ChatHeader 
+              theme={theme}
+              isRTL={isRTL}
+              content={{
+                masterAgent: t.masterAgent,
+                clientAgent: '',
+                connecting: t.connecting,
+                connected: t.connected
+              }}
+              isConnecting={!connectionChecked}
+              clientId={user?.id || ''}
+              onToggleTheme={() => {}}
+            />
+            {getConnectionStatusBadge()}
+          </div>
+          <div className="flex items-center gap-2">
+            {diagnosticInfo && (
+              <div className="text-xs text-gray-500">
+                {diagnosticInfo.test_endpoint_latency}ms
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDebugPanel(!showDebugPanel)}
+              className="opacity-50 hover:opacity-100"
+            >
+              <Bug className="w-4 h-4" />
+              <span className="ml-1 text-xs">Enhanced</span>
+            </Button>
+          </div>
         </div>
       </div>
       

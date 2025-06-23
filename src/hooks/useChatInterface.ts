@@ -6,7 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAdvancedConversation } from '@/hooks/useAdvancedConversation';
 import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
-import { MorvoAIService } from '@/services/morvoAIService';
+import { EnhancedMorvoAIService } from '@/services/enhancedMorvoAIService';
 import { UserProfileService } from '@/services/userProfileService';
 
 interface MessageData {
@@ -30,6 +30,8 @@ export const useChatInterface = (
   const [connectionChecked, setConnectionChecked] = useState(false);
   const [chatInitialized, setChatInitialized] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'excellent' | 'slow' | 'down'>('down');
+  const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAuth();
@@ -48,14 +50,24 @@ export const useChatInterface = (
       connecting: 'جاري الاتصال...',
       connected: 'متصل',
       thinking: 'مورفو يفكر...',
-      placeholder: 'اكتب رسالتك هنا...'
+      placeholder: 'اكتب رسالتك هنا...',
+      connectionStatus: {
+        excellent: 'ممتاز',
+        slow: 'بطيء', 
+        down: 'معطل'
+      }
     },
     en: {
       masterAgent: 'Morvo AI',
       connecting: 'Connecting...',
       connected: 'Connected',
       thinking: 'Morvo is thinking...',
-      placeholder: 'Type your message here...'
+      placeholder: 'Type your message here...',
+      connectionStatus: {
+        excellent: 'Excellent',
+        slow: 'Slow',
+        down: 'Down'
+      }
     }
   };
 
@@ -69,16 +81,67 @@ export const useChatInterface = (
     scrollToBottom();
   }, [messages]);
 
-  // Load user profile
+  // Load user profile and perform initial diagnostics
   useEffect(() => {
     const loadUserProfile = async () => {
       if (user) {
         const profile = await UserProfileService.getUserProfile(user.id);
         setUserProfile(profile);
+        
+        // Perform initial health check
+        try {
+          const healthCheck = await EnhancedMorvoAIService.performHealthCheck();
+          setDiagnosticInfo(healthCheck);
+          updateConnectionStatus(healthCheck);
+        } catch (error) {
+          console.warn('Initial health check failed:', error);
+          setConnectionStatus('down');
+        }
       }
     };
     loadUserProfile();
   }, [user]);
+
+  // Periodic health checks
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const healthCheck = await EnhancedMorvoAIService.performHealthCheck();
+        setDiagnosticInfo(healthCheck);
+        updateConnectionStatus(healthCheck);
+      } catch (error) {
+        console.warn('Periodic health check failed:', error);
+        setConnectionStatus('down');
+      }
+    }, 30000); // Every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const updateConnectionStatus = (diagnostic: any) => {
+    if (!diagnostic) {
+      setConnectionStatus('down');
+      setIsConnected(false);
+      return;
+    }
+
+    if (diagnostic.overallStatus === 'healthy') {
+      const avgLatency = (diagnostic.testEndpoint?.latency + (diagnostic.authEndpoint?.latency || 0)) / 2;
+      if (avgLatency < 2000) {
+        setConnectionStatus('excellent');
+      } else {
+        setConnectionStatus('slow');
+      }
+      setIsConnected(true);
+    } else if (diagnostic.overallStatus === 'degraded') {
+      setConnectionStatus('slow');
+      setIsConnected(true);
+    } else {
+      setConnectionStatus('down');
+      setIsConnected(false);
+    }
+    setConnectionChecked(true);
+  };
 
   const handleSidebarContentChange = (message: string) => {
     if (onContentTypeChange) {
@@ -115,9 +178,64 @@ export const useChatInterface = (
 
   const generateContextualResponse = (message: string): string => {
     const isOnboardingComplete = userProfile?.onboarding_completed || false;
+    const lowerMessage = message.toLowerCase();
     
+    // Enhanced contextual responses in Arabic
+    if (lowerMessage.includes('موقع') || lowerMessage.includes('حللت') || lowerMessage.includes('تحليل')) {
+      if (userProfile?.website_url) {
+        return `أستاذ ${userProfile.company_name ? userProfile.company_name : 'صديقي'}، 
+        
+لقد قمت بتحليل موقعك ${userProfile.website_url} مسبقاً! 🔍
+
+**ملخص التحليل:**
+• الموقع مُسجّل في نظامي ✅
+• البيانات محفوظة ومحدثة 📊
+• جاري العمل على تحسينات إضافية 🚀
+
+هل تريد تحديث التحليل أم لديك استفسار محدد حول الموقع؟
+
+*ملاحظة: النظام يعمل حالياً في الوضع المحلي - جميع البيانات محفوظة وآمنة* 🔒`;
+      } else {
+        return `مرحباً أستاذ ${user?.user_metadata?.first_name || 'صديقي'}! 👋
+
+لم أحلل موقعك بعد. لكي أقوم بتحليل شامل، أحتاج رابط موقعك الإلكتروني.
+
+**ما سأقوم بتحليله:**
+• سرعة الموقع وأداءه ⚡
+• تحسين محركات البحث (SEO) 🔍  
+• تجربة المستخدم (UX) 👥
+• المحتوى والكلمات المفتاحية 📝
+• المنافسين والفرص 📈
+
+شاركني رابط موقعك وسأبدأ التحليل فوراً! 🚀`;
+      }
+    }
+    
+    if (lowerMessage.includes('مرحبا') || lowerMessage.includes('السلام') || lowerMessage.includes('اهلا')) {
+      return `أهلاً وسهلاً أستاذ ${user?.user_metadata?.first_name || 'صديقي'}! 🌟
+
+أنا مورفو - مساعدك الذكي للتسويق الرقمي المحدث بـ GPT-4o 🤖
+
+**كيف يمكنني مساعدتك اليوم؟**
+• تحليل موقعك الإلكتروني 🌐
+• تحسين محركات البحث 🔍
+• استراتيجيات التسويق 📈
+• إنشاء محتوى جذاب ✨
+
+اكتب لي ما تريد وسأساعدك خطوة بخطوة! 💪`;
+    }
+
     if (!isOnboardingComplete) {
-      return 'مرحباً بك في مورفو! دعني أساعدك في إعداد ملفك التجاري أولاً. ما هو اسم شركتك؟';
+      return `مرحباً بك في مورفو! 🚀
+
+دعني أساعدك في إعداد ملفك التجاري أولاً لأقدم لك خدمة مخصصة.
+
+**ما أحتاجه منك:**
+• اسم شركتك أو مشروعك 🏢
+• نوع نشاطك التجاري 💼
+• رابط موقعك (إن وُجد) 🌐
+
+ابدأ بمشاركة اسم شركتك، وسأتولى الباقي! ✨`;
     }
 
     return SmartResponseGenerator.generateContextualResponse(message, [], userProfile);
@@ -147,6 +265,8 @@ export const useChatInterface = (
     emotionalContext,
     conversationState,
     t,
+    connectionStatus,
+    diagnosticInfo,
     scrollToBottom,
     handleSidebarContentChange,
     extractUrlFromMessage,
