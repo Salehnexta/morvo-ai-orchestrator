@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -39,8 +40,8 @@ export const Login = () => {
       loginSuccess: "تم تسجيل الدخول بنجاح",
       loginError: "خطأ في تسجيل الدخول",
       invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
-      authServiceError: "خطأ في خدمة المصادقة. يرجى التواصل مع الدعم الفني",
-      configError: "خطأ في إعدادات النظام. يرجى التواصل مع المطور"
+      authServiceError: "خطأ في خدمة المصادقة. يرجى المحاولة مرة أخرى",
+      fillAllFields: "يرجى ملء جميع الحقول"
     },
     en: {
       title: "Sign In",
@@ -58,8 +59,8 @@ export const Login = () => {
       loginSuccess: "Login successful",
       loginError: "Login error",
       invalidCredentials: "Invalid email or password",
-      authServiceError: "Authentication service error. Please contact support",
-      configError: "System configuration error. Please contact developer"
+      authServiceError: "Authentication service error. Please try again",
+      fillAllFields: "Please fill in all fields"
     }
   };
 
@@ -74,7 +75,7 @@ export const Login = () => {
     if (!email.trim() || !password.trim()) {
       toast({
         title: t.loginError,
-        description: "Please fill in all fields",
+        description: t.fillAllFields,
         variant: "destructive",
       });
       return;
@@ -93,9 +94,6 @@ export const Login = () => {
         // Handle specific error types
         if (error.message === "Invalid login credentials") {
           errorMessage = t.invalidCredentials;
-        } else if (error.message.includes("Invalid API key")) {
-          errorMessage = t.configError;
-          console.error('🚨 CRITICAL: Invalid Supabase API key detected!');
         } else if (error.message.includes("Email not confirmed")) {
           errorMessage = "Please check your email and confirm your account before signing in.";
         } else {

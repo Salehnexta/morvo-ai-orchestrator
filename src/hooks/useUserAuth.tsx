@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,9 +50,6 @@ export const useUserAuth = (): UseUserAuthResult => {
         
         if (error) {
           console.error('❌ Error getting session:', error);
-          if (error.message.includes('Invalid API key')) {
-            console.error('🚨 INVALID API KEY - Please check your Supabase configuration');
-          }
         } else {
           console.log('🔐 Initial session retrieved:', !!session);
           if (mounted) {
@@ -89,9 +87,6 @@ export const useUserAuth = (): UseUserAuthResult => {
       
       if (error) {
         console.error('❌ Sign in error:', error);
-        if (error.message.includes('Invalid API key')) {
-          console.error('🚨 API KEY ISSUE - The Supabase anon key is invalid or expired');
-        }
       } else {
         console.log('✅ Sign in successful for:', email);
       }
