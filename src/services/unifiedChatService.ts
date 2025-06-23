@@ -10,9 +10,7 @@ import type {
 
 export class UnifiedChatService {
   private static readonly FALLBACK_URLS = [
-    'https://morvo-production.up.railway.app',
-    'https://api.morvo.ai',
-    'https://backup.morvo.ai'
+    'https://morvo-production.up.railway.app'
   ];
   private static currentApiUrl = 'https://morvo-production.up.railway.app';
   private static conversationId: string | null = sessionStorage.getItem('morvo_conversation_id');
@@ -46,23 +44,14 @@ export class UnifiedChatService {
     const token = await this.getAuthToken();
     const results: UnifiedDiagnosticResult[] = [];
 
-    // اختبار التنسيق البسيط مع عدة URLs
-    for (const baseUrl of this.FALLBACK_URLS) {
-      const simpleResult = await this.testRequestFormat('simple', {
-        message: 'Test message',
-        client_id: this.getClientId(),
-        conversation_id: this.conversationId || 'test-conv'
-      }, token, '', baseUrl);
-      
-      if (simpleResult.success) {
-        // إذا نجح، حفظ الـ URL الناجح
-        this.currentApiUrl = baseUrl;
-        results.push(simpleResult);
-        break;
-      } else {
-        results.push(simpleResult);
-      }
-    }
+    // اختبار التنسيق البسيط مع Railway URL الوحيد
+    const simpleResult = await this.testRequestFormat('simple', {
+      message: 'Test message',
+      client_id: this.getClientId(),
+      conversation_id: this.conversationId || 'test-conv'
+    }, token, '', this.currentApiUrl);
+    
+    results.push(simpleResult);
 
     // اختبار مع معاملات أساسية
     const basicResult = await this.testRequestFormat('basic', {
