@@ -27,6 +27,8 @@ export interface ChatConnectionStatus {
 }
 
 export interface DiagnosticInfo {
+  format: string;
+  success: boolean;
   timestamp: string;
   endpoint: string;
   status: 'success' | 'error' | 'timeout';
@@ -200,6 +202,8 @@ export class UnifiedChatService {
         const latency = Date.now() - startTime;
         
         const diagnostic: DiagnosticInfo = {
+          format: config.name,
+          success: response.ok,
           timestamp: new Date().toISOString(),
           endpoint: config.name,
           status: response.ok ? 'success' : 'error',
@@ -218,6 +222,8 @@ export class UnifiedChatService {
         const latency = Date.now() - startTime;
         
         const diagnostic: DiagnosticInfo = {
+          format: config.name,
+          success: false,
           timestamp: new Date().toISOString(),
           endpoint: config.name,
           status: error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'error',

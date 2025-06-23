@@ -1,15 +1,13 @@
-
 // 🎯 Hook الشات الموحد - يدمج جميع الوظائف في مكان واحد
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
-import { UnifiedChatService } from '@/services/unifiedChatService';
+import { UnifiedChatService, type DiagnosticInfo } from '@/services/unifiedChatService';
 import type { 
   UnifiedMessageData, 
   UnifiedProcessingStatus, 
-  UnifiedDiagnosticResult, 
   UnifiedConnectionStatus,
   UnifiedChatSettings,
   UnifiedPerformanceMetrics 
@@ -23,7 +21,7 @@ export const useUnifiedChat = () => {
   const [processingStatus, setProcessingStatus] = useState<UnifiedProcessingStatus>('idle');
   const [isConnected, setIsConnected] = useState(false);
   const [connectionChecked, setConnectionChecked] = useState(false);
-  const [diagnosticResults, setDiagnosticResults] = useState<UnifiedDiagnosticResult[]>([]);
+  const [diagnosticResults, setDiagnosticResults] = useState<DiagnosticInfo[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<UnifiedConnectionStatus | null>(null);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [serverIssues, setServerIssues] = useState<string | null>(null);
