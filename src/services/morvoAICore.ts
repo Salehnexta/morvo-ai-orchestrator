@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-interface ChatResponse {
+export interface ChatResponse {
   response: string;
   personality_traits?: any;
   tokens_used: number;
