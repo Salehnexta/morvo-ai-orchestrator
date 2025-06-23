@@ -93,7 +93,7 @@ export class MorvoAIService {
     }
   }
 
-  // Use the working test endpoint that doesn't require authentication
+  // Primary method - Use the working test endpoint that doesn't require authentication
   static async processMessage(message: string, context?: any): Promise<ChatResponse> {
     try {
       console.log('🚀 Sending message to Railway test endpoint:', message);
@@ -290,6 +290,99 @@ export class MorvoAIService {
     }
     
     throw lastError;
+  }
+
+  // Generic request method for other components
+  static async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
+    const url = endpoint.startsWith('http') ? endpoint : `${this.API_URL}${endpoint}`;
+    
+    const token = await this.getAuthToken();
+    const defaultHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options.headers
+      },
+      signal: AbortSignal.timeout(this.TIMEOUT)
+    });
+  }
+
+  // Onboarding and Journey methods for backward compatibility
+  static async checkJourneyStatus(userId: string): Promise<any> {
+    try {
+      const response = await this.makeRequest(`/onboarding/journey/${userId}`);
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error(`Journey status check failed: ${response.status}`);
+    } catch (error) {
+      console.warn('Journey status check failed, returning mock data:', error);
+      // Return mock data for development
+      return {
+        id: 'mock-journey',
+        client_id: userId,
+        current_phase: 1,
+        completed_phases: [],
+        profile_data: {},
+        phase_times: {},
+        started_at: new Date().toISOString(),
+        last_updated: new Date().toISOString()
+      };
+    }
+  }
+
+  static async setGreetingPreference(journeyId: string, greeting: string): Promise<any> {
+    try {
+      const response = await this.makeRequest(`/onboarding/greeting`, {
+        method: 'POST',
+        body: JSON.stringify({
+          journey_id: journeyId,
+          greeting_preference: greeting
+        })
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error(`Greeting preference failed: ${response.status}`);
+    } catch (error) {
+      console.warn('Setting greeting preference failed:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async startWebsiteAnalysis(journeyId: string, websiteUrl: string): Promise<any> {
+    try {
+      const response = await this.makeRequest('/onboarding/website-analysis', {
+        method: 'POST',
+        body: JSON.stringify({
+          journey_id: journeyId,
+          website_url: websiteUrl
+        })
+      });
+
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error(`Website analysis failed: ${response.status}`);
+    } catch (error) {
+      console.warn('Website analysis failed:', error);
+      return { 
+        success: false, 
+        error: error.message,
+        analysis_results: {
+          company_overview: 'Mock analysis results',
+          core_offerings: 'Mock offerings',
+          business_focus: 'Mock focus'
+        }
+      };
+    }
   }
 
   // Token Management - Fallback to local client data
