@@ -46,6 +46,16 @@ export const useUnifiedChat = () => {
     autoConnect: true
   });
 
+  // 🆕 إصلاح #1: مزامنة الإعدادات مع تغيّر السياقات
+  useEffect(() => {
+    setSettings(prev => ({
+      ...prev,
+      theme,
+      language,
+      isRTL,
+    }));
+  }, [theme, language, isRTL]);
+
   // === مقاييس الأداء ===
   const [performanceMetrics, setPerformanceMetrics] = useState<UnifiedPerformanceMetrics>({
     averageResponseTime: 0,
@@ -54,6 +64,42 @@ export const useUnifiedChat = () => {
     errorRate: 0,
     lastUpdated: new Date()
   });
+
+  // 🆕 إصلاح #3: دالة آمنة لحساب معدلات الأداء
+  const updatePerformanceMetrics = useCallback((isSuccess: boolean, processingTime: number) => {
+    setPerformanceMetrics(prev => {
+      const newTotalMessages = prev.totalMessages + 1;
+      const newAverageResponseTime = prev.totalMessages === 0 
+        ? processingTime 
+        : (prev.averageResponseTime * prev.totalMessages + processingTime) / newTotalMessages;
+      
+      if (isSuccess) {
+        const newSuccessRate = prev.totalMessages === 0 
+          ? 100 
+          : ((prev.successRate * prev.totalMessages) + 100) / newTotalMessages;
+        
+        return {
+          ...prev,
+          averageResponseTime: newAverageResponseTime,
+          totalMessages: newTotalMessages,
+          successRate: newSuccessRate,
+          lastUpdated: new Date()
+        };
+      } else {
+        const newErrorRate = prev.totalMessages === 0 
+          ? 100 
+          : ((prev.errorRate * prev.totalMessages) + 100) / newTotalMessages;
+        
+        return {
+          ...prev,
+          averageResponseTime: newAverageResponseTime,
+          totalMessages: newTotalMessages,
+          errorRate: newErrorRate,
+          lastUpdated: new Date()
+        };
+      }
+    });
+  }, []);
 
   // === المحتوى المترجم ===
   const content = {
@@ -92,6 +138,27 @@ export const useUnifiedChat = () => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  // 🆕 إصلاح #4: دالة محسّنة لكشف أخطاء CORS
+  const detectErrorType = useCallback((error: string) => {
+    // تحسين كشف CORS - المتصفحات تختلف في رسائل الخطأ
+    if (error.includes('CORS') || 
+        error.includes('Failed to fetch') ||
+        error === 'Network error' ||
+        error.includes('Access to fetch')) {
+      return 'مشكلة CORS - إعدادات الخادم';
+    }
+    
+    if (error.includes('502') || error.includes('Bad Gateway')) {
+      return 'الخادم غير متاح (502)';
+    }
+    
+    if (error.includes('timeout') || error.includes('AbortError')) {
+      return 'انتهت مهلة الاتصال';
+    }
+    
+    return 'مشكلة اتصال عامة';
+  }, []);
+
   // === تشغيل التشخيص ===
   const runDiagnostics = useCallback(async () => {
     setProcessingStatus('diagnosing');
@@ -124,10 +191,10 @@ export const useUnifiedChat = () => {
       } else {
         setIsConnected(false);
         
-        // تحليل نوع المشكلة
-        const corsErrors = results.filter(r => r.error?.includes('CORS'));
-        const timeoutErrors = results.filter(r => r.error?.includes('timeout'));
-        const serverErrors = results.filter(r => r.error?.includes('502'));
+        // تحليل محسّن لنوع المشكلة
+        const corsErrors = results.filter(r => r.error && detectErrorType(r.error).includes('CORS'));
+        const timeoutErrors = results.filter(r => r.error && detectErrorType(r.error).includes('مهلة'));
+        const serverErrors = results.filter(r => r.error && detectErrorType(r.error).includes('502'));
         
         let issueType = 'مشكلة اتصال عامة';
         if (corsErrors.length > 0) {
@@ -157,12 +224,13 @@ export const useUnifiedChat = () => {
       }
     } catch (error) {
       console.error('❌ Unified diagnostic failed:', error);
-      setServerIssues('فشل في التشخيص');
+      const errorType = error instanceof Error ? detectErrorType(error.message) : 'فشل في التشخيص';
+      setServerIssues(errorType);
     } finally {
       setProcessingStatus('idle');
       setConnectionChecked(true);
     }
-  }, [language, toast]);
+  }, [language, toast, detectErrorType]);
 
   // === إرسال الرسائل ===
   const handleSendMessage = useCallback(async (messageText: string) => {
@@ -182,6 +250,8 @@ export const useUnifiedChat = () => {
     setProcessingStatus('sending');
 
     const startTime = Date.now();
+    // 🆕 إصلاح #2: متغيّر لحفظ نوع المشكلة خارج الـ closure
+    let currentIssueType: string | null = null;
 
     try {
       const context = {
@@ -191,7 +261,7 @@ export const useUnifiedChat = () => {
         })),
         user_id: user.id,
         user_profile: {
-          greeting_preference: 'أستاذ' // يمكن تحسينه لاحقاً
+          greeting_preference: 'أستاذ'
         }
       };
 
@@ -206,15 +276,10 @@ export const useUnifiedChat = () => {
         tokensUsed = response.tokens_used || 0;
         setIsConnected(true);
         setServerIssues(null);
+        currentIssueType = null;
         
-        // تحديث مقاييس الأداء
-        setPerformanceMetrics(prev => ({
-          averageResponseTime: (prev.averageResponseTime * prev.totalMessages + processingTime) / (prev.totalMessages + 1),
-          totalMessages: prev.totalMessages + 1,
-          successRate: ((prev.successRate * prev.totalMessages) + 100) / (prev.totalMessages + 1),
-          errorRate: (prev.errorRate * prev.totalMessages) / (prev.totalMessages + 1),
-          lastUpdated: new Date()
-        }));
+        // تحديث مقاييس الأداء للنجاح
+        updatePerformanceMetrics(true, processingTime);
         
         console.log('✅ Unified response received', {
           processingTime,
@@ -225,35 +290,21 @@ export const useUnifiedChat = () => {
       } else {
         console.warn('⚠️ Unified service failed:', response.error);
         
-        // تحديد نوع المشكلة
-        let issueDescription = 'مشكلة اتصال';
-        if (response.error?.includes('CORS')) {
-          issueDescription = 'مشكلة CORS';
-          setServerIssues('مشكلة CORS - إعدادات الخادم');
-        } else if (response.error?.includes('502')) {
-          issueDescription = 'الخادم غير متاح';
-          setServerIssues('الخادم غير متاح (502)');
-        } else if (response.error?.includes('timeout')) {
-          issueDescription = 'انتهت مهلة الاتصال';
-          setServerIssues('انتهت مهلة الاتصال');
-        }
-        
-        botResponse = UnifiedChatService.generateSmartFallbackResponse(messageText, context);
+        // تحديد نوع المشكلة باستخدام الدالة المحسّنة
+        currentIssueType = response.error ? detectErrorType(response.error) : 'مشكلة اتصال';
+        setServerIssues(currentIssueType);
         setIsConnected(false);
         
-        // تحديث معدل الأخطاء
-        setPerformanceMetrics(prev => ({
-          ...prev,
-          errorRate: ((prev.errorRate * prev.totalMessages) + 100) / (prev.totalMessages + 1),
-          totalMessages: prev.totalMessages + 1,
-          lastUpdated: new Date()
-        }));
+        botResponse = UnifiedChatService.generateSmartFallbackResponse(messageText, context);
+        
+        // تحديث مقاييس الأداء للخطأ
+        updatePerformanceMetrics(false, processingTime);
 
         toast({
           title: language === 'ar' ? '⚠️ مشكلة تقنية' : '⚠️ Technical Issue',
           description: language === 'ar' 
-            ? `${issueDescription} - تم التبديل للنمط المحلي` 
-            : `${issueDescription} - Switched to local mode`,
+            ? `${currentIssueType} - تم التبديل للنمط المحلي` 
+            : `${currentIssueType} - Switched to local mode`,
           variant: "destructive",
         });
       }
@@ -269,7 +320,7 @@ export const useUnifiedChat = () => {
           isAuthenticated: response.success,
           endpointUsed: response.success ? 'unified_service' : 'local_fallback',
           processingSteps: ['sent', 'processed', 'delivered'],
-          serverIssue: serverIssues
+          serverIssue: currentIssueType
         }
       };
 
@@ -277,6 +328,9 @@ export const useUnifiedChat = () => {
 
     } catch (error) {
       console.error('❌ Unified chat error:', error);
+      const processingTime = Date.now() - startTime;
+      
+      currentIssueType = error instanceof Error ? detectErrorType(error.message) : 'خطأ غير متوقع';
       
       const errorMessage: UnifiedMessageData = {
         id: (Date.now() + 1).toString(),
@@ -288,18 +342,21 @@ export const useUnifiedChat = () => {
         metadata: {
           isError: true,
           errorHandled: true,
-          serverIssue: 'خطأ غير متوقع'
+          serverIssue: currentIssueType
         }
       };
 
       setMessages(prev => [...prev, errorMessage]);
       setIsConnected(false);
-      setServerIssues('خطأ غير متوقع');
+      setServerIssues(currentIssueType);
+      
+      // تحديث مقاييس الأداء للخطأ
+      updatePerformanceMetrics(false, processingTime);
     } finally {
       setIsLoading(false);
       setProcessingStatus('idle');
     }
-  }, [messages, user, isLoading, language, toast, serverIssues]);
+  }, [messages, user, isLoading, language, toast, detectErrorType, updatePerformanceMetrics]);
 
   // === إعادة التعيين ===
   const resetChat = useCallback(() => {
