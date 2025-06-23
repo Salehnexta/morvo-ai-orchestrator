@@ -8,7 +8,13 @@ export interface UnifiedChatMessage {
   timestamp: Date;
   tokens_used?: number;
   processing_time?: number;
+  processing_time_ms?: number;
   metadata?: any;
+  success?: boolean;
+  message?: string;
+  error?: string;
+  conversation_id?: string;
+  confidence_score?: number;
 }
 
 export interface ChatConnectionStatus {
@@ -17,6 +23,7 @@ export interface ChatConnectionStatus {
   lastCheck: Date;
   latency?: number;
   error?: string;
+  status?: 'healthy' | 'degraded' | 'failed';
 }
 
 export interface DiagnosticInfo {
@@ -74,6 +81,11 @@ export class UnifiedChatService {
         timestamp: new Date(),
         tokens_used: response.tokens_used,
         processing_time: processingTime,
+        processing_time_ms: processingTime,
+        success: true,
+        message: response.response,
+        conversation_id: MorvoAICore.getConversationId(),
+        confidence_score: response.confidence_score,
         metadata: {
           personality_traits: response.personality_traits,
           emotion_detected: response.emotion_detected,
@@ -98,7 +110,19 @@ export class UnifiedChatService {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       
-      throw error;
+      return {
+        id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        content: 'حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى.',
+        role: 'assistant',
+        timestamp: new Date(),
+        processing_time: processingTime,
+        processing_time_ms: processingTime,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        metadata: {
+          isError: true
+        }
+      };
     }
   }
 
@@ -131,6 +155,10 @@ export class UnifiedChatService {
     return [...this.diagnosticCache];
   }
 
+  static getDiagnosticResults(): DiagnosticInfo[] {
+    return [...this.diagnosticCache];
+  }
+
   static clearDiagnosticCache(): void {
     this.diagnosticCache = [];
     console.log('🧹 Diagnostic cache cleared');
@@ -145,66 +173,7 @@ export class UnifiedChatService {
     }
   }
 
-  private static updateConnectionStatus(
-    isConnected: boolean, 
-    connectionType: 'authenticated' | 'test' | 'offline',
-    latency?: number,
-    error?: string
-  ): void {
-    this.connectionStatus = {
-      isConnected,
-      connectionType,
-      lastCheck: new Date(),
-      latency,
-      error
-    };
-    
-    console.log('📊 Connection status updated:', this.connectionStatus);
-  }
-
-  private static addDiagnosticInfo(info: DiagnosticInfo): void {
-    this.diagnosticCache.unshift(info);
-    
-    // Keep only the latest entries
-    if (this.diagnosticCache.length > this.MAX_DIAGNOSTIC_ENTRIES) {
-      this.diagnosticCache = this.diagnosticCache.slice(0, this.MAX_DIAGNOSTIC_ENTRIES);
-    }
-  }
-
-  // Conversation management
-  static resetConversation(): void {
-    MorvoAICore.resetConversation();
-    console.log('🔄 Conversation reset via UnifiedChatService');
-  }
-
-  static getConversationId(): string | null {
-    return MorvoAICore.getConversationId();
-  }
-
-  // Test configurations for diagnostic purposes
-  static getTestConfigurations(): ConnectionTestResult[] {
-    return [
-      {
-        name: 'Morvo AI Test Endpoint',
-        endpoint: 'https://morvo-production.up.railway.app/v1/chat/test',
-        body: {
-          message: 'Connection test',
-          client_id: `test-${Date.now()}`,
-          conversation_id: 'test-connection'
-        },
-        timeout: 30000
-      },
-      {
-        name: 'Morvo AI Health Check',
-        endpoint: 'https://morvo-production.up.railway.app/health',
-        body: {},
-        timeout: 10000
-      }
-    ];
-  }
-
-  // Enhanced diagnostic method for detailed connection testing
-  static async runDiagnostics(): Promise<DiagnosticInfo[]> {
+  static async runComprehensiveDiagnostics(): Promise<DiagnosticInfo[]> {
     const diagnostics: DiagnosticInfo[] = [];
     const testConfigs = this.getTestConfigurations();
 
@@ -262,6 +231,77 @@ export class UnifiedChatService {
     }
     
     return diagnostics;
+  }
+
+  static generateSmartFallbackResponse(message: string, context?: any): string {
+    // Simple fallback response generation
+    const responses = [
+      'أعتذر، يبدو أن هناك مشكلة تقنية مؤقتة. يمكنني مساعدتك بطريقة أخرى.',
+      'نظراً للمشكلة التقنية الحالية، دعني أقدم لك بعض الاقتراحات العامة حول استفسارك.',
+      'أواجه صعوبة في الاتصال بالخادم حالياً، لكنني سأحاول مساعدتك بناءً على خبرتي.'
+    ];
+    
+    return responses[Math.floor(Math.random() * responses.length)] + 
+           ` بخصوص "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`;
+  }
+
+  private static updateConnectionStatus(
+    isConnected: boolean, 
+    connectionType: 'authenticated' | 'test' | 'offline',
+    latency?: number,
+    error?: string
+  ): void {
+    this.connectionStatus = {
+      isConnected,
+      connectionType,
+      lastCheck: new Date(),
+      latency,
+      error,
+      status: isConnected ? 'healthy' : 'failed'
+    };
+    
+    console.log('📊 Connection status updated:', this.connectionStatus);
+  }
+
+  private static addDiagnosticInfo(info: DiagnosticInfo): void {
+    this.diagnosticCache.unshift(info);
+    
+    // Keep only the latest entries
+    if (this.diagnosticCache.length > this.MAX_DIAGNOSTIC_ENTRIES) {
+      this.diagnosticCache = this.diagnosticCache.slice(0, this.MAX_DIAGNOSTIC_ENTRIES);
+    }
+  }
+
+  // Conversation management
+  static resetConversation(): void {
+    MorvoAICore.resetConversation();
+    console.log('🔄 Conversation reset via UnifiedChatService');
+  }
+
+  static getConversationId(): string | null {
+    return MorvoAICore.getConversationId();
+  }
+
+  // Test configurations for diagnostic purposes
+  static getTestConfigurations(): ConnectionTestResult[] {
+    return [
+      {
+        name: 'Morvo AI Test Endpoint',
+        endpoint: 'https://morvo-production.up.railway.app/v1/chat/test',
+        body: {
+          message: 'Connection test',
+          client_id: `test-${Date.now()}`,
+          conversation_id: 'test-connection'
+        },
+        timeout: 30000
+      },
+      {
+        name: 'Morvo AI Health Check',
+        endpoint: 'https://morvo-production.up.railway.app/health',
+        body: {},
+        timeout: 10000
+      }
+    ];
   }
 
   // User authentication check

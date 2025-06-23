@@ -18,14 +18,26 @@ export interface UnifiedMessageData {
     suggested_actions?: any[];
     isError?: boolean;
     errorHandled?: boolean;
+    serverIssue?: string;
     [key: string]: any;
   };
 }
 
 // === رسائل المحادثة ===
 export interface UnifiedChatMessage {
-  role: 'user' | 'assistant';
+  id: string;
   content: string;
+  role: 'user' | 'assistant';
+  timestamp: Date;
+  tokens_used?: number;
+  processing_time?: number;
+  processing_time_ms?: number;
+  metadata?: any;
+  success?: boolean;
+  message?: string;
+  error?: string;
+  conversation_id?: string;
+  confidence_score?: number;
 }
 
 // === نتائج التشخيص الموحدة ===
