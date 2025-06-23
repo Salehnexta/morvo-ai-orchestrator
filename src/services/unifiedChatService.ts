@@ -1,3 +1,4 @@
+
 import { RailwayBackendService } from './railwayBackendService';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -54,7 +55,6 @@ export class UnifiedChatService {
   
   private static diagnosticCache: DiagnosticInfo[] = [];
   private static readonly MAX_DIAGNOSTIC_ENTRIES = 50;
-  private static railwayService = new RailwayBackendService();
 
   static async sendMessage(message: string, context?: any): Promise<UnifiedChatMessage> {
     const startTime = Date.now();
@@ -68,8 +68,8 @@ export class UnifiedChatService {
         throw new Error('No authentication token available');
       }
 
-      // Send message via Railway backend
-      const response = await this.railwayService.processMessage(message, {
+      // Send message via Railway backend using static method
+      const response = await RailwayBackendService.processMessage(message, {
         ...context,
         user_metadata: session.user?.user_metadata || {},
         session_id: session.user?.id
@@ -156,7 +156,7 @@ export class UnifiedChatService {
     try {
       console.log('🔗 UnifiedChatService: Testing Railway backend connection...');
       
-      const healthResult = await this.railwayService.checkServerHealth();
+      const healthResult = await RailwayBackendService.checkServerHealth();
       const isConnected = healthResult.success;
       
       this.updateConnectionStatus(
@@ -193,7 +193,7 @@ export class UnifiedChatService {
 
   static async getHealthStatus(): Promise<any> {
     try {
-      const result = await this.railwayService.checkServerHealth();
+      const result = await RailwayBackendService.checkServerHealth();
       return result.data || { status: 'unknown' };
     } catch (error) {
       console.error('❌ Health check failed:', error);
@@ -208,7 +208,7 @@ export class UnifiedChatService {
       console.log('🔍 Running comprehensive Railway backend diagnostics...');
       
       const startTime = Date.now();
-      const healthResult = await this.railwayService.checkServerHealth();
+      const healthResult = await RailwayBackendService.checkServerHealth();
       const latency = Date.now() - startTime;
       
       const diagnostic: DiagnosticInfo = {
@@ -227,7 +227,7 @@ export class UnifiedChatService {
       // Test message processing
       try {
         const testStartTime = Date.now();
-        const testResult = await this.railwayService.processMessage('مرحبا، هذه رسالة تجريبية');
+        const testResult = await RailwayBackendService.processMessage('مرحبا، هذه رسالة تجريبية');
         const testLatency = Date.now() - testStartTime;
         
         const testDiagnostic: DiagnosticInfo = {
