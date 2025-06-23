@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -215,8 +216,7 @@ export const useChatInterface = (
         }
       }
       
-      if (lowerMessage.includes('م
-با') || lowerMessage.includes('السلام')) {
+      if (lowerMessage.includes('مرحبا') || lowerMessage.includes('السلام')) {
         return `أهلاً وسهلاً ${userProfile?.greeting_preference || 'أستاذ'} ${userProfile?.company_name || 'صديقي'}! 🌟
 
 أنا مورفو - مساعدك الذكي للتسويق الرقمي 🤖
