@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ChatDiagnostics } from "./chatDiagnostics";
+import { UnifiedDiagnostics } from "./unifiedDiagnostics";
 
 interface EnhancedChatResponse {
   response: string;
@@ -43,49 +43,36 @@ export class EnhancedMorvoAIService {
   static async processMessageWithDiagnostics(message: string, context?: any): Promise<EnhancedChatResponse> {
     console.log('🚀 Enhanced message processing started:', message);
     
-    // Perform diagnostic check with improved timeout
+    // Use UnifiedDiagnostics for comprehensive testing
     const token = await this.getAuthToken();
-    const diagnostic = await ChatDiagnostics.performComprehensiveDiagnostic(token);
-    this.lastDiagnostic = diagnostic;
+    const diagnosticResults = await UnifiedDiagnostics.runComprehensiveDiagnostics();
+    const connectionStatus = UnifiedDiagnostics.getConnectionStatus();
     
-    console.log('📊 Diagnostic result:', diagnostic);
+    this.lastDiagnostic = {
+      results: diagnosticResults,
+      status: connectionStatus,
+      overallStatus: connectionStatus?.status || 'unknown',
+      recommendation: connectionStatus?.isConnected ? 'Use authenticated endpoint' : 'Check connection'
+    };
+    
+    console.log('📊 Diagnostic result:', this.lastDiagnostic);
 
-    // Improved endpoint selection logic
-    let response: EnhancedChatResponse;
-    
     try {
-      // Try authenticated endpoint first if token exists and diagnostic is positive
-      if (token && diagnostic.authEndpoint?.status === 'healthy') {
-        try {
-          response = await this.sendAuthenticatedMessage(message, token, context);
-          response.endpoint_used = 'authenticated';
-        } catch (authError) {
-          console.warn('Auth endpoint failed, falling back to test:', authError);
-          response = await this.sendTestMessage(message, context);
-          response.endpoint_used = 'test_fallback';
-        }
-      } else if (diagnostic.testEndpoint?.status === 'healthy') {
-        response = await this.sendTestMessage(message, context);
-        response.endpoint_used = 'test';
+      // Try to send message using UnifiedDiagnostics
+      const response = await UnifiedDiagnostics.sendMessage(message, context);
+      
+      if (response.success) {
+        return {
+          response: response.message,
+          tokens_used: response.tokens_used || 0,
+          processing_time: response.processing_time_ms,
+          confidence_score: response.confidence_score || 0.9,
+          endpoint_used: 'unified_diagnostics',
+          diagnostic_info: this.lastDiagnostic
+        };
       } else {
-        throw new Error('All endpoints unavailable');
+        throw new Error(response.error || 'Unified diagnostics failed');
       }
-      
-      response.diagnostic_info = {
-        overall_status: diagnostic.overallStatus,
-        recommendation: diagnostic.recommendation,
-        test_endpoint_latency: diagnostic.testEndpoint.latency,
-        auth_endpoint_latency: diagnostic.authEndpoint?.latency || null,
-        connection_quality: this.getConnectionQuality(diagnostic)
-      };
-      
-      console.log('✅ Enhanced response generated:', {
-        endpoint: response.endpoint_used,
-        processingTime: response.processing_time,
-        confidence: response.confidence_score
-      });
-      
-      return response;
       
     } catch (error) {
       console.error('❌ Enhanced processing failed:', error);
@@ -97,112 +84,9 @@ export class EnhancedMorvoAIService {
         processing_time: 150,
         confidence_score: 0.7,
         endpoint_used: 'arabic_fallback',
-        diagnostic_info: diagnostic
+        diagnostic_info: this.lastDiagnostic
       };
     }
-  }
-
-  private static async sendTestMessage(message: string, context?: any): Promise<EnhancedChatResponse> {
-    const response = await fetch(`${this.API_URL}/v1/chat/test`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'MorvoAI-Frontend/1.0'
-      },
-      body: JSON.stringify({
-        message: message.trim(),
-        client_id: this.getClientId(),
-        conversation_id: this.conversationId || `conv-${Date.now()}`,
-        context: context || {},
-        language: 'ar',
-        user_preferences: {
-          response_language: 'arabic',
-          response_style: 'professional'
-        }
-      }),
-      signal: AbortSignal.timeout(this.TEST_TIMEOUT)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Test endpoint failed: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-    
-    // Save conversation ID
-    if (data.conversation_id) {
-      this.conversationId = data.conversation_id;
-      sessionStorage.setItem('morvo_conversation_id', data.conversation_id);
-    }
-    
-    return {
-      response: data.message || data.response || 'تم استلام رسالتك وسأجيب عليها قريباً',
-      personality_traits: data.personality_traits,
-      tokens_used: data.tokens_used || 0,
-      emotion_detected: data.emotion_detected,
-      suggested_actions: data.suggested_actions || [],
-      processing_time: data.processing_time_ms,
-      confidence_score: data.confidence_score || 0.9,
-      endpoint_used: 'test'
-    };
-  }
-
-  private static async sendAuthenticatedMessage(message: string, token: string, context?: any): Promise<EnhancedChatResponse> {
-    // Fixed: Remove the problematic func parameter
-    const url = `${this.API_URL}/v1/chat/message`;
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'X-Client-Info': 'morvo-ai-frontend',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        message: message.trim(),
-        conversation_id: this.conversationId || `auth-conv-${Date.now()}`,
-        language: 'ar',
-        project_context: context?.project_context || {},
-        metadata: {
-          ...context?.metadata,
-          client_id: this.getClientId(),
-          timestamp: new Date().toISOString()
-        },
-        stream: false,
-        user_preferences: {
-          response_language: 'arabic',
-          greeting_style: 'professional'
-        }
-      }),
-      signal: AbortSignal.timeout(this.AUTH_TIMEOUT)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Auth endpoint failed: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-    
-    // Save conversation ID
-    if (data.conversation_id) {
-      this.conversationId = data.conversation_id;
-      sessionStorage.setItem('morvo_conversation_id', data.conversation_id);
-    }
-
-    return {
-      response: data.message || data.response || 'شكراً لرسالتك، تم معالجتها بنجاح',
-      personality_traits: data.personality_traits,
-      tokens_used: data.tokens_used || 0,
-      emotion_detected: data.emotion_detected,
-      suggested_actions: data.suggested_actions || [],
-      processing_time: data.processing_time_ms,
-      confidence_score: data.confidence_score || 0.9,
-      endpoint_used: 'authenticated'
-    };
   }
 
   private static generateArabicFallbackResponse(message: string, context?: any): string {
@@ -284,29 +168,27 @@ export class EnhancedMorvoAIService {
 ما هو التحدي التسويقي الذي تواجهه؟ 🤔`;
   }
 
-  private static getConnectionQuality(diagnostic: any): string {
-    if (!diagnostic) return 'unknown';
-    
-    const avgLatency = (diagnostic.testEndpoint?.latency || 0 + diagnostic.authEndpoint?.latency || 0) / 2;
-    
-    if (avgLatency < 1000) return 'excellent';
-    if (avgLatency < 3000) return 'good';
-    if (avgLatency < 5000) return 'fair';
-    return 'poor';
-  }
-
   static getLastDiagnostic(): any {
     return this.lastDiagnostic;
   }
 
   static async performHealthCheck(): Promise<any> {
     const token = await this.getAuthToken();
-    return ChatDiagnostics.performComprehensiveDiagnostic(token);
+    const results = await UnifiedDiagnostics.runComprehensiveDiagnostics();
+    const status = UnifiedDiagnostics.getConnectionStatus();
+    
+    return {
+      results,
+      status,
+      overallStatus: status?.status || 'unknown',
+      recommendation: status?.isConnected ? 'System healthy' : 'Check connection'
+    };
   }
 
   static resetConversation(): void {
     this.conversationId = null;
     sessionStorage.removeItem('morvo_conversation_id');
+    UnifiedDiagnostics.resetConversation();
     console.log('🔄 Enhanced conversation reset');
   }
 }

@@ -2,7 +2,6 @@
 import React from 'react';
 import { Bot, Sun, Moon, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ConnectionStatus } from './ConnectionStatus';
 import { useUserGreeting } from '@/hooks/useUserGreeting';
 
 interface ChatHeaderProps {

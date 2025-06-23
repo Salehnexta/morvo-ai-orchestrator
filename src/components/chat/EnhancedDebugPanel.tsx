@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Bug, X, RefreshCw, Activity, Wifi, AlertTriangle } from 'lucide-react';
-import { EnhancedMorvoAIService } from '@/services/enhancedMorvoAIService';
-import { ChatDiagnostics } from '@/services/chatDiagnostics';
+import { UnifiedDiagnostics } from '@/services/unifiedDiagnostics';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,22 +25,21 @@ export const EnhancedDebugPanel: React.FC<EnhancedDebugPanelProps> = ({ isVisibl
   }, [isVisible]);
 
   const loadDiagnosticData = async () => {
-    const lastDiagnostic = EnhancedMorvoAIService.getLastDiagnostic();
-    const history = ChatDiagnostics.getDiagnosticHistory();
+    const connectionStatus = UnifiedDiagnostics.getConnectionStatus();
+    const history = UnifiedDiagnostics.getDiagnosticResults();
     
-    setDiagnosticData(lastDiagnostic);
+    setDiagnosticData(connectionStatus);
     setDiagnosticHistory(history);
   };
 
   const runFullDiagnostic = async () => {
     setIsRunningDiagnostic(true);
     try {
-      const result = await EnhancedMorvoAIService.performHealthCheck();
-      setDiagnosticData(result);
+      const isConnected = await UnifiedDiagnostics.testConnection();
+      const results = UnifiedDiagnostics.getDiagnosticResults();
+      setDiagnosticHistory(results);
       
-      // Test actual message
-      const testResponse = await EnhancedMorvoAIService.processMessageWithDiagnostics('مرحبا، هذا اختبار شامل');
-      console.log('✅ Full diagnostic test completed:', testResponse);
+      console.log('✅ Full diagnostic test completed:', { isConnected, results });
     } catch (error) {
       console.error('❌ Full diagnostic failed:', error);
     } finally {
@@ -92,41 +90,11 @@ export const EnhancedDebugPanel: React.FC<EnhancedDebugPanelProps> = ({ isVisibl
             <div className="bg-gray-800 p-3 rounded mb-3">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold">System Status</h3>
-                {getStatusBadge(diagnosticData.overallStatus)}
+                {getStatusBadge(diagnosticData.status || 'unknown')}
               </div>
               <div className="text-xs space-y-1">
-                <div>Recommendation: <span className="text-blue-400">{diagnosticData.recommendation}</span></div>
-                <div>Last Check: {new Date().toLocaleTimeString()}</div>
-              </div>
-            </div>
-          )}
-
-          {/* Endpoint Status */}
-          {diagnosticData && (
-            <div className="bg-gray-800 p-3 rounded mb-3">
-              <h3 className="text-sm font-semibold mb-2">Endpoints Status</h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    {getStatusIcon(diagnosticData.testEndpoint?.status)}
-                    Test Endpoint
-                  </span>
-                  <span>{diagnosticData.testEndpoint?.latency}ms</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    {getStatusIcon(diagnosticData.authEndpoint?.status)}
-                    Auth Endpoint
-                  </span>
-                  <span>{diagnosticData.authEndpoint?.latency || 'N/A'}ms</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    {getStatusIcon(diagnosticData.healthEndpoint?.status)}
-                    Health Check
-                  </span>
-                  <span>{diagnosticData.healthEndpoint?.latency}ms</span>
-                </div>
+                <div>Connected: <span className="text-blue-400">{diagnosticData.isConnected ? 'Yes' : 'No'}</span></div>
+                <div>Last Check: {diagnosticData.lastChecked ? new Date(diagnosticData.lastChecked).toLocaleTimeString() : 'Never'}</div>
               </div>
             </div>
           )}
@@ -142,10 +110,10 @@ export const EnhancedDebugPanel: React.FC<EnhancedDebugPanelProps> = ({ isVisibl
               <RefreshCw className={`w-3 h-3 mr-1 ${isRunningDiagnostic ? 'animate-spin' : ''}`} />
               {isRunningDiagnostic ? 'Testing...' : 'Full Test'}
             </Button>
-            <Button size="sm" variant="outline" onClick={() => EnhancedMorvoAIService.resetConversation()}>
+            <Button size="sm" variant="outline" onClick={() => UnifiedDiagnostics.resetConversation()}>
               Reset Chat
             </Button>
-            <Button size="sm" variant="outline" onClick={() => ChatDiagnostics.clearHistory()}>
+            <Button size="sm" variant="outline" onClick={() => UnifiedDiagnostics.clearDiagnosticCache()}>
               Clear
             </Button>
           </div>
@@ -155,17 +123,15 @@ export const EnhancedDebugPanel: React.FC<EnhancedDebugPanelProps> = ({ isVisibl
             <div className="font-semibold mb-2">Recent Diagnostic History</div>
             {diagnosticHistory.map((entry, i) => (
               <div key={i} className={`mb-2 p-2 rounded ${
-                entry.status === 'failed' ? 'bg-red-900/30' :
-                entry.status === 'degraded' ? 'bg-yellow-900/30' :
-                'bg-green-900/30'
+                entry.success ? 'bg-green-900/30' : 'bg-red-900/30'
               }`}>
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-blue-400">{entry.endpoint}</span>
+                  <span className="font-mono text-blue-400">{entry.format}</span>
                   <span className="text-gray-400">{entry.latency}ms</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>{getStatusBadge(entry.status)}</span>
-                  <span className="text-gray-400">{entry.timestamp.toLocaleTimeString()}</span>
+                  <span>{getStatusBadge(entry.success ? 'healthy' : 'failed')}</span>
+                  <span className="text-gray-400">{entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : ''}</span>
                 </div>
                 {entry.error && (
                   <div className="text-red-400 text-xs mt-1">{entry.error}</div>

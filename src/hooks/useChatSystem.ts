@@ -10,7 +10,7 @@ import { SERankingService } from '@/services/seRankingService';
 import { IntelligentAgentService } from '@/services/intelligentAgentService';
 import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
 import { UnifiedDiagnostics } from '@/services/unifiedDiagnostics';
-import { MessageData, ProcessingStatus, DiagnosticResult, ConnectionStatus } from '@/types/chat';
+import { MessageData, ProcessingStatus, DiagnosticResult, ConnectionStatus, ChatMessage } from '@/types/chat';
 
 export const useChatSystem = (
   onContentTypeChange?: (type: string) => void,
@@ -228,9 +228,9 @@ export const useChatSystem = (
       // Send message with unified service
       const context = {
         conversation_history: messages.slice(-3).map(m => ({
-          role: m.sender === 'user' ? 'user' : 'assistant',
+          role: m.sender === 'user' ? 'user' as const : 'assistant' as const,
           content: m.content
-        })),
+        })) as ChatMessage[],
         user_profile: userProfile,
         emotional_context: emotionalContext,
         conversation_state: conversationState,
