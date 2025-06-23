@@ -1,5 +1,5 @@
 
-// 🎯 مكون الشات الموحد - يجمع كل شيء في مكان واحد
+// 🎯 مكون الشات الموحد - محدث لإصلاح مشاكل الإرسال
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,14 +50,53 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
     resetChat,
   } = useUnifiedChat();
 
-  // === معالجة الإرسال ===
+  console.log('🔧 UnifiedChatInterface Debug:', {
+    messagesCount: messages.length,
+    isLoading,
+    processingStatus,
+    isConnected,
+    connectionChecked,
+    userExists: !!user,
+    serverIssues,
+    inputValue: input
+  });
+
+  // === معالجة الإرسال المحدثة ===
   const handleSendClick = async () => {
-    if (!input.trim() || !user || isLoading) return;
+    console.log('🚀 Send button clicked:', {
+      input: input.trim(),
+      userExists: !!user,
+      isLoading,
+      processingStatus
+    });
+
+    if (!input.trim()) {
+      console.warn('⚠️ Empty input, not sending');
+      return;
+    }
     
-    const messageText = input;
+    if (!user) {
+      console.error('❌ No user found, cannot send message');
+      return;
+    }
+    
+    if (isLoading || processingStatus !== 'idle') {
+      console.warn('⚠️ Already processing, not sending');
+      return;
+    }
+    
+    const messageText = input.trim();
+    console.log('📤 Sending message:', messageText);
+    
     setInput('');
     onMessageSent?.(messageText);
-    await handleSendMessage(messageText);
+    
+    try {
+      await handleSendMessage(messageText);
+      console.log('✅ Message sent successfully');
+    } catch (error) {
+      console.error('❌ Error sending message:', error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -67,7 +106,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
     }
   };
 
-  // === شارة الاتصال ===
+  // === شارات الحالة ===
   const getConnectionBadge = () => {
     if (!connectionChecked) {
       return (
@@ -98,7 +137,6 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
     );
   };
 
-  // === شارة المعالجة ===
   const getProcessingBadge = () => {
     if (processingStatus === 'sending') {
       return (
@@ -119,10 +157,21 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
     return null;
   };
 
+  // إضافة رسالة ترحيب إذا لم توجد رسائل
+  const displayMessages = messages.length === 0 ? [{
+    id: 'welcome',
+    content: `مرحباً بك أستاذ ${user?.user_metadata?.first_name || 'العزيز'}! 🌟\n\nأنا مورفو - مساعدك الذكي للتسويق الرقمي المحدث.\n\nكيف يمكنني مساعدتك اليوم؟`,
+    sender: 'agent' as const,
+    timestamp: new Date(),
+    metadata: {
+      isWelcome: true
+    }
+  }] : messages;
+
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800" dir={isRTL ? 'rtl' : 'ltr'}>
       
-      {/* === رأس الصفحة الموحد === */}
+      {/* === رأس الصفحة === */}
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-2 border-b">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-semibold flex items-center gap-2">
@@ -134,14 +183,12 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         </div>
         
         <div className="flex items-center gap-2">
-          {/* مقاييس الأداء */}
           {performanceMetrics.totalMessages > 0 && (
             <Badge variant="outline" className="text-xs">
               {performanceMetrics.totalMessages} رسالة
             </Badge>
           )}
           
-          {/* أزرار التحكم */}
           <Button
             size="sm"
             variant="outline"
@@ -170,7 +217,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         </div>
       </CardHeader>
 
-      {/* === تحذير المشاكل التقنية === */}
+      {/* === تحذير المشاكل === */}
       {serverIssues && (
         <Alert className="m-3 border-orange-200 bg-orange-50 dark:bg-orange-950/10">
           <AlertTriangle className="h-4 w-4" />
@@ -192,7 +239,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
       {/* === لوحة التشخيص === */}
       {showDiagnostics && diagnosticResults.length > 0 && (
         <div className="p-3 bg-gray-50 dark:bg-gray-800 border-b">
-          <div className="text-sm font-medium mb-2">نتائج التشخيص الموحد:</div>
+          <div className="text-sm font-medium mb-2">نتائج التشخيص:</div>
           <div className="grid grid-cols-3 gap-2 text-xs">
             {diagnosticResults.map((result, i) => (
               <div key={i} className={`p-2 rounded ${
@@ -218,7 +265,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
       <CardContent className="flex-1 p-0">
         <ScrollArea className="h-full">
           <div className="space-y-4 p-4">
-            {messages.map((message) => (
+            {displayMessages.map((message) => (
               <div key={message.id} className={`flex gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
                 {/* الصورة الرمزية */}
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
@@ -301,23 +348,30 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         </ScrollArea>
       </CardContent>
       
-      {/* === منطقة الإدخال === */}
+      {/* === منطقة الإدخال المحدثة === */}
       <div className="border-t p-4">
         <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Input
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              console.log('📝 Input changed:', e.target.value);
+              setInput(e.target.value);
+            }}
             onKeyDown={handleKeyPress}
-            placeholder={serverIssues ? `${t.placeholder} (النمط المحلي)` : t.placeholder}
+            placeholder={
+              !user ? 'يرجى تسجيل الدخول أولاً...' :
+              serverIssues ? `${t.placeholder} (النمط المحلي)` : 
+              t.placeholder
+            }
             className={`flex-1 ${isRTL ? 'text-right' : 'text-left'} ${
               serverIssues ? 'border-orange-300 focus:border-orange-500' : ''
             }`}
-            disabled={isLoading || processingStatus !== 'idle'}
+            disabled={!user || isLoading || processingStatus !== 'idle'}
             dir={isRTL ? 'rtl' : 'ltr'}
           />
           <Button
             onClick={handleSendClick}
-            disabled={!input.trim() || isLoading || processingStatus !== 'idle'}
+            disabled={!user || !input.trim() || isLoading || processingStatus !== 'idle'}
             className="shrink-0"
           >
             {isLoading ? (
@@ -327,6 +381,13 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
             )}
           </Button>
         </div>
+        
+        {/* معلومات الحالة */}
+        {!user && (
+          <div className="mt-2 text-center text-sm text-red-500">
+            يرجى تسجيل الدخول لاستخدام الشات
+          </div>
+        )}
       </div>
     </div>
   );

@@ -101,7 +101,6 @@ export class UnifiedChatService {
         'Accept': 'application/json'
       };
 
-      // تجربة بدون Origin header لتجنب مشاكل CORS
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
@@ -114,7 +113,7 @@ export class UnifiedChatService {
         headers,
         body: JSON.stringify(requestBody),
         signal: controller.signal,
-        mode: 'cors' // تجربة explicit CORS
+        mode: 'cors'
       });
 
       clearTimeout(timeoutId);
@@ -167,11 +166,14 @@ export class UnifiedChatService {
     }
   }
 
-  // === إرسال الرسائل ===
+  // === إرسال الرسائل المحدث ===
   static async sendMessage(message: string, context?: UnifiedChatContextData): Promise<UnifiedChatResponse> {
+    console.log('🚀 Starting sendMessage with:', { message: message.substring(0, 50), context });
+    
     const token = await this.getAuthToken();
     
     if (!token) {
+      console.error('❌ No auth token available');
       return {
         success: false,
         message: '',
@@ -180,20 +182,20 @@ export class UnifiedChatService {
     }
 
     try {
-      console.log('🚀 Sending message with unified service...');
+      console.log('🔧 Preparing message request...');
       
       let requestBody: any;
       let urlSuffix = '';
       let endpoint = '/v1/chat/message';
 
-      // 🆕 إصلاح: استخدام التنسيق الناجح المحفوظ بشكل صحيح
+      // استخدام التنسيق الناجح المحفوظ
       if (this.lastSuccessfulFormat === 'simple') {
         requestBody = {
           message: message.trim(),
           client_id: this.getClientId(),
           conversation_id: this.conversationId || `unified-conv-${Date.now()}`
         };
-        // التنسيق البسيط يستخدم نفس endpoint بدون معاملات
+        endpoint = '/v1/chat/test'; // استخدام test endpoint للتنسيق البسيط
       } else if (this.lastSuccessfulFormat === 'func-url') {
         requestBody = {
           message: message.trim(),
@@ -203,6 +205,7 @@ export class UnifiedChatService {
           stream: false
         };
         urlSuffix = '?func=chat';
+        endpoint = '/v1/chat/message';
       } else if (this.lastSuccessfulFormat === 'basic') {
         requestBody = {
           message: message.trim(),
@@ -211,7 +214,7 @@ export class UnifiedChatService {
           language: 'ar',
           stream: false
         };
-        urlSuffix = '?func=chat'; // 🆕 إصلاح: basic format أيضاً يحتاج func=chat
+        endpoint = '/v1/chat/test';
       } else {
         // الافتراضي - نجرب func-url أولاً
         requestBody = {
@@ -222,12 +225,14 @@ export class UnifiedChatService {
           stream: false
         };
         urlSuffix = '?func=chat';
+        endpoint = '/v1/chat/message';
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // زيادة timeout
 
-      console.log('🔧 Using format:', this.lastSuccessfulFormat, 'with URL suffix:', urlSuffix);
+      console.log('🔧 Using format:', this.lastSuccessfulFormat, 'with endpoint:', `${endpoint}${urlSuffix}`);
+      console.log('📤 Request body:', requestBody);
 
       const response = await fetch(`${this.currentApiUrl}${endpoint}${urlSuffix}`, {
         method: 'POST',
@@ -242,6 +247,7 @@ export class UnifiedChatService {
       });
 
       clearTimeout(timeoutId);
+      console.log('📥 Response status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -267,6 +273,7 @@ export class UnifiedChatService {
       }
 
       const data = await response.json();
+      console.log('✅ Response data received:', data);
       
       // حفظ معرف المحادثة
       if (data.conversation_id) {
@@ -274,7 +281,7 @@ export class UnifiedChatService {
         sessionStorage.setItem('morvo_conversation_id', data.conversation_id);
       }
 
-      console.log('✅ Unified response received successfully');
+      console.log('✅ Message sent successfully');
       
       return {
         success: true,
@@ -286,7 +293,7 @@ export class UnifiedChatService {
       };
 
     } catch (error) {
-      console.error('❌ Connection error:', error);
+      console.error('❌ Connection error in sendMessage:', error);
       
       let errorMessage = 'Connection failed';
       if (error instanceof Error) {
