@@ -440,6 +440,464 @@
 
 
 
+// import { supabase } from "@/integrations/supabase/client";
+// import type { 
+//   UnifiedDiagnosticResult, 
+//   UnifiedConnectionStatus, 
+//   UnifiedChatResponse,
+//   UnifiedChatContextData,
+//   UnifiedChatMessage
+// } from '@/types/unifiedChat';
+
+// // أنواع البيانات
+// interface FallbackServer {
+//   url: string;
+//   priority: number;
+//   lastSuccess: Date | null;
+// }
+
+// export class UnifiedChatService {
+//   // قائمة الخوادم الاحتياطية مع أولوياتها
+//   private static readonly FALLBACK_SERVERS: FallbackServer[] = [
+//     { url: 'https://morvo-production.up.railway.app', priority: 1, lastSuccess: null },
+//     { url: 'https://morvo-production.up.railway.app', priority: 2, lastSuccess: null },
+//     { url: 'https://morvo-production.up.railway.app', priority: 3, lastSuccess: null }
+//   ];
+
+//   // حالة الخادم الحالي
+//   private static currentServerIndex = 0;
+//   private static get currentServer(): FallbackServer {
+//     return this.FALLBACK_SERVERS[this.currentServerIndex];
+//   }
+//   private static get currentApiUrl(): string {
+//     return this.currentServer.url;
+//   }
+
+//   // حالة المحادثة
+//   private static conversationId: string | null = sessionStorage.getItem('morvo_conversation_id');
+//   private static lastSuccessfulFormat: string | null = localStorage.getItem('morvo_successful_format');
+//   private static diagnosticHistory: UnifiedDiagnosticResult[] = [];
+//   private static lastHealthCheck: UnifiedConnectionStatus | null = null;
+//   private static retryCount = 0;
+//   private static MAX_RETRIES = 3;
+
+//   // === المصادقة ===
+//   private static async getAuthToken(): Promise<string | null> {
+//     try {
+//       const { data: { session }, error } = await supabase.auth.getSession();
+//       if (error) throw error;
+//       return session?.access_token || null;
+//     } catch (error) {
+//       console.error('❌ Failed to get auth token:', error);
+//       return null;
+//     }
+//   }
+
+//   private static getClientId(): string {
+//     let clientId = localStorage.getItem('morvo_client_id');
+//     if (!clientId) {
+//       clientId = crypto.randomUUID();
+//       localStorage.setItem('morvo_client_id', clientId);
+//     }
+//     return clientId;
+//   }
+
+//   // === إدارة الخوادم ===
+//   private static rotateServer(): void {
+//     // ترتيب الخوادم حسب الأفضلية (الأقل أولوية أولاً) وآخر نجاح
+//     const sortedServers = [...this.FALLBACK_SERVERS].sort((a, b) => {
+//       if (a.lastSuccess && !b.lastSuccess) return -1;
+//       if (!a.lastSuccess && b.lastSuccess) return 1;
+//       return a.priority - b.priority;
+//     });
+
+//     const currentIndex = sortedServers.findIndex(s => s.url === this.currentApiUrl);
+//     this.currentServerIndex = (currentIndex + 1) % sortedServers.length;
+    
+//     console.log(`🔄 Rotating to server: ${this.currentApiUrl}`);
+//     this.retryCount = 0;
+//   }
+
+//   // === التشخيص الشامل ===
+//   static async runComprehensiveDiagnostics(): Promise<UnifiedDiagnosticResult[]> {
+//     console.log('🛠️ Starting comprehensive diagnostics...');
+//     const token = await this.getAuthToken();
+//     const results: UnifiedDiagnosticResult[] = [];
+
+//     // تنسيقات الطلب المختلفة لاختبارها
+//     const testCases = [
+//       {
+//         name: 'simple',
+//         endpoint: '/v1/chat/test',
+//         body: { 
+//           message: 'Diagnostic test', 
+//           client_id: this.getClientId(),
+//           conversation_id: this.conversationId || 'diagnostic-conv'
+//         }
+//       },
+//       {
+//         name: 'basic',
+//         endpoint: '/v1/chat/message',
+//         body: {
+//           message: 'Diagnostic test',
+//           client_id: this.getClientId(),
+//           conversation_id: this.conversationId || 'diagnostic-conv',
+//           language: 'ar',
+//           stream: false
+//         }
+//       },
+//       {
+//         name: 'func-url',
+//         endpoint: '/v1/chat/message?func=chat',
+//         body: {
+//           message: 'Diagnostic test',
+//           client_id: this.getClientId(),
+//           conversation_id: this.conversationId || 'diagnostic-conv',
+//           language: 'ar'
+//         }
+//       }
+//     ];
+
+//     // اختبار كل تنسيق
+//     for (const testCase of testCases) {
+//       const result = await this.testRequestWithRetry(
+//         testCase.name,
+//         testCase.body,
+//         token,
+//         testCase.endpoint
+//       );
+      
+//       results.push(result);
+      
+//       // إذا نجح اختبار، نوقف المزيد من الاختبارات
+//       if (result.success) {
+//         this.lastSuccessfulFormat = testCase.name;
+//         localStorage.setItem('morvo_successful_format', testCase.name);
+//         this.currentServer.lastSuccess = new Date();
+//         break;
+//       }
+//     }
+
+//     // إذا فشلت جميع الاختبارات، ننتقل للخادم التالي
+//     if (!results.some(r => r.success)) {
+//       if (this.retryCount < this.MAX_RETRIES) {
+//         this.retryCount++;
+//         console.log(`🔄 Retrying diagnostics (attempt ${this.retryCount})...`);
+//         await new Promise(resolve => setTimeout(resolve, 1000 * this.retryCount));
+//         return this.runComprehensiveDiagnostics();
+//       } else {
+//         this.rotateServer();
+//         return this.runComprehensiveDiagnostics();
+//       }
+//     }
+
+//     this.diagnosticHistory = results;
+//     return results;
+//   }
+
+//   private static async testRequestWithRetry(
+//     formatName: string,
+//     requestBody: any,
+//     token: string | null,
+//     endpoint: string,
+//     retries = 2
+//   ): Promise<UnifiedDiagnosticResult> {
+//     for (let i = 0; i <= retries; i++) {
+//       const result = await this.testRequest(formatName, requestBody, token, endpoint);
+//       if (result.success) return result;
+//       if (i < retries) await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+//     }
+//     return this.testRequest(formatName, requestBody, token, endpoint);
+//   }
+
+//   private static async testRequest(
+//     formatName: string,
+//     requestBody: any,
+//     token: string | null,
+//     endpoint: string
+//   ): Promise<UnifiedDiagnosticResult> {
+//     const startTime = Date.now();
+    
+//     try {
+//       const headers: Record<string, string> = {
+//         'Content-Type': 'application/json',
+//         'Accept': 'application/json'
+//       };
+
+//       if (token) headers['Authorization'] = `Bearer ${token}`;
+
+//       const controller = new AbortController();
+//       const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+//       const response = await fetch(`${this.currentApiUrl}${endpoint}`, {
+//         method: 'POST',
+//         headers,
+//         body: JSON.stringify(requestBody),
+//         signal: controller.signal
+//       });
+
+//       clearTimeout(timeoutId);
+//       const latency = Date.now() - startTime;
+
+//       if (response.ok) {
+//         const data = await response.json();
+//         return { 
+//           format: formatName, 
+//           success: true, 
+//           status: response.status, 
+//           response: data, 
+//           latency, 
+//           timestamp: new Date() 
+//         };
+//       } else {
+//         const errorText = await response.text();
+//         return { 
+//           format: formatName, 
+//           success: false, 
+//           status: response.status, 
+//           error: `HTTP ${response.status}: ${errorText}`, 
+//           latency, 
+//           timestamp: new Date() 
+//         };
+//       }
+//     } catch (error) {
+//       const latency = Date.now() - startTime;
+//       let errorMessage = 'Network error';
+      
+//       if (error instanceof Error) {
+//         errorMessage = error.name === 'AbortError' ? 'Request timeout' : 
+//                       error.message.includes('CORS') ? 'CORS error' : 
+//                       error.message.includes('502') ? 'Server unavailable' : 
+//                       error.message;
+//       }
+      
+//       return { 
+//         format: formatName, 
+//         success: false, 
+//         error: errorMessage, 
+//         latency, 
+//         timestamp: new Date() 
+//       };
+//     }
+//   }
+
+//   // === إرسال الرسائل ===
+//   static async sendMessage(
+//     message: string, 
+//     context?: UnifiedChatContextData
+//   ): Promise<UnifiedChatResponse> {
+//     // إذا لم يكن هناك تنسيق ناجح، نقوم بالتشخيص أولاً
+//     if (!this.lastSuccessfulFormat) {
+//       await this.runComprehensiveDiagnostics();
+//       if (!this.lastSuccessfulFormat) {
+//         return {
+//           success: false,
+//           message: this.generateSmartFallbackResponse(message, context),
+//           error: 'No working connection format found'
+//         };
+//       }
+//     }
+
+//     const token = await this.getAuthToken();
+//     if (!token) {
+//       return {
+//         success: false,
+//         message: this.generateSmartFallbackResponse(message, context),
+//         error: 'Authentication required'
+//       };
+//     }
+
+//     try {
+//       // تحضير الطلب حسب التنسيق الناجح
+//       const { requestBody, endpoint } = this.prepareRequest(message);
+      
+//       const response = await fetch(`${this.currentApiUrl}${endpoint}`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           'Authorization': `Bearer ${token}`,
+//           'Accept': 'application/json'
+//         },
+//         body: JSON.stringify(requestBody)
+//       });
+
+//       if (!response.ok) {
+//         const errorText = await response.text();
+//         if (response.status === 502 || response.status === 422) {
+//           // إعادة التشخيص والمحاولة مرة أخرى
+//           await this.runComprehensiveDiagnostics();
+//           return this.sendMessage(message, context);
+//         }
+//         throw new Error(`Server error: ${response.status} - ${errorText}`);
+//       }
+
+//       const data = await response.json();
+      
+//       // حفظ حالة المحادثة
+//       if (data.conversation_id) {
+//         this.conversationId = data.conversation_id;
+//         sessionStorage.setItem('morvo_conversation_id', data.conversation_id);
+//       }
+
+//       return {
+//         success: true,
+//         message: data.message || data.response || 'تم استلام رسالتك بنجاح',
+//         conversation_id: data.conversation_id,
+//         processing_time_ms: data.processing_time_ms,
+//         tokens_used: data.tokens_used || 0,
+//         confidence_score: data.confidence_score
+//       };
+//     } catch (error) {
+//       console.error('❌ Error sending message:', error);
+      
+//       // إعادة التشخيص والمحاولة مرة أخرى
+//       await this.runComprehensiveDiagnostics();
+      
+//       return {
+//         success: false,
+//         message: this.generateSmartFallbackResponse(message, context),
+//         error: error instanceof Error ? error.message : 'Connection failed'
+//       };
+//     }
+//   }
+
+//   private static prepareRequest(message: string): { requestBody: any; endpoint: string } {
+//     const baseBody = {
+//       message: message.trim(),
+//       client_id: this.getClientId(),
+//       conversation_id: this.conversationId || `conv-${Date.now()}`
+//     };
+
+//     switch (this.lastSuccessfulFormat) {
+//       case 'simple':
+//         return {
+//           requestBody: baseBody,
+//           endpoint: '/v1/chat/test'
+//         };
+//       case 'func-url':
+//         return {
+//           requestBody: { ...baseBody, language: 'ar' },
+//           endpoint: '/v1/chat/message?func=chat'
+//         };
+//       case 'basic':
+//       default:
+//         return {
+//           requestBody: { ...baseBody, language: 'ar', stream: false },
+//           endpoint: '/v1/chat/message'
+//         };
+//     }
+//   }
+
+//   // === اختبار الاتصال ===
+//   static async testConnection(): Promise<boolean> {
+//     const results = await this.runComprehensiveDiagnostics();
+//     const successfulTests = results.filter(r => r.success);
+    
+//     this.lastHealthCheck = {
+//       isConnected: successfulTests.length > 0,
+//       isHealthy: successfulTests.length > 0,
+//       lastChecked: new Date(),
+//       status: successfulTests.length > 0 ? 'healthy' : 'unhealthy',
+//       latency: successfulTests.length > 0 ? 
+//         Math.min(...successfulTests.map(t => t.latency)) : null,
+//       error: successfulTests.length > 0 ? null : 'All connection tests failed',
+//       serverUrl: this.currentApiUrl,
+//       activeFormat: this.lastSuccessfulFormat
+//     };
+
+//     return successfulTests.length > 0;
+//   }
+
+//   // === معلومات الحالة ===
+//   static getConnectionStatus(): UnifiedConnectionStatus | null {
+//     return this.lastHealthCheck;
+//   }
+
+//   static getDiagnosticResults(): UnifiedDiagnosticResult[] {
+//     return this.diagnosticHistory;
+//   }
+
+//   static getConversationId(): string | null {
+//     return this.conversationId;
+//   }
+
+//   // === إعادة التعيين ===
+//   static resetConversation(): void {
+//     this.conversationId = null;
+//     sessionStorage.removeItem('morvo_conversation_id');
+//     console.log('🔄 Conversation reset');
+//   }
+
+//   static clearCache(): void {
+//     localStorage.removeItem('morvo_successful_format');
+//     localStorage.removeItem('morvo_client_id');
+//     this.lastSuccessfulFormat = null;
+//     this.diagnosticHistory = [];
+//     this.retryCount = 0;
+//     console.log('🧹 Cache cleared');
+//   }
+
+//   // === استجابة ذكية محلية ===
+//   static generateSmartFallbackResponse(message: string, context?: any): string {
+//     const lowerMessage = message.toLowerCase();
+    
+//     if (lowerMessage.includes('موقع') || lowerMessage.includes('تحليل')) {
+//       return this.getSiteAnalysisResponse(context);
+//     }
+    
+//     if (lowerMessage.includes('مرحبا') || lowerMessage.includes('السلام')) {
+//       return this.getGreetingResponse(context);
+//     }
+
+//     return this.getDefaultFallbackResponse(context);
+//   }
+
+//   private static getSiteAnalysisResponse(context: any): string {
+//     return `أستاذ ${context?.user_profile?.greeting_preference || 'العزيز'}، 
+
+// 🔧 **حالة النظام**: يواجه الخادم مشكلة مؤقتة في الاتصال
+
+// رغم المشكلة التقنية، يمكنني مساعدتك في تحليل موقعك:
+
+// **ما يمكنني تحليله:**
+// • أداء الموقع وسرعة التحميل ⚡
+// • تحسين محركات البحث (SEO) 🔍  
+// • تجربة المستخدم والتصميم 🎨
+
+// **معلومات مطلوبة:**
+// • رابط موقعك 🌐
+// • أهدافك التسويقية 🎯
+
+// سأقدم لك تحليلاً كاملاً فور عودة الاتصال!`;
+//   }
+
+//   private static getGreetingResponse(context: any): string {
+//     return `أهلاً ${context?.user_profile?.greeting_preference || 'بك'}! 🌟
+
+// ⚠️ **تنبيه**: الخادم يواجه مشكلة مؤقتة
+
+// أنا هنا لمساعدتك في:
+// • تحليل المواقع 📊
+// • استراتيجيات التسويق 🎯  
+// • إنشاء محتوى احترافي ✨
+
+// كيف يمكنني مساعدتك؟`;
+//   }
+
+//   private static getDefaultFallbackResponse(context: any): string {
+//     return `أستاذ ${context?.user_profile?.greeting_preference || 'العزيز'}، 
+
+// ⚠️ **مشكلة تقنية مؤقتة**: الخادم غير متاح حالياً
+
+// ما زلت أستطيع مساعدتك في:
+// • تحليل المواقع 🌐
+// • استراتيجيات التسويق 📈
+// • إنشاء محتوى مؤثر ✨  
+
+// اضغط إرسال مرة أخرى أو وضح طلبك أكثر!`;
+//   }
+// }
+
 import { supabase } from "@/integrations/supabase/client";
 import type { 
   UnifiedDiagnosticResult, 
@@ -449,7 +907,6 @@ import type {
   UnifiedChatMessage
 } from '@/types/unifiedChat';
 
-// أنواع البيانات
 interface FallbackServer {
   url: string;
   priority: number;
@@ -457,14 +914,12 @@ interface FallbackServer {
 }
 
 export class UnifiedChatService {
-  // قائمة الخوادم الاحتياطية مع أولوياتها
   private static readonly FALLBACK_SERVERS: FallbackServer[] = [
     { url: 'https://morvo-production.up.railway.app', priority: 1, lastSuccess: null },
-    { url: 'https://morvo-production.up.railway.app', priority: 2, lastSuccess: null },
-    { url: 'https://morvo-production.up.railway.app', priority: 3, lastSuccess: null }
+    { url: 'https://morvo-backup1.example.com', priority: 2, lastSuccess: null },
+    { url: 'https://morvo-backup2.example.com', priority: 3, lastSuccess: null }
   ];
 
-  // حالة الخادم الحالي
   private static currentServerIndex = 0;
   private static get currentServer(): FallbackServer {
     return this.FALLBACK_SERVERS[this.currentServerIndex];
@@ -473,7 +928,6 @@ export class UnifiedChatService {
     return this.currentServer.url;
   }
 
-  // حالة المحادثة
   private static conversationId: string | null = sessionStorage.getItem('morvo_conversation_id');
   private static lastSuccessfulFormat: string | null = localStorage.getItem('morvo_successful_format');
   private static diagnosticHistory: UnifiedDiagnosticResult[] = [];
@@ -481,7 +935,6 @@ export class UnifiedChatService {
   private static retryCount = 0;
   private static MAX_RETRIES = 3;
 
-  // === المصادقة ===
   private static async getAuthToken(): Promise<string | null> {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -502,29 +955,17 @@ export class UnifiedChatService {
     return clientId;
   }
 
-  // === إدارة الخوادم ===
   private static rotateServer(): void {
-    // ترتيب الخوادم حسب الأفضلية (الأقل أولوية أولاً) وآخر نجاح
-    const sortedServers = [...this.FALLBACK_SERVERS].sort((a, b) => {
-      if (a.lastSuccess && !b.lastSuccess) return -1;
-      if (!a.lastSuccess && b.lastSuccess) return 1;
-      return a.priority - b.priority;
-    });
-
-    const currentIndex = sortedServers.findIndex(s => s.url === this.currentApiUrl);
-    this.currentServerIndex = (currentIndex + 1) % sortedServers.length;
-    
+    this.currentServerIndex = (this.currentServerIndex + 1) % this.FALLBACK_SERVERS.length;
     console.log(`🔄 Rotating to server: ${this.currentApiUrl}`);
     this.retryCount = 0;
   }
 
-  // === التشخيص الشامل ===
   static async runComprehensiveDiagnostics(): Promise<UnifiedDiagnosticResult[]> {
-    console.log('🛠️ Starting comprehensive diagnostics...');
+    console.log('🛠️ Starting enhanced diagnostics...');
     const token = await this.getAuthToken();
     const results: UnifiedDiagnosticResult[] = [];
 
-    // تنسيقات الطلب المختلفة لاختبارها
     const testCases = [
       {
         name: 'simple',
@@ -533,72 +974,64 @@ export class UnifiedChatService {
           message: 'Diagnostic test', 
           client_id: this.getClientId(),
           conversation_id: this.conversationId || 'diagnostic-conv'
-        }
+        },
+        timeout: 10000
       },
-      // {
-      //   name: 'basic',
-      //   endpoint: '/v1/chat/message',
-      //   body: {
-      //     message: 'Diagnostic test',
-      //     client_id: this.getClientId(),
-      //     conversation_id: this.conversationId || 'diagnostic-conv',
-      //     language: 'ar',
-      //     stream: false
-      //   }
-      // },
       {
         name: 'basic',
-        // endpoint: '/v1/chat/message?func=chat', // أضف هذه المعلمة
-        // endpoint: '/v1/chat/message?func=chat', // أضف هذه المعلمة
-        endpoint: '/v1/chat/test', // أضف هذه المعلمة
+        // endpoint: '/v1/chat/message',
+        endpoint: '/v1/chat/test',
         body: {
           message: 'Diagnostic test',
           client_id: this.getClientId(),
           conversation_id: this.conversationId || 'diagnostic-conv',
           language: 'ar',
-          stream: false
+          stream: false,
+          func: 'chat'
         },
-        timeout: 25000
+        timeout: 15000
       },
       {
         name: 'func-url',
         // endpoint: '/v1/chat/message?func=chat',
-        endpoint: '/v1/chat/message',
+        endpoint: '/v1/chat/test',
+        // queryParams: { func: 'chat' },
         body: {
           message: 'Diagnostic test',
+          // message: 'Help me with SEO for my website',
           client_id: this.getClientId(),
           conversation_id: this.conversationId || 'diagnostic-conv',
-          language: 'ar'
-        }
+          stream: false,
+          // language: 'ar'
+        },
+        timeout: 15000
       }
     ];
 
-    // اختبار كل تنسيق
     for (const testCase of testCases) {
       const result = await this.testRequestWithRetry(
         testCase.name,
         testCase.body,
         token,
-        testCase.endpoint
+        testCase.endpoint,
+        testCase.timeout,
+        testCase.queryParams
       );
       
       results.push(result);
       
-      // إذا نجح اختبار، نوقف المزيد من الاختبارات
       if (result.success) {
         this.lastSuccessfulFormat = testCase.name;
         localStorage.setItem('morvo_successful_format', testCase.name);
         this.currentServer.lastSuccess = new Date();
-        break;
       }
     }
 
-    // إذا فشلت جميع الاختبارات، ننتقل للخادم التالي
     if (!results.some(r => r.success)) {
       if (this.retryCount < this.MAX_RETRIES) {
         this.retryCount++;
         console.log(`🔄 Retrying diagnostics (attempt ${this.retryCount})...`);
-        await new Promise(resolve => setTimeout(resolve, 1000 * this.retryCount));
+        await new Promise(resolve => setTimeout(resolve, 2000 * this.retryCount));
         return this.runComprehensiveDiagnostics();
       } else {
         this.rotateServer();
@@ -615,21 +1048,44 @@ export class UnifiedChatService {
     requestBody: any,
     token: string | null,
     endpoint: string,
-    retries = 2
+    timeout: number = 10000,
+    queryParams?: Record<string, string>,
+    retries: number = 2
   ): Promise<UnifiedDiagnosticResult> {
     for (let i = 0; i <= retries; i++) {
-      const result = await this.testRequest(formatName, requestBody, token, endpoint);
+      const result = await this.testRequest(
+        formatName,
+        requestBody,
+        token,
+        endpoint,
+        timeout,
+        queryParams
+      );
+      
       if (result.success) return result;
-      if (i < retries) await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      
+      if (i < retries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      }
     }
-    return this.testRequest(formatName, requestBody, token, endpoint);
+    
+    return this.testRequest(
+      formatName,
+      requestBody,
+      token,
+      endpoint,
+      timeout,
+      queryParams
+    );
   }
 
   private static async testRequest(
     formatName: string,
     requestBody: any,
     token: string | null,
-    endpoint: string
+    endpoint: string,
+    timeout: number,
+    queryParams?: Record<string, string>
   ): Promise<UnifiedDiagnosticResult> {
     const startTime = Date.now();
     
@@ -641,10 +1097,19 @@ export class UnifiedChatService {
 
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      let url = `${this.currentApiUrl}${endpoint}`;
+      if (queryParams) {
+        const queryString = new URLSearchParams(queryParams).toString();
+        url += `?${queryString}`;
+      }
 
-      const response = await fetch(`${this.currentApiUrl}${endpoint}`, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      console.log(`Sending ${formatName} request to: ${url}`);
+      console.log('Request body:', requestBody);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(requestBody),
@@ -656,23 +1121,23 @@ export class UnifiedChatService {
 
       if (response.ok) {
         const data = await response.json();
-        return { 
-          format: formatName, 
-          success: true, 
-          status: response.status, 
-          response: data, 
-          latency, 
-          timestamp: new Date() 
+        return {
+          format: formatName,
+          success: true,
+          status: response.status,
+          response: data,
+          latency,
+          timestamp: new Date()
         };
       } else {
         const errorText = await response.text();
-        return { 
-          format: formatName, 
-          success: false, 
-          status: response.status, 
-          error: `HTTP ${response.status}: ${errorText}`, 
-          latency, 
-          timestamp: new Date() 
+        return {
+          format: formatName,
+          success: false,
+          status: response.status,
+          error: `HTTP ${response.status}: ${errorText}`,
+          latency,
+          timestamp: new Date()
         };
       }
     } catch (error) {
@@ -682,26 +1147,23 @@ export class UnifiedChatService {
       if (error instanceof Error) {
         errorMessage = error.name === 'AbortError' ? 'Request timeout' : 
                       error.message.includes('CORS') ? 'CORS error' : 
-                      error.message.includes('502') ? 'Server unavailable' : 
                       error.message;
       }
       
-      return { 
-        format: formatName, 
-        success: false, 
-        error: errorMessage, 
-        latency, 
-        timestamp: new Date() 
+      return {
+        format: formatName,
+        success: false,
+        error: errorMessage,
+        latency,
+        timestamp: new Date()
       };
     }
   }
 
-  // === إرسال الرسائل ===
   static async sendMessage(
     message: string, 
     context?: UnifiedChatContextData
   ): Promise<UnifiedChatResponse> {
-    // إذا لم يكن هناك تنسيق ناجح، نقوم بالتشخيص أولاً
     if (!this.lastSuccessfulFormat) {
       await this.runComprehensiveDiagnostics();
       if (!this.lastSuccessfulFormat) {
@@ -723,23 +1185,33 @@ export class UnifiedChatService {
     }
 
     try {
-      // تحضير الطلب حسب التنسيق الناجح
-      const { requestBody, endpoint } = this.prepareRequest(message);
+      const { requestBody, endpoint, queryParams, timeout } = this.prepareRequest(message);
       
-      const response = await fetch(`${this.currentApiUrl}${endpoint}`, {
+      let url = `${this.currentApiUrl}${endpoint}`;
+      if (queryParams) {
+        const queryString = new URLSearchParams(queryParams).toString();
+        url += `?${queryString}`;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout || 15000);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
-        if (response.status === 502 || response.status === 422) {
-          // إعادة التشخيص والمحاولة مرة أخرى
+        if (response.status === 422) {
           await this.runComprehensiveDiagnostics();
           return this.sendMessage(message, context);
         }
@@ -748,7 +1220,6 @@ export class UnifiedChatService {
 
       const data = await response.json();
       
-      // حفظ حالة المحادثة
       if (data.conversation_id) {
         this.conversationId = data.conversation_id;
         sessionStorage.setItem('morvo_conversation_id', data.conversation_id);
@@ -764,8 +1235,6 @@ export class UnifiedChatService {
       };
     } catch (error) {
       console.error('❌ Error sending message:', error);
-      
-      // إعادة التشخيص والمحاولة مرة أخرى
       await this.runComprehensiveDiagnostics();
       
       return {
@@ -776,7 +1245,12 @@ export class UnifiedChatService {
     }
   }
 
-  private static prepareRequest(message: string): { requestBody: any; endpoint: string } {
+  private static prepareRequest(message: string): { 
+    requestBody: any; 
+    endpoint: string; 
+    queryParams?: Record<string, string>;
+    timeout?: number;
+  } {
     const baseBody = {
       message: message.trim(),
       client_id: this.getClientId(),
@@ -787,24 +1261,41 @@ export class UnifiedChatService {
       case 'simple':
         return {
           requestBody: baseBody,
-          endpoint: '/v1/chat/test'
+          endpoint: '/v1/chat/test',
+          timeout: 10000
+        };
+      case 'basic':
+        return {
+          requestBody: { 
+            ...baseBody, 
+            language: 'ar',
+            stream: false,
+            func: 'chat'
+          },
+          // endpoint: '/v1/chat/message',
+          endpoint: '/v1/chat/test',
+          timeout: 15000
         };
       case 'func-url':
         return {
-          requestBody: { ...baseBody, language: 'ar' },
-          endpoint: '/v1/chat/message'
+          requestBody: { 
+            ...baseBody, 
+            language: 'ar'
+          },
+          endpoint: '/v1/chat/test',
+          // endpoint: '/v1/chat/message?func=chat',
+          // queryParams: { func: 'chat' },
+          timeout: 15000
         };
-      case 'basic':
       default:
         return {
-          requestBody: { ...baseBody, language: 'ar', stream: false },
-          // endpoint: '/v1/chat/message'
-          endpoint: '/v1/chat/test'
+          requestBody: baseBody,
+          endpoint: '/v1/chat/test',
+          timeout: 10000
         };
     }
   }
 
-  // === اختبار الاتصال ===
   static async testConnection(): Promise<boolean> {
     const results = await this.runComprehensiveDiagnostics();
     const successfulTests = results.filter(r => r.success);
@@ -824,7 +1315,6 @@ export class UnifiedChatService {
     return successfulTests.length > 0;
   }
 
-  // === معلومات الحالة ===
   static getConnectionStatus(): UnifiedConnectionStatus | null {
     return this.lastHealthCheck;
   }
@@ -837,7 +1327,6 @@ export class UnifiedChatService {
     return this.conversationId;
   }
 
-  // === إعادة التعيين ===
   static resetConversation(): void {
     this.conversationId = null;
     sessionStorage.removeItem('morvo_conversation_id');
@@ -853,23 +1342,11 @@ export class UnifiedChatService {
     console.log('🧹 Cache cleared');
   }
 
-  // === استجابة ذكية محلية ===
   static generateSmartFallbackResponse(message: string, context?: any): string {
     const lowerMessage = message.toLowerCase();
     
     if (lowerMessage.includes('موقع') || lowerMessage.includes('تحليل')) {
-      return this.getSiteAnalysisResponse(context);
-    }
-    
-    if (lowerMessage.includes('مرحبا') || lowerMessage.includes('السلام')) {
-      return this.getGreetingResponse(context);
-    }
-
-    return this.getDefaultFallbackResponse(context);
-  }
-
-  private static getSiteAnalysisResponse(context: any): string {
-    return `أستاذ ${context?.user_profile?.greeting_preference || 'العزيز'}، 
+      return `أستاذ ${context?.user_profile?.greeting_preference || 'العزيز'}، 
 
 🔧 **حالة النظام**: يواجه الخادم مشكلة مؤقتة في الاتصال
 
@@ -885,10 +1362,10 @@ export class UnifiedChatService {
 • أهدافك التسويقية 🎯
 
 سأقدم لك تحليلاً كاملاً فور عودة الاتصال!`;
-  }
-
-  private static getGreetingResponse(context: any): string {
-    return `أهلاً ${context?.user_profile?.greeting_preference || 'بك'}! 🌟
+    }
+    
+    if (lowerMessage.includes('مرحبا') || lowerMessage.includes('السلام')) {
+      return `أهلاً ${context?.user_profile?.greeting_preference || 'بك'}! 🌟
 
 ⚠️ **تنبيه**: الخادم يواجه مشكلة مؤقتة
 
@@ -898,9 +1375,8 @@ export class UnifiedChatService {
 • إنشاء محتوى احترافي ✨
 
 كيف يمكنني مساعدتك؟`;
-  }
+    }
 
-  private static getDefaultFallbackResponse(context: any): string {
     return `أستاذ ${context?.user_profile?.greeting_preference || 'العزيز'}، 
 
 ⚠️ **مشكلة تقنية مؤقتة**: الخادم غير متاح حالياً
@@ -913,8 +1389,6 @@ export class UnifiedChatService {
 اضغط إرسال مرة أخرى أو وضح طلبك أكثر!`;
   }
 }
-
-
 
 
 // import { supabase } from "@/integrations/supabase/client";
