@@ -1,4 +1,3 @@
-
 import { UserProfileService, UserProfile } from './userProfileService';
 
 export class IntelligentAgentService {
@@ -60,7 +59,8 @@ export class IntelligentAgentService {
     const companyName = profile.company_name || 'صديقي';
     const industry = profile.industry;
     const hasWebsite = profile.website_url;
-    const hasAnalysis = profile.seo_data && profile.last_seo_update;
+    // Fix: Convert to boolean properly
+    const hasAnalysis = !!(profile.seo_data && profile.last_seo_update);
     const isOnboardingComplete = profile.onboarding_completed || false;
 
     switch (intent) {

@@ -145,7 +145,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         
       } catch (backendError) {
         console.warn('⚠️ Enhanced backend failed, using local response:', backendError);
-        botResponse = generateContextualResponse(messageText);
+        // Fix: Await the async function call
+        botResponse = await generateContextualResponse(messageText);
         processingTime = 100;
         endpointUsed = 'local_fallback';
         setIsConnected(false);
