@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChatInterface } from "@/components/ChatInterface";
+import { UnifiedChatInterface } from "@/components/UnifiedChatInterface";
 import { DynamicContentPanel } from "@/components/DynamicContentPanel";
 import { JourneyPhaseHandler } from "@/components/onboarding/JourneyPhaseHandler";
 import { PerplexityTest } from "@/components/PerplexityTest";
@@ -27,7 +27,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
       {/* Chat Panel - Left side with improved visibility */}
       <div className="w-1/2 bg-gray-900/85 backdrop-blur-md border-r border-white/10 relative z-10 shadow-xl">
         <div className="relative z-10 h-full">
-          <ChatInterface 
+          <UnifiedChatInterface 
             onContentTypeChange={onContentTypeChange}
             onMessageSent={onMessageSent}
           />

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Bug, X, RefreshCw, Activity, Wifi, AlertTriangle } from 'lucide-react';
-import { UnifiedDiagnostics } from '@/services/unifiedDiagnostics';
+import { UnifiedChatService } from '@/services/unifiedChatService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +25,8 @@ export const EnhancedDebugPanel: React.FC<EnhancedDebugPanelProps> = ({ isVisibl
   }, [isVisible]);
 
   const loadDiagnosticData = async () => {
-    const connectionStatus = UnifiedDiagnostics.getConnectionStatus();
-    const history = UnifiedDiagnostics.getDiagnosticResults();
+    const connectionStatus = UnifiedChatService.getConnectionStatus();
+    const history = UnifiedChatService.getDiagnosticResults();
     
     setDiagnosticData(connectionStatus);
     setDiagnosticHistory(history);
@@ -35,8 +35,8 @@ export const EnhancedDebugPanel: React.FC<EnhancedDebugPanelProps> = ({ isVisibl
   const runFullDiagnostic = async () => {
     setIsRunningDiagnostic(true);
     try {
-      const isConnected = await UnifiedDiagnostics.testConnection();
-      const results = UnifiedDiagnostics.getDiagnosticResults();
+      const isConnected = await UnifiedChatService.testConnection();
+      const results = UnifiedChatService.getDiagnosticResults();
       setDiagnosticHistory(results);
       
       console.log('✅ Full diagnostic test completed:', { isConnected, results });
@@ -110,10 +110,10 @@ export const EnhancedDebugPanel: React.FC<EnhancedDebugPanelProps> = ({ isVisibl
               <RefreshCw className={`w-3 h-3 mr-1 ${isRunningDiagnostic ? 'animate-spin' : ''}`} />
               {isRunningDiagnostic ? 'Testing...' : 'Full Test'}
             </Button>
-            <Button size="sm" variant="outline" onClick={() => UnifiedDiagnostics.resetConversation()}>
+            <Button size="sm" variant="outline" onClick={() => UnifiedChatService.resetConversation()}>
               Reset Chat
             </Button>
-            <Button size="sm" variant="outline" onClick={() => UnifiedDiagnostics.clearDiagnosticCache()}>
+            <Button size="sm" variant="outline" onClick={() => UnifiedChatService.clearDiagnosticCache()}>
               Clear
             </Button>
           </div>

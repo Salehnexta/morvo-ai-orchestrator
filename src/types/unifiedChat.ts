@@ -1,8 +1,7 @@
 
-// 🎯 ملف الأنواع المركزي الموحد للشات
-// يحل تكرار MessageData وجميع الأنواع الأخرى
+// 🎯 ملف الأنواع الموحد الكامل - يدمج جميع أنواع الشات
 
-// === رسائل الشات ===
+// === رسائل الشات الموحدة ===
 export interface UnifiedMessageData {
   id: string;
   content: string;
@@ -23,7 +22,13 @@ export interface UnifiedMessageData {
   };
 }
 
-// === تشخيص النظام ===
+// === رسائل المحادثة ===
+export interface UnifiedChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+// === نتائج التشخيص الموحدة ===
 export interface UnifiedDiagnosticResult {
   format: string;
   success: boolean;
@@ -37,17 +42,18 @@ export interface UnifiedDiagnosticResult {
   requestFormat?: string;
 }
 
+// === حالة الاتصال الموحدة ===
 export interface UnifiedConnectionStatus {
   isConnected: boolean;
   isHealthy: boolean;
-  lastChecked: Date | null;
+  lastChecked: Date;
   serverInfo?: any;
-  error?: string | null;
+  error?: string;
   latency?: number;
   status?: 'healthy' | 'degraded' | 'failed';
 }
 
-// === استجابة الشات ===
+// === استجابة الشات الموحدة ===
 export interface UnifiedChatResponse {
   message: string;
   conversation_id?: string;
@@ -58,15 +64,10 @@ export interface UnifiedChatResponse {
   confidence_score?: number;
 }
 
-// === حالة المعالجة ===
+// === حالة المعالجة الموحدة ===
 export type UnifiedProcessingStatus = 'idle' | 'sending' | 'diagnosing';
 
-// === سياق الشات ===
-export interface UnifiedChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
+// === بيانات السياق الموحدة ===
 export interface UnifiedChatContextData {
   conversation_history?: UnifiedChatMessage[];
   user_profile?: any;
@@ -75,7 +76,7 @@ export interface UnifiedChatContextData {
   user_id?: string;
 }
 
-// === إعدادات الواجهة ===
+// === إعدادات الشات الموحدة ===
 export interface UnifiedChatSettings {
   theme: 'light' | 'dark';
   language: 'ar' | 'en';
@@ -84,11 +85,33 @@ export interface UnifiedChatSettings {
   autoConnect: boolean;
 }
 
-// === مقاييس الأداء ===
+// === مقاييس الأداء الموحدة ===
 export interface UnifiedPerformanceMetrics {
   averageResponseTime: number;
   totalMessages: number;
   successRate: number;
   errorRate: number;
   lastUpdated: Date;
+}
+
+// === التشخيص الشامل الموحد ===
+export interface UnifiedComprehensiveDiagnostic {
+  id: string;
+  timestamp: Date;
+  results: UnifiedDiagnosticResult[];
+  overallStatus: 'healthy' | 'degraded' | 'failed';
+  recommendations: string[];
+}
+
+// === استجابة الخدمة الموحدة ===
+export interface UnifiedServiceResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  metadata?: {
+    processingTime?: number;
+    tokensUsed?: number;
+    endpoint?: string;
+    timestamp: Date;
+  };
 }

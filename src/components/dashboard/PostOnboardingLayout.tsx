@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChatInterface } from "@/components/ChatInterface";
+import { UnifiedChatInterface } from "@/components/UnifiedChatInterface";
 import { SidebarContentManager } from "@/components/sidebar/SidebarContentManager";
 
 interface PostOnboardingLayoutProps {
@@ -33,7 +33,7 @@ export const PostOnboardingLayout: React.FC<PostOnboardingLayoutProps> = ({
       <div className="w-[40%] bg-black/30 backdrop-blur-xl border-l border-white/10 relative z-10 shadow-2xl">
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
         <div className="relative z-10 h-full">
-          <ChatInterface 
+          <UnifiedChatInterface 
             onContentTypeChange={onContentTypeChange}
             onMessageSent={onMessageSent}
           />
