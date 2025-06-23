@@ -134,8 +134,8 @@ export class EnhancedMorvoAIService {
   }
 
   private static async sendAuthenticatedMessage(message: string, token: string, context?: any): Promise<EnhancedChatResponse> {
-    // Add the required func parameter to the URL
-    const url = `${this.API_URL}/v1/chat/message?func=chat`;
+    // Remove the func parameter - just use the base endpoint
+    const url = `${this.API_URL}/v1/chat/message`;
     
     const response = await fetch(url, {
       method: 'POST',
