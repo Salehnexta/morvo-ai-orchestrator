@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -11,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { RailwayBackendTest } from "@/components/RailwayBackendTest";
 
 export const Login = () => {
   const { language, isRTL } = useLanguage();
@@ -22,6 +22,7 @@ export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showBackendTest, setShowBackendTest] = useState(false);
 
   const content = {
     ar: {
@@ -129,7 +130,7 @@ export const Login = () => {
     <div className={`min-h-screen flex items-center justify-center p-4 ${
       theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
     }`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md space-y-6">
         <Link 
           to="/" 
           className={`inline-flex items-center gap-2 mb-8 text-sm text-gray-600 hover:text-gray-900 transition-colors ${
@@ -139,6 +140,19 @@ export const Login = () => {
           <BackIcon className="w-4 h-4" />
           {t.backToHome}
         </Link>
+
+        {/* Railway Backend Test Panel */}
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => setShowBackendTest(!showBackendTest)}
+            className="w-full mb-4"
+          >
+            {showBackendTest ? 'إخفاء اختبار Railway' : 'اختبار اتصال Railway'}
+          </Button>
+          
+          {showBackendTest && <RailwayBackendTest />}
+        </div>
 
         <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
           <CardHeader className={`text-center ${isRTL ? 'text-right' : 'text-left'}`}>
