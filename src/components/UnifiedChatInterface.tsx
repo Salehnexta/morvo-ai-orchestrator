@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Send, Loader2, Bug, RefreshCw, Bot, User, Wifi, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Send, Loader2, Bug, RefreshCw, Bot, User, Wifi, CheckCircle, AlertTriangle, Server } from 'lucide-react';
 import { useUnifiedChat } from '@/hooks/useUnifiedChat';
 
 interface UnifiedChatInterfaceProps {
@@ -31,6 +32,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
     showDiagnostics,
     setShowDiagnostics,
     performanceMetrics,
+    serverIssues,
     
     // المراجع
     messagesEndRef,
@@ -77,11 +79,21 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
       );
     }
 
+    if (serverIssues) {
+      return (
+        <Badge variant="destructive" className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+          <Server className="w-3 h-3" />
+          <span className="text-xs">{t.localMode}</span>
+        </Badge>
+      );
+    }
+
     return (
       <Badge variant="outline" className="flex items-center gap-1">
         <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
         {isConnected ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-        <span className="text-xs">{isConnected ? t.connected : 'غير متصل'}</span>
+        <span className="text-xs">{isConnected ? t.connected : t.serverDown}</span>
       </Badge>
     );
   };
@@ -113,7 +125,10 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
       {/* === رأس الصفحة الموحد === */}
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-2 border-b">
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold">{t.masterAgent}</h1>
+          <h1 className="text-lg font-semibold flex items-center gap-2">
+            <Bot className="w-5 h-5" />
+            {t.masterAgent}
+          </h1>
           {getConnectionBadge()}
           {getProcessingBadge()}
         </div>
@@ -155,6 +170,25 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         </div>
       </CardHeader>
 
+      {/* === تحذير المشاكل التقنية === */}
+      {serverIssues && (
+        <Alert className="m-3 border-orange-200 bg-orange-50 dark:bg-orange-950/10">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="text-sm">
+            <strong>مشكلة تقنية:</strong> {serverIssues} - النظام يعمل في النمط المحلي
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={runDiagnostics}
+              className="ml-2 h-6 text-xs"
+              disabled={processingStatus === 'diagnosing'}
+            >
+              إعادة محاولة الاتصال
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* === لوحة التشخيص === */}
       {showDiagnostics && diagnosticResults.length > 0 && (
         <div className="p-3 bg-gray-50 dark:bg-gray-800 border-b">
@@ -169,6 +203,11 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                   {result.success ? '✅ نجح' : '❌ فشل'}
                 </div>
                 {result.latency && <div className="text-gray-500">{result.latency}ms</div>}
+                {!result.success && result.error && (
+                  <div className="text-xs text-red-500 mt-1 truncate" title={result.error}>
+                    {result.error}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -185,6 +224,8 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                   message.sender === 'user' 
                     ? 'bg-blue-500 text-white' 
+                    : message.metadata?.serverIssue
+                    ? 'bg-orange-500 text-white'
                     : 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
                 }`}>
                   {message.sender === 'user' ? <User size={16} /> : <Bot size={16} />}
@@ -195,12 +236,14 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                   <div className={`inline-block p-3 rounded-lg ${
                     message.sender === 'user'
                       ? 'bg-blue-500 text-white'
+                      : message.metadata?.serverIssue
+                      ? 'bg-orange-50 dark:bg-orange-950/20 border border-orange-200 text-gray-900 dark:text-gray-100'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                   }`}>
                     <div className="whitespace-pre-wrap">{message.content}</div>
                     
                     {/* معلومات إضافية */}
-                    <div className={`text-xs opacity-70 mt-1 flex items-center gap-2 ${
+                    <div className={`text-xs mt-1 flex items-center gap-2 flex-wrap ${
                       message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                     }`}>
                       <span>{message.timestamp.toLocaleTimeString('ar-SA', { 
@@ -221,6 +264,12 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                           {message.metadata.endpointUsed}
                         </Badge>
                       )}
+
+                      {message.metadata?.serverIssue && (
+                        <Badge variant="destructive" className="text-xs px-1 py-0">
+                          محلي
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -237,7 +286,11 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                   <div className="inline-block p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>{processingStatus === 'sending' ? 'جاري الإرسال...' : processingStatus === 'diagnosing' ? 'جاري التشخيص...' : t.thinking}</span>
+                      <span>
+                        {processingStatus === 'sending' ? 'جاري الإرسال...' : 
+                         processingStatus === 'diagnosing' ? 'جاري التشخيص...' : 
+                         t.thinking}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -255,8 +308,10 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
-            placeholder={t.placeholder}
-            className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}
+            placeholder={serverIssues ? `${t.placeholder} (النمط المحلي)` : t.placeholder}
+            className={`flex-1 ${isRTL ? 'text-right' : 'text-left'} ${
+              serverIssues ? 'border-orange-300 focus:border-orange-500' : ''
+            }`}
             disabled={isLoading || processingStatus !== 'idle'}
             dir={isRTL ? 'rtl' : 'ltr'}
           />
