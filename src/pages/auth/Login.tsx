@@ -38,7 +38,9 @@ export const Login = () => {
       microsoft: "مايكروسوفت",
       loginSuccess: "تم تسجيل الدخول بنجاح",
       loginError: "خطأ في تسجيل الدخول",
-      invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+      invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+      authServiceError: "خطأ في خدمة المصادقة. يرجى التواصل مع الدعم الفني",
+      configError: "خطأ في إعدادات النظام. يرجى التواصل مع المطور"
     },
     en: {
       title: "Sign In",
@@ -55,7 +57,9 @@ export const Login = () => {
       microsoft: "Microsoft",
       loginSuccess: "Login successful",
       loginError: "Login error",
-      invalidCredentials: "Invalid email or password"
+      invalidCredentials: "Invalid email or password",
+      authServiceError: "Authentication service error. Please contact support",
+      configError: "System configuration error. Please contact developer"
     }
   };
 
@@ -65,14 +69,9 @@ export const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('📝 Login form submitted:', { 
-      email, 
-      passwordLength: password.length,
-      timestamp: new Date().toISOString()
-    });
+    console.log('📝 Login form submitted for:', email);
     
     if (!email.trim() || !password.trim()) {
-      console.warn('⚠️ Empty fields detected');
       toast({
         title: t.loginError,
         description: "Please fill in all fields",
@@ -84,23 +83,23 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
-      console.log('🔄 Calling signIn function...');
       const { error } = await signIn(email, password);
 
       if (error) {
-        console.error('❌ Login failed:', {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        });
+        console.error('❌ Login failed:', error);
         
         let errorMessage = error.message;
+        
+        // Handle specific error types
         if (error.message === "Invalid login credentials") {
           errorMessage = t.invalidCredentials;
+        } else if (error.message.includes("Invalid API key")) {
+          errorMessage = t.configError;
+          console.error('🚨 CRITICAL: Invalid Supabase API key detected!');
         } else if (error.message.includes("Email not confirmed")) {
           errorMessage = "Please check your email and confirm your account before signing in.";
-        } else if (error.message.includes("Invalid API key")) {
-          errorMessage = "Authentication service error. Please contact support.";
+        } else {
+          errorMessage = t.authServiceError;
         }
         
         toast({
@@ -109,7 +108,7 @@ export const Login = () => {
           variant: "destructive",
         });
       } else {
-        console.log('✅ Login successful, redirecting to dashboard...');
+        console.log('✅ Login successful, redirecting...');
         toast({
           title: t.loginSuccess,
           description: t.subtitle,
@@ -120,7 +119,7 @@ export const Login = () => {
       console.error('❌ Unexpected login error:', error);
       toast({
         title: t.loginError,
-        description: "An unexpected error occurred. Please try again.",
+        description: t.authServiceError,
         variant: "destructive",
       });
     } finally {

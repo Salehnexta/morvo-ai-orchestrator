@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,25 +36,11 @@ export const useUserAuth = (): UseUserAuthResult => {
         
         setSession(session);
         setUser(session?.user ?? null);
-        
-        if (event === 'SIGNED_IN') {
-          console.log('✅ User signed in successfully:', session?.user?.email);
-          setTimeout(() => {
-            if (mounted) setLoading(false);
-          }, 100);
-        } else if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out');
-          localStorage.removeItem('sb-teniefzxdikestahdnur-auth-token');
-          if (mounted) setLoading(false);
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('🔄 Token refreshed successfully');
-        } else if (event === 'INITIAL_SESSION') {
-          console.log('🔐 Initial session loaded:', !!session);
-          if (mounted) setLoading(false);
-        }
+        setLoading(false);
       }
     );
 
+    // Get initial session
     const getInitialSession = async () => {
       try {
         console.log('🔐 Getting initial session...');
@@ -63,34 +48,22 @@ export const useUserAuth = (): UseUserAuthResult => {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('❌ Error getting session:', {
-            message: error.message,
-            status: error.status,
-            details: error
-          });
-          const storedSession = localStorage.getItem('sb-teniefzxdikestahdnur-auth-token');
-          if (storedSession && mounted) {
-            console.log('🔄 Attempting session recovery...');
-            await supabase.auth.refreshSession();
+          console.error('❌ Error getting session:', error);
+          if (error.message.includes('Invalid API key')) {
+            console.error('🚨 INVALID API KEY - Please check your Supabase configuration');
           }
         } else {
-          console.log('🔐 Initial session loaded:', {
-            hasSession: !!session,
-            hasUser: !!session?.user,
-            userEmail: session?.user?.email
-          });
+          console.log('🔐 Initial session retrieved:', !!session);
           if (mounted) {
             setSession(session);
             setUser(session?.user ?? null);
           }
         }
       } catch (error) {
-        console.error('❌ Error in getInitialSession:', error);
+        console.error('❌ Unexpected error in getInitialSession:', error);
       } finally {
         if (mounted) {
-          setTimeout(() => {
-            if (mounted) setLoading(false);
-          }, 500);
+          setLoading(false);
         }
       }
     };
@@ -106,7 +79,7 @@ export const useUserAuth = (): UseUserAuthResult => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('🔐 Attempting sign in:', { email, timestamp: new Date().toISOString() });
+      console.log('🔐 Attempting sign in for:', email);
       setLoading(true);
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -115,25 +88,20 @@ export const useUserAuth = (): UseUserAuthResult => {
       });
       
       if (error) {
-        console.error('❌ Sign in error:', {
-          message: error.message,
-          status: error.status,
-          details: error
-        });
-        setLoading(false);
+        console.error('❌ Sign in error:', error);
+        if (error.message.includes('Invalid API key')) {
+          console.error('🚨 API KEY ISSUE - The Supabase anon key is invalid or expired');
+        }
       } else {
-        console.log('✅ Sign in successful:', {
-          hasUser: !!data.user,
-          hasSession: !!data.session,
-          userEmail: data.user?.email
-        });
+        console.log('✅ Sign in successful for:', email);
       }
       
       return { error };
     } catch (error) {
       console.error('❌ Unexpected sign in error:', error);
-      setLoading(false);
       return { error: error as AuthError };
+    } finally {
+      setLoading(false);
     }
   };
 
