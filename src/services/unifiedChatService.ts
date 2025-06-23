@@ -69,6 +69,8 @@ export class UnifiedChatService {
       
       // Add diagnostic info
       this.addDiagnosticInfo({
+        format: 'morvo-ai-core',
+        success: true,
         timestamp: new Date().toISOString(),
         endpoint: 'morvo-ai-core',
         status: 'success',
@@ -105,6 +107,8 @@ export class UnifiedChatService {
       
       // Add diagnostic info
       this.addDiagnosticInfo({
+        format: 'morvo-ai-core',
+        success: false,
         timestamp: new Date().toISOString(),
         endpoint: 'morvo-ai-core',
         status: 'error',

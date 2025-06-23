@@ -9,6 +9,84 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      a2a_messages: {
+        Row: {
+          id: string
+          message: string
+          source_agent_id: string
+          target_agent_id: string
+          timestamp: string
+        }
+        Insert: {
+          id?: string
+          message: string
+          source_agent_id: string
+          target_agent_id: string
+          timestamp?: string
+        }
+        Update: {
+          id?: string
+          message?: string
+          source_agent_id?: string
+          target_agent_id?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
+      agent_metrics: {
+        Row: {
+          agent_id: string
+          id: string
+          metric_name: string
+          metric_value: number
+          timestamp: string
+        }
+        Insert: {
+          agent_id: string
+          id?: string
+          metric_name: string
+          metric_value: number
+          timestamp?: string
+        }
+        Update: {
+          agent_id?: string
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          timestamp?: string
+        }
+        Relationships: []
+      }
+      agents: {
+        Row: {
+          active: boolean
+          agent_id: string
+          created_at: string
+          description: string | null
+          goal: string | null
+          name: string
+          type: string
+        }
+        Insert: {
+          active?: boolean
+          agent_id: string
+          created_at?: string
+          description?: string | null
+          goal?: string | null
+          name: string
+          type: string
+        }
+        Update: {
+          active?: boolean
+          agent_id?: string
+          created_at?: string
+          description?: string | null
+          goal?: string | null
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           active: boolean | null
