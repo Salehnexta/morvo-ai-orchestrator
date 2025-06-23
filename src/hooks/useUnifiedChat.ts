@@ -309,7 +309,7 @@ export const useUnifiedChat = () => {
     UnifiedChatService.clearDiagnosticCache();
     setDiagnosticResults([]);
     setShowDiagnostics(false);
-    setConnection(false);
+    setIsConnected(false);
     
     toast({
       title: language === 'ar' ? 'تم إعادة التعيين' : 'Chat Reset',

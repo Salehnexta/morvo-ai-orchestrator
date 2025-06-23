@@ -10,12 +10,12 @@ import type {
 } from '@/types/unifiedChat';
 
 export class UnifiedChatService {
-  private static readonly API_URL = 'https://morvo-production.up.railway.app';
   private static readonly FALLBACK_URLS = [
     'https://morvo-production.up.railway.app',
     'https://api.morvo.ai',
     'https://backup.morvo.ai'
   ];
+  private static currentApiUrl = 'https://morvo-production.up.railway.app';
   private static conversationId: string | null = sessionStorage.getItem('morvo_conversation_id');
   private static lastSuccessfulFormat: string | null = localStorage.getItem('morvo_successful_format');
   private static diagnosticHistory: UnifiedDiagnosticResult[] = [];
@@ -57,7 +57,7 @@ export class UnifiedChatService {
       
       if (simpleResult.success) {
         // إذا نجح، حفظ الـ URL الناجح
-        this.API_URL = baseUrl;
+        this.currentApiUrl = baseUrl;
         results.push(simpleResult);
         break;
       } else {
@@ -105,7 +105,7 @@ export class UnifiedChatService {
     customBaseUrl?: string
   ): Promise<UnifiedDiagnosticResult> {
     const startTime = Date.now();
-    const baseUrl = customBaseUrl || this.API_URL;
+    const baseUrl = customBaseUrl || this.currentApiUrl;
     
     try {
       const headers: Record<string, string> = {
@@ -226,7 +226,7 @@ export class UnifiedChatService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch(`${this.API_URL}/v1/chat/message${urlSuffix}`, {
+      const response = await fetch(`${this.currentApiUrl}/v1/chat/message${urlSuffix}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
