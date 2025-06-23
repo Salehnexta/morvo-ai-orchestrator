@@ -1,4 +1,3 @@
-
 // 🎯 خدمة الشات الموحدة - تدمج جميع الخدمات في مكان واحد
 import { supabase } from "@/integrations/supabase/client";
 import type { 
@@ -196,14 +195,16 @@ export class UnifiedChatService {
       
       let requestBody: any;
       let urlSuffix = '';
+      let endpoint = '/v1/chat/message';
 
-      // استخدام التنسيق الناجح المحفوظ
+      // 🆕 إصلاح: استخدام التنسيق الناجح المحفوظ بشكل صحيح
       if (this.lastSuccessfulFormat === 'simple') {
         requestBody = {
           message: message.trim(),
           client_id: this.getClientId(),
           conversation_id: this.conversationId || `unified-conv-${Date.now()}`
         };
+        // التنسيق البسيط يستخدم نفس endpoint بدون معاملات
       } else if (this.lastSuccessfulFormat === 'func-url') {
         requestBody = {
           message: message.trim(),
@@ -213,7 +214,7 @@ export class UnifiedChatService {
           stream: false
         };
         urlSuffix = '?func=chat';
-      } else {
+      } else if (this.lastSuccessfulFormat === 'basic') {
         requestBody = {
           message: message.trim(),
           client_id: this.getClientId(),
@@ -221,12 +222,25 @@ export class UnifiedChatService {
           language: 'ar',
           stream: false
         };
+        urlSuffix = '?func=chat'; // 🆕 إصلاح: basic format أيضاً يحتاج func=chat
+      } else {
+        // الافتراضي - نجرب func-url أولاً
+        requestBody = {
+          message: message.trim(),
+          client_id: this.getClientId(),
+          conversation_id: this.conversationId || `unified-conv-${Date.now()}`,
+          language: 'ar',
+          stream: false
+        };
+        urlSuffix = '?func=chat';
       }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch(`${this.currentApiUrl}/v1/chat/message${urlSuffix}`, {
+      console.log('🔧 Using format:', this.lastSuccessfulFormat, 'with URL suffix:', urlSuffix);
+
+      const response = await fetch(`${this.currentApiUrl}${endpoint}${urlSuffix}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -251,7 +265,7 @@ export class UnifiedChatService {
           const workingFormat = diagnosticResults.find(r => r.success);
           
           if (workingFormat && this.lastSuccessfulFormat !== workingFormat.format) {
-            console.log('🔄 Retrying with new working format...');
+            console.log('🔄 Retrying with new working format:', workingFormat.format);
             return this.sendMessage(message, context);
           }
         }
