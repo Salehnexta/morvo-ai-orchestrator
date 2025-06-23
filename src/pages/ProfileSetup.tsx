@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileService, UserProfile } from '@/services/userProfileService';
+import { ProfileCompletionService } from '@/services/profileCompletionService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,15 +10,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { User, Building, Target, Users, DollarSign, Save } from 'lucide-react';
+import { User, Building, Target, Users, DollarSign, Save, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const ProfileSetup: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completeness, setCompleteness] = useState(0);
+  const [completionStatus, setCompletionStatus] = useState<any>(null);
+  
   const [profile, setProfile] = useState<Partial<UserProfile>>({
     full_name: '',
     company_name: '',
@@ -52,11 +56,15 @@ const ProfileSetup: React.FC = () => {
     setLoading(true);
     try {
       const userProfile = await UserProfileService.getUserProfile(user.id);
+      const status = await ProfileCompletionService.getCompletionStatus(user.id);
+      
       if (userProfile) {
         setProfile(userProfile);
         const score = await UserProfileService.calculateCompleteness(userProfile);
         setCompleteness(score);
       }
+      
+      setCompletionStatus(status);
     } catch (error) {
       console.error('Error loading profile:', error);
       toast({
@@ -74,9 +82,17 @@ const ProfileSetup: React.FC = () => {
 
     setSaving(true);
     try {
-      const success = await UserProfileService.saveUserProfile(user.id, profile);
+      console.log('🔄 Starting profile save with completion check');
+      
+      // Use the new completion service
+      const success = await ProfileCompletionService.completeProfileSetup(user.id, profile);
+      
       if (success) {
-        await UserProfileService.updateCompleteness(user.id);
+        // Reload status to check if profile was completed
+        const newStatus = await ProfileCompletionService.getCompletionStatus(user.id);
+        setCompletionStatus(newStatus);
+        
+        // Update UI
         const updatedProfile = await UserProfileService.getUserProfile(user.id);
         if (updatedProfile) {
           const score = await UserProfileService.calculateCompleteness(updatedProfile);
@@ -84,9 +100,18 @@ const ProfileSetup: React.FC = () => {
         }
         
         toast({
-          title: 'تم الحفظ',
-          description: 'تم حفظ بياناتك بنجاح'
+          title: newStatus.isComplete ? 'تم إكمال الملف الشخصي! 🎉' : 'تم الحفظ',
+          description: newStatus.isComplete 
+            ? 'تم حفظ بياناتك وبدء تحليل موقعك تلقائياً' 
+            : 'تم حفظ بياناتك بنجاح'
         });
+        
+        // If profile is complete, navigate to dashboard after a delay
+        if (newStatus.isComplete) {
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
+        }
       } else {
         throw new Error('Failed to save profile');
       }
@@ -128,16 +153,43 @@ const ProfileSetup: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Header */}
+        {/* Header with enhanced status */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">إعداد الملف الشخصي</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900">إعداد الملف الشخصي</h1>
+            {completionStatus?.isComplete && (
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            )}
+          </div>
+          
           <p className="text-gray-600">أكمل معلوماتك للحصول على تجربة مخصصة</p>
           
-          {/* Progress */}
+          {completionStatus && !completionStatus.isComplete && completionStatus.missingFields.length > 0 && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+                <span className="font-medium text-amber-800">حقول مطلوبة للإكمال:</span>
+              </div>
+              <ul className="text-sm text-amber-700 list-disc list-inside">
+                {completionStatus.missingFields.map((field: string, index: number) => (
+                  <li key={index}>{field}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {/* Progress with status indicators */}
           <div className="mt-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">اكتمال الملف الشخصي</span>
-              <span className="text-sm font-medium text-blue-600">{completeness}%</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-blue-600">{completeness}%</span>
+                {completionStatus?.hasWebsiteAnalysis && (
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                    تم تحليل الموقع ✅
+                  </span>
+                )}
+              </div>
             </div>
             <Progress value={completeness} className="h-2" />
           </div>
@@ -408,17 +460,21 @@ const ProfileSetup: React.FC = () => {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-blue-600 hover:bg-blue-700 px-8"
+            className={`px-8 ${
+              completionStatus?.isComplete 
+                ? 'bg-green-600 hover:bg-green-700' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
             {saving ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                جاري الحفظ...
+                {completionStatus?.isComplete ? 'جاري التحديث...' : 'جاري الحفظ...'}
               </>
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                حفظ التغييرات
+                {completionStatus?.isComplete ? 'تحديث الملف' : 'حفظ وإكمال الإعداد'}
               </>
             )}
           </Button>

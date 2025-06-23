@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -8,6 +7,7 @@ import { useAdvancedConversation } from '@/hooks/useAdvancedConversation';
 import { SmartResponseGenerator } from '@/services/smartResponseGenerator';
 import { EnhancedMorvoAIService } from '@/services/enhancedMorvoAIService';
 import { UserProfileService } from '@/services/userProfileService';
+import { IntelligentAgentService } from '@/services/intelligentAgentService';
 
 interface MessageData {
   id: string;
@@ -176,69 +176,59 @@ export const useChatInterface = (
     return null;
   };
 
-  const generateContextualResponse = (message: string): string => {
-    const isOnboardingComplete = userProfile?.onboarding_completed || false;
-    const lowerMessage = message.toLowerCase();
-    
-    // Enhanced contextual responses in Arabic
-    if (lowerMessage.includes('موقع') || lowerMessage.includes('حللت') || lowerMessage.includes('تحليل')) {
-      if (userProfile?.website_url) {
-        return `أستاذ ${userProfile.company_name ? userProfile.company_name : 'صديقي'}، 
-        
+  const generateContextualResponse = async (message: string): Promise<string> => {
+    if (!user) {
+      return SmartResponseGenerator.generateContextualResponse(message, [], null);
+    }
+
+    try {
+      // Use intelligent agent service for profile-aware responses
+      const { IntelligentAgentService } = await import('@/services/intelligentAgentService');
+      return await IntelligentAgentService.generateContextualResponse(
+        user.id, 
+        message, 
+        messages.slice(-3) // Last 3 messages for context
+      );
+    } catch (error) {
+      console.error('❌ Error generating intelligent response:', error);
+      
+      // Fallback to basic contextual response
+      const isOnboardingComplete = userProfile?.profile_setup_completed || false;
+      const lowerMessage = message.toLowerCase();
+      
+      if (lowerMessage.includes('موقع') || lowerMessage.includes('تحليل')) {
+        if (userProfile?.website_url) {
+          return `${userProfile.greeting_preference || 'أستاذ'} ${userProfile.company_name || 'صديقي'}،
+
 لقد قمت بتحليل موقعك ${userProfile.website_url} مسبقاً! 🔍
 
 **ملخص التحليل:**
 • الموقع مُسجّل في نظامي ✅
 • البيانات محفوظة ومحدثة 📊
-• جاري العمل على تحسينات إضافية 🚀
+• ${userProfile.last_seo_update ? `آخر تحديث: ${new Date(userProfile.last_seo_update).toLocaleDateString('ar-SA')}` : 'تحليل حديث'} 🚀
 
-هل تريد تحديث التحليل أم لديك استفسار محدد حول الموقع؟
+هل تريد مراجعة النتائج أم تحديث التحليل؟`;
+        } else {
+          return `مرحباً ${userProfile?.greeting_preference || 'أستاذ'} ${userProfile?.company_name || 'صديقي'}! 👋
 
-*ملاحظة: النظام يعمل حالياً في الوضع المحلي - جميع البيانات محفوظة وآمنة* 🔒`;
-      } else {
-        return `مرحباً أستاذ ${user?.user_metadata?.first_name || 'صديقي'}! 👋
-
-لم أحلل موقعك بعد. لكي أقوم بتحليل شامل، أحتاج رابط موقعك الإلكتروني.
-
-**ما سأقوم بتحليله:**
-• سرعة الموقع وأداءه ⚡
-• تحسين محركات البحث (SEO) 🔍  
-• تجربة المستخدم (UX) 👥
-• المحتوى والكلمات المفتاحية 📝
-• المنافسين والفرص 📈
-
-شاركني رابط موقعك وسأبدأ التحليل فوراً! 🚀`;
+لم أحلل موقعك بعد. شاركني رابط موقعك وسأبدأ التحليل فوراً! 🚀`;
+        }
       }
+      
+      if (lowerMessage.includes('م
+با') || lowerMessage.includes('السلام')) {
+        return `أهلاً وسهلاً ${userProfile?.greeting_preference || 'أستاذ'} ${userProfile?.company_name || 'صديقي'}! 🌟
+
+أنا مورفو - مساعدك الذكي للتسويق الرقمي 🤖
+
+${isOnboardingComplete ? 
+  '**ملفك مكتمل وجاهز! كيف يمكنني مساعدتك اليوم؟**' :
+  '**يرجى إكمال ملفك الشخصي أولاً للحصول على خدمة مخصصة**'
+}`;
+      }
+
+      return SmartResponseGenerator.generateContextualResponse(message, [], userProfile);
     }
-    
-    if (lowerMessage.includes('مرحبا') || lowerMessage.includes('السلام') || lowerMessage.includes('اهلا')) {
-      return `أهلاً وسهلاً أستاذ ${user?.user_metadata?.first_name || 'صديقي'}! 🌟
-
-أنا مورفو - مساعدك الذكي للتسويق الرقمي المحدث بـ GPT-4o 🤖
-
-**كيف يمكنني مساعدتك اليوم؟**
-• تحليل موقعك الإلكتروني 🌐
-• تحسين محركات البحث 🔍
-• استراتيجيات التسويق 📈
-• إنشاء محتوى جذاب ✨
-
-اكتب لي ما تريد وسأساعدك خطوة بخطوة! 💪`;
-    }
-
-    if (!isOnboardingComplete) {
-      return `مرحباً بك في مورفو! 🚀
-
-دعني أساعدك في إعداد ملفك التجاري أولاً لأقدم لك خدمة مخصصة.
-
-**ما أحتاجه منك:**
-• اسم شركتك أو مشروعك 🏢
-• نوع نشاطك التجاري 💼
-• رابط موقعك (إن وُجد) 🌐
-
-ابدأ بمشاركة اسم شركتك، وسأتولى الباقي! ✨`;
-    }
-
-    return SmartResponseGenerator.generateContextualResponse(message, [], userProfile);
   };
 
   return {

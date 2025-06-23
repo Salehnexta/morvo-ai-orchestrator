@@ -944,9 +944,13 @@ export type Database = {
           preferred_language: string | null
           primary_marketing_goals: string[] | null
           products_services: Json | null
+          profile_setup_completed: boolean | null
+          profile_setup_completed_at: string | null
           recent_news: string[] | null
           revenue_target: string | null
           seasonal_peaks: string[] | null
+          seo_analysis_completed_at: string | null
+          seo_analysis_triggered: boolean | null
           seo_data: Json | null
           service_areas: string[] | null
           target_audience: Json | null
@@ -986,9 +990,13 @@ export type Database = {
           preferred_language?: string | null
           primary_marketing_goals?: string[] | null
           products_services?: Json | null
+          profile_setup_completed?: boolean | null
+          profile_setup_completed_at?: string | null
           recent_news?: string[] | null
           revenue_target?: string | null
           seasonal_peaks?: string[] | null
+          seo_analysis_completed_at?: string | null
+          seo_analysis_triggered?: boolean | null
           seo_data?: Json | null
           service_areas?: string[] | null
           target_audience?: Json | null
@@ -1028,9 +1036,13 @@ export type Database = {
           preferred_language?: string | null
           primary_marketing_goals?: string[] | null
           products_services?: Json | null
+          profile_setup_completed?: boolean | null
+          profile_setup_completed_at?: string | null
           recent_news?: string[] | null
           revenue_target?: string | null
           seasonal_peaks?: string[] | null
+          seo_analysis_completed_at?: string | null
+          seo_analysis_triggered?: boolean | null
           seo_data?: Json | null
           service_areas?: string[] | null
           target_audience?: Json | null
