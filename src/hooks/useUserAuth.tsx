@@ -25,7 +25,13 @@ export const useUserAuth = (): UseUserAuthResult => {
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔐 Auth state changed:', event, !!session);
+        console.log('🔐 Auth state changed:', {
+          event,
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userEmail: session?.user?.email,
+          timestamp: new Date().toISOString()
+        });
         
         if (!mounted) return;
         
@@ -33,7 +39,7 @@ export const useUserAuth = (): UseUserAuthResult => {
         setUser(session?.user ?? null);
         
         if (event === 'SIGNED_IN') {
-          console.log('✅ User signed in successfully');
+          console.log('✅ User signed in successfully:', session?.user?.email);
           setTimeout(() => {
             if (mounted) setLoading(false);
           }, 100);
@@ -57,14 +63,22 @@ export const useUserAuth = (): UseUserAuthResult => {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('❌ Error getting session:', error);
+          console.error('❌ Error getting session:', {
+            message: error.message,
+            status: error.status,
+            details: error
+          });
           const storedSession = localStorage.getItem('sb-teniefzxdikestahdnur-auth-token');
           if (storedSession && mounted) {
             console.log('🔄 Attempting session recovery...');
             await supabase.auth.refreshSession();
           }
         } else {
-          console.log('🔐 Initial session loaded:', !!session);
+          console.log('🔐 Initial session loaded:', {
+            hasSession: !!session,
+            hasUser: !!session?.user,
+            userEmail: session?.user?.email
+          });
           if (mounted) {
             setSession(session);
             setUser(session?.user ?? null);
@@ -92,19 +106,27 @@ export const useUserAuth = (): UseUserAuthResult => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('🔐 Signing in user:', email);
+      console.log('🔐 Attempting sign in:', { email, timestamp: new Date().toISOString() });
       setLoading(true);
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) {
-        console.error('❌ Sign in error:', error.message);
+        console.error('❌ Sign in error:', {
+          message: error.message,
+          status: error.status,
+          details: error
+        });
         setLoading(false);
       } else {
-        console.log('✅ Sign in successful');
+        console.log('✅ Sign in successful:', {
+          hasUser: !!data.user,
+          hasSession: !!data.session,
+          userEmail: data.user?.email
+        });
       }
       
       return { error };
@@ -117,8 +139,9 @@ export const useUserAuth = (): UseUserAuthResult => {
 
   const signUp = async (email: string, password: string) => {
     try {
-      console.log('🔐 Signing up user:', email);
-      const { error } = await supabase.auth.signUp({
+      console.log('🔐 Attempting sign up:', { email, timestamp: new Date().toISOString() });
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -127,9 +150,18 @@ export const useUserAuth = (): UseUserAuthResult => {
       });
       
       if (error) {
-        console.error('❌ Sign up error:', error.message);
+        console.error('❌ Sign up error:', {
+          message: error.message,
+          status: error.status,
+          details: error
+        });
       } else {
-        console.log('✅ Sign up successful');
+        console.log('✅ Sign up successful:', {
+          hasUser: !!data.user,
+          hasSession: !!data.session,
+          userEmail: data.user?.email,
+          needsConfirmation: !data.session
+        });
       }
       
       return { error };

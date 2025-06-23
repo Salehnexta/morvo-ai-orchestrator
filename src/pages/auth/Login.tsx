@@ -65,7 +65,14 @@ export const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('📝 Login form submitted:', { 
+      email, 
+      passwordLength: password.length,
+      timestamp: new Date().toISOString()
+    });
+    
     if (!email.trim() || !password.trim()) {
+      console.warn('⚠️ Empty fields detected');
       toast({
         title: t.loginError,
         description: "Please fill in all fields",
@@ -77,25 +84,43 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
+      console.log('🔄 Calling signIn function...');
       const { error } = await signIn(email, password);
 
       if (error) {
+        console.error('❌ Login failed:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
+        
+        let errorMessage = error.message;
+        if (error.message === "Invalid login credentials") {
+          errorMessage = t.invalidCredentials;
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Please check your email and confirm your account before signing in.";
+        } else if (error.message.includes("Invalid API key")) {
+          errorMessage = "Authentication service error. Please contact support.";
+        }
+        
         toast({
           title: t.loginError,
-          description: error.message === "Invalid login credentials" ? t.invalidCredentials : error.message,
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
+        console.log('✅ Login successful, redirecting to dashboard...');
         toast({
           title: t.loginSuccess,
           description: t.subtitle,
         });
         navigate("/dashboard");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Unexpected login error:', error);
       toast({
         title: t.loginError,
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
