@@ -61,6 +61,7 @@ export class IntelligentAgentService {
     const industry = profile.industry;
     const hasWebsite = profile.website_url;
     const hasAnalysis = profile.seo_data && profile.last_seo_update;
+    const isOnboardingComplete = profile.onboarding_completed || false;
 
     switch (intent) {
       case 'greeting':
@@ -84,7 +85,7 @@ export class IntelligentAgentService {
   }
 
   private static generateGreetingResponse(greeting: string, companyName: string, profile: UserProfile): string {
-    const setupStatus = profile.profile_setup_completed ? 'مكتمل' : 'يحتاج تحديث';
+    const setupStatus = profile.onboarding_completed ? 'مكتمل' : 'يحتاج تحديث';
     
     return `مرحباً ${greeting} ${companyName}! 🌟
 
@@ -92,7 +93,7 @@ export class IntelligentAgentService {
 
 **حالة ملفك الشخصي:** ${setupStatus} ✅
 
-${profile.profile_setup_completed ? 
+${profile.onboarding_completed ? 
   `**شركتك:** ${profile.company_name || 'غير محدد'}
 **المجال:** ${profile.industry || 'غير محدد'}
 **الموقع:** ${profile.website_url ? '✅ محلل' : '❌ غير مضاف'}

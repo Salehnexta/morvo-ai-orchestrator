@@ -34,11 +34,11 @@ export class ProfileCompletionService {
       if (isComplete) {
         console.log('✅ Profile meets completion criteria');
         
-        // Mark profile as completed
+        // Mark profile as completed using existing fields
         const completionData = {
           ...profileData,
-          profile_setup_completed: true,
-          profile_setup_completed_at: new Date().toISOString(),
+          onboarding_completed: true,
+          onboarding_completed_at: new Date().toISOString(),
           first_time_setup_completed: true,
           data_completeness_score: await UserProfileService.calculateCompleteness(updatedProfile as UserProfile)
         };
@@ -77,9 +77,8 @@ export class ProfileCompletionService {
       if (analysisResult) {
         console.log('✅ SEO analysis completed successfully');
         
-        // Mark analysis as completed
+        // Mark analysis as completed using existing fields
         await UserProfileService.saveUserProfile(userId, {
-          seo_analysis_completed_at: new Date().toISOString(),
           last_seo_update: new Date().toISOString()
         });
       }

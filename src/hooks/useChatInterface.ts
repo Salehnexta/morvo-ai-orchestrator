@@ -184,7 +184,6 @@ export const useChatInterface = (
 
     try {
       // Use intelligent agent service for profile-aware responses
-      const { IntelligentAgentService } = await import('@/services/intelligentAgentService');
       return await IntelligentAgentService.generateContextualResponse(
         user.id, 
         message, 
@@ -194,7 +193,7 @@ export const useChatInterface = (
       console.error('❌ Error generating intelligent response:', error);
       
       // Fallback to basic contextual response
-      const isOnboardingComplete = userProfile?.profile_setup_completed || false;
+      const isOnboardingComplete = userProfile?.onboarding_completed || false;
       const lowerMessage = message.toLowerCase();
       
       if (lowerMessage.includes('موقع') || lowerMessage.includes('تحليل')) {

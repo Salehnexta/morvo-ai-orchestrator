@@ -99,11 +99,10 @@ export class SERankingService {
       if (userId) {
         console.log('💾 Saving SEO analysis results for user:', userId);
         
-        // Update user profile with SEO data
+        // Update user profile with SEO data using existing field
         await UserProfileService.saveUserProfile(userId, {
           seo_data: mockData as any,
-          last_seo_update: new Date().toISOString(),
-          seo_analysis_completed_at: new Date().toISOString()
+          last_seo_update: new Date().toISOString()
         });
 
         // Save to seo_data table for historical tracking
