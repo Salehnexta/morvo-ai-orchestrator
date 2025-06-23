@@ -1,4 +1,3 @@
-
 interface DiagnosticResult {
   endpoint: string;
   status: 'healthy' | 'degraded' | 'failed';
@@ -38,9 +37,9 @@ export class ChatDiagnostics {
       conversation_id: 'diagnostic'
     });
 
-    // Test auth endpoint if token is available
+    // Test auth endpoint if token is available - with required func parameter
     if (token) {
-      results.authEndpoint = await this.testEndpoint('/v1/chat/message', 'POST', {
+      results.authEndpoint = await this.testEndpoint('/v1/chat/message?func=chat', 'POST', {
         message: 'Auth diagnostic test',
         conversation_id: 'diagnostic-auth',
         stream: false

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ChatDiagnostics } from "./chatDiagnostics";
 
@@ -135,7 +134,10 @@ export class EnhancedMorvoAIService {
   }
 
   private static async sendAuthenticatedMessage(message: string, token: string, context?: any): Promise<EnhancedChatResponse> {
-    const response = await fetch(`${this.API_URL}/v1/chat/message`, {
+    // Add the required func parameter to the URL
+    const url = `${this.API_URL}/v1/chat/message?func=chat`;
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
