@@ -2,14 +2,15 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = "https://teniefzxdikestahdnur.supabase.co"
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlbmllZnp4ZGlrZXN0YWhkbnVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUwMzQwMDAsImV4cCI6MjA1MDYxMDAwMH0.example_new_key_here"
+// TODO: Replace this with your actual anon key from Supabase Dashboard > API Keys
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlbmllZnp4ZGlrZXN0YWhkbnVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMDczMjcsImV4cCI6MjA2NDg4MzMyN30.9-WD35_UTe4_nBLMxZaSNS-VWfZit5ORUI6jahEYQUM"
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Missing Supabase configuration');
   throw new Error('Supabase URL and anon key are required');
 }
 
-console.log('🔧 Supabase client initializing with updated config...');
+console.log('🔧 Supabase client initializing...');
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -36,7 +37,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 // Enhanced connection test with better error handling
-console.log('🔗 Testing updated Supabase connection...');
+console.log('🔗 Testing Supabase connection...');
 supabase.auth.getSession()
   .then(({ data, error }) => {
     if (error) {
@@ -46,7 +47,7 @@ supabase.auth.getSession()
         details: error
       });
     } else {
-      console.log('✅ Supabase client connected successfully with updated key', {
+      console.log('✅ Supabase client connected successfully', {
         hasSession: !!data.session,
         sessionValid: data.session ? 'Yes' : 'No'
       });
