@@ -1,9 +1,7 @@
-
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = "https://teniefzxdikestahdnur.supabase.co"
-// TODO: Replace this with your actual anon key from Supabase Dashboard > API Keys
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlbmllZnp4ZGlrZXN0YWhkbnVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMDczMjcsImV4cCI6MjA2NDg4MzMyN30.9-WD35_UTe4_nBLMxZaSNS-VWfZit5ORUI6jahEYQUM"
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlbmllZnp4ZGlrZXN0YWhkbnVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3MDc3MDIsImV4cCI6MjA2NjI4MzcwMn0.h9-EDj0yRdIv5GIyXJLsVsEdWOObMPhnY4-KjuTCRx0"
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Missing Supabase configuration');
