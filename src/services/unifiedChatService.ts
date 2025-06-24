@@ -55,12 +55,16 @@ export class UnifiedChatService {
     const startTime = Date.now();
     
     try {
-      console.log('🚀 UnifiedChatService: Sending message to Railway backend:', message);
+      console.log('🚀 UnifiedChatService: Sending message to Railway backend:', {
+        messagePreview: message.substring(0, 50),
+        hasContext: !!context,
+        baseUrl: 'https://morvo-production.up.railway.app'
+      });
       
       // Check if we should skip Railway due to consecutive failures
       if (this.fallbackMode && this.consecutiveFailures >= this.MAX_FAILURES_BEFORE_FALLBACK) {
         console.warn('⚠️ In fallback mode due to consecutive Railway failures');
-        throw new Error('Railway backend in fallback mode');
+        throw new Error('Railway backend in fallback mode - too many consecutive failures');
       }
       
       // Get current user session for authentication
@@ -69,12 +73,22 @@ export class UnifiedChatService {
         throw new Error('No authentication token available');
       }
 
-      // Send message via Railway backend
-      const response = await RailwayBackendService.processMessage(message, {
+      // Send message via Railway backend with enhanced context
+      const enhancedContext = {
         ...context,
         user_metadata: session.user?.user_metadata || {},
-        session_id: session.user?.id
+        session_id: session.user?.id,
+        frontend_origin: window.location.origin,
+        lovable_domain: 'https://d91bae1e-ac01-4697-8921-bf9fd4aecaf6.lovableproject.com'
+      };
+
+      console.log('📋 Enhanced context for Railway:', {
+        hasUserMetadata: !!enhancedContext.user_metadata,
+        sessionId: enhancedContext.session_id,
+        frontendOrigin: enhancedContext.frontend_origin
       });
+
+      const response = await RailwayBackendService.processMessage(message, enhancedContext);
       
       const processingTime = Date.now() - startTime;
       
@@ -88,13 +102,20 @@ export class UnifiedChatService {
         
         // Add diagnostic info
         this.addDiagnosticInfo({
-          format: 'railway-backend',
+          format: 'Railway Backend - Success',
           success: true,
           timestamp: new Date().toISOString(),
-          endpoint: 'railway-backend',
+          endpoint: 'https://morvo-production.up.railway.app/v1/chat/message',
           status: 'success',
           latency: processingTime,
-          tokens_used: response.data.tokens_used
+          tokens_used: response.data.tokens_used,
+          response_size: JSON.stringify(response.data).length
+        });
+        
+        console.log('✅ Railway backend success:', {
+          processingTime,
+          tokensUsed: response.data.tokens_used,
+          responseLength: response.data.response?.length
         });
         
         return {
@@ -107,13 +128,14 @@ export class UnifiedChatService {
           processing_time_ms: processingTime,
           success: true,
           message: response.data.response,
-          conversation_id: `conv-${session.user?.id}-${Date.now()}`,
+          conversation_id: response.data.conversation_id || `conv-${session.user?.id}-${Date.now()}`,
           confidence_score: 0.95,
           metadata: {
-            agents_involved: response.data.suggested_actions || [],
+            agents_involved: response.data.agents_involved || [],
             emotion_detected: response.data.emotion_detected,
             processing_time: response.data.processing_time,
-            endpoint: 'railway-backend'
+            endpoint: 'railway-backend',
+            railway_success: true
           }
         };
       } else {
@@ -130,7 +152,27 @@ export class UnifiedChatService {
       // Enable fallback mode if too many consecutive failures
       if (this.consecutiveFailures >= this.MAX_FAILURES_BEFORE_FALLBACK) {
         this.fallbackMode = true;
-        console.warn('⚠️ Enabling fallback mode due to consecutive Railway failures');
+        console.warn(`⚠️ Enabling fallback mode due to ${this.consecutiveFailures} consecutive Railway failures`);
+      }
+      
+      // Categorize error for better user messaging
+      let errorCategory = 'unknown';
+      let userFriendlyMessage = 'مشكلة تقنية مع خادم Railway';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          errorCategory = 'timeout';
+          userFriendlyMessage = 'انتهت مهلة الاتصال مع خادم Railway';
+        } else if (error.message.includes('Network error') || error.message.includes('Failed to fetch')) {
+          errorCategory = 'network';
+          userFriendlyMessage = 'مشكلة في الاتصال بالشبكة مع Railway';
+        } else if (error.message.includes('CORS')) {
+          errorCategory = 'cors';
+          userFriendlyMessage = 'مشكلة في إعدادات CORS مع Railway';
+        } else if (error.message.includes('authentication')) {
+          errorCategory = 'auth';
+          userFriendlyMessage = 'مشكلة في المصادقة مع Railway';
+        }
       }
       
       // Update connection status
@@ -138,10 +180,10 @@ export class UnifiedChatService {
       
       // Add diagnostic info
       this.addDiagnosticInfo({
-        format: 'railway-backend',
+        format: 'Railway Backend - Error',
         success: false,
         timestamp: new Date().toISOString(),
-        endpoint: 'railway-backend',
+        endpoint: 'https://morvo-production.up.railway.app/v1/chat/message',
         status: 'error',
         latency: processingTime,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -150,7 +192,7 @@ export class UnifiedChatService {
       // Return enhanced fallback response
       return {
         id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        content: this.generateEnhancedFallbackResponse(message, context, error),
+        content: this.generateEnhancedFallbackResponse(message, context, error, errorCategory),
         role: 'assistant',
         timestamp: new Date(),
         processing_time: processingTime,
@@ -161,8 +203,10 @@ export class UnifiedChatService {
           isError: true,
           fallbackUsed: true,
           originalError: error instanceof Error ? error.message : 'Unknown error',
+          errorCategory,
           consecutiveFailures: this.consecutiveFailures,
-          fallbackMode: this.fallbackMode
+          fallbackMode: this.fallbackMode,
+          railway_failed: true
         }
       };
     }
@@ -326,22 +370,34 @@ export class UnifiedChatService {
     return diagnostics;
   }
 
-  static generateEnhancedFallbackResponse(message: string, context?: any, error?: any): string {
+  static generateEnhancedFallbackResponse(message: string, context?: any, error?: any, errorCategory: string = 'unknown'): string {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
-    // Determine error type for better user messaging
     let errorType = 'مشكلة تقنية مؤقتة';
     let suggestion = 'يرجى المحاولة مرة أخرى خلال دقائق قليلة.';
+    let technicalNote = '';
     
-    if (errorMessage.includes('timeout')) {
-      errorType = 'انتهت مهلة الاتصال مع الخادم';
-      suggestion = 'الخادم يستغرق وقتاً أطول من المعتاد. يرجى المحاولة مرة أخرى.';
-    } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network')) {
-      errorType = 'مشكلة في الاتصال بالشبكة';
-      suggestion = 'يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.';
-    } else if (errorMessage.includes('CORS')) {
-      errorType = 'مشكلة في إعدادات الخادم';
-      suggestion = 'يتم العمل على حل هذه المشكلة. النظام يعمل في النمط المحلي حالياً.';
+    switch (errorCategory) {
+      case 'timeout':
+        errorType = 'انتهت مهلة الاتصال مع خادم Railway';
+        suggestion = 'الخادم يستغرق وقتاً أطول من المعتاد. يرجى المحاولة مرة أخرى.';
+        technicalNote = 'الطلب استغرق أكثر من 15 ثانية.';
+        break;
+      case 'network':
+        errorType = 'مشكلة في الاتصال بالشبكة';
+        suggestion = 'يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.';
+        technicalNote = 'لا يمكن الوصول إلى خادم Railway.';
+        break;
+      case 'cors':
+        errorType = 'مشكلة في إعدادات الخادم (CORS)';
+        suggestion = 'يتم العمل على حل هذه المشكلة. النظام يعمل في النمط المحلي حالياً.';
+        technicalNote = 'إعدادات CORS تحتاج تحديث على الخادم.';
+        break;
+      case 'auth':
+        errorType = 'مشكلة في المصادقة';
+        suggestion = 'يرجى إعادة تسجيل الدخول أو تحديث الصفحة.';
+        technicalNote = 'رمز المصادقة غير صالح أو منتهي الصلاحية.';
+        break;
     }
 
     const baseResponses = [
@@ -365,7 +421,12 @@ export class UnifiedChatService {
       response += '\n\n💡 يمكنني مساعدتك في:\n• تقديم معلومات عامة عن التسويق الرقمي\n• شرح المفاهيم الأساسية\n• تقديم نصائح عملية';
     }
     
-    response += '\n\n🔧 إذا استمرت المشكلة، يرجى التواصل مع الدعم الفني.';
+    // Add technical note for debugging
+    if (technicalNote) {
+      response += `\n\n🔧 ملاحظة تقنية: ${technicalNote}`;
+    }
+    
+    response += '\n\n📧 إذا استمرت المشكلة، يرجى التواصل مع الدعم الفني.';
     
     return response;
   }

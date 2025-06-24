@@ -26,8 +26,9 @@ interface TokenPackage {
 }
 
 export class RailwayBackendService {
+  // Updated to use the correct Railway production URL
   private static readonly BASE_URL = 'https://morvo-production.up.railway.app';
-  private static readonly TIMEOUT = 10000; // Reduced timeout
+  private static readonly TIMEOUT = 15000; // Increased timeout for Railway
   private static isServerHealthy = false;
   private static lastHealthCheck = 0;
   private static readonly HEALTH_CHECK_INTERVAL = 60000; // 1 minute
@@ -59,6 +60,8 @@ export class RailwayBackendService {
     const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT);
     
     try {
+      console.log(`🔗 Making Railway request to: ${this.BASE_URL}${endpoint}`);
+      
       const response = await fetch(`${this.BASE_URL}${endpoint}`, {
         ...options,
         headers: {
@@ -69,17 +72,26 @@ export class RailwayBackendService {
       });
       
       clearTimeout(timeoutId);
+      console.log(`✅ Railway response status: ${response.status}`);
       return response;
     } catch (error) {
       clearTimeout(timeoutId);
+      console.error(`❌ Railway request failed for ${endpoint}:`, error);
+      
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout - Railway server not responding');
+        throw new Error(`Railway server timeout - ${endpoint} not responding after ${this.TIMEOUT}ms`);
       }
+      
+      // Handle specific CORS and network errors
+      if (error.message.includes('Failed to fetch')) {
+        throw new Error('Network error - Unable to connect to Railway backend');
+      }
+      
       throw error;
     }
   }
 
-  // Enhanced Health Check with caching
+  // Enhanced Health Check with better error handling
   static async checkServerHealth(): Promise<RailwayResponse> {
     const now = Date.now();
     
@@ -90,32 +102,23 @@ export class RailwayBackendService {
     
     try {
       console.log('🔍 Checking Railway server health...');
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
-      const response = await fetch(`${this.BASE_URL}/health`, {
-        signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      clearTimeout(timeoutId);
+      const response = await this.makeRequest('/health');
       this.lastHealthCheck = now;
       
       if (!response.ok) {
         this.isServerHealthy = false;
+        const errorText = await response.text().catch(() => 'Unknown error');
         return { 
           success: false, 
-          error: `Railway server responded with ${response.status}: ${response.statusText}` 
+          error: `Railway server error ${response.status}: ${errorText}` 
         };
       }
       
       const data = await response.json();
       this.isServerHealthy = true;
       
-      console.log('✅ Railway server is healthy');
+      console.log('✅ Railway server is healthy:', data);
       return { success: true, data };
       
     } catch (error) {
@@ -124,10 +127,6 @@ export class RailwayBackendService {
       
       console.error('❌ Railway health check failed:', error);
       
-      if (error.name === 'AbortError') {
-        return { success: false, error: 'Railway server timeout - server may be down' };
-      }
-      
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Railway server connection failed' 
@@ -135,11 +134,12 @@ export class RailwayBackendService {
     }
   }
 
-  // Chat Processing with enhanced error handling
+  // Chat Processing with improved CORS handling
   static async processMessage(message: string, context: any = {}): Promise<RailwayResponse> {
     try {
-      // Quick health check first
+      // Quick health check first if server was previously unhealthy
       if (!this.isServerHealthy) {
+        console.log('🔍 Server was unhealthy, checking health first...');
         const healthCheck = await this.checkServerHealth();
         if (!healthCheck.success) {
           return { 
@@ -156,41 +156,56 @@ export class RailwayBackendService {
 
       console.log('📤 Sending message to Railway backend...');
       
+      const requestBody = {
+        message: message.trim(),
+        conversation_id: context.conversation_id || null,
+        project_context: {
+          business_type: context.business_type || user.user_metadata?.business_type || 'unknown',
+          industry: context.industry || user.user_metadata?.industry || 'unknown',
+          ...context
+        },
+        metadata: {
+          source: 'lovable-frontend',
+          user_agent: navigator.userAgent,
+          timestamp: new Date().toISOString(),
+          session_id: user.id,
+          frontend_url: window.location.origin,
+          ...context.metadata
+        },
+        stream: false
+      };
+
+      console.log('📋 Request payload:', { 
+        endpoint: '/v1/chat/message',
+        messageLength: message.length,
+        hasContext: !!context.conversation_id 
+      });
+
       const response = await this.makeRequest('/v1/chat/message', {
         method: 'POST',
-        body: JSON.stringify({
-          message: message.trim(),
-          conversation_id: context.conversation_id || null,
-          project_context: {
-            business_type: context.business_type || user.user_metadata?.business_type || 'unknown',
-            industry: context.industry || user.user_metadata?.industry || 'unknown',
-            ...context
-          },
-          metadata: {
-            source: 'web',
-            user_agent: navigator.userAgent,
-            timestamp: new Date().toISOString(),
-            session_id: user.id,
-            ...context.metadata
-          },
-          stream: false
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorText = await response.text().catch(() => 'Unknown error');
         this.isServerHealthy = false; // Mark as unhealthy
+        
+        console.error(`❌ Railway HTTP ${response.status}:`, errorText);
         
         return { 
           success: false, 
-          error: `Railway HTTP ${response.status}: ${errorText || response.statusText}` 
+          error: `Railway HTTP ${response.status}: ${errorText}` 
         };
       }
 
       const data = await response.json();
       this.isServerHealthy = true; // Mark as healthy
       
-      console.log('✅ Railway backend response received');
+      console.log('✅ Railway backend response received:', {
+        hasMessage: !!data.message,
+        hasResponse: !!data.response,
+        tokensUsed: data.metadata?.tokens_used
+      });
       
       return { 
         success: true, 
@@ -210,17 +225,25 @@ export class RailwayBackendService {
       
       console.error('❌ Railway message processing failed:', error);
       
+      // Enhanced error categorization
       if (error.message.includes('timeout')) {
         return { 
           success: false, 
-          error: 'Railway server timeout - please try again' 
+          error: 'Railway server timeout - Request took too long' 
         };
       }
       
-      if (error.message.includes('Failed to fetch')) {
+      if (error.message.includes('Network error') || error.message.includes('Failed to fetch')) {
         return { 
           success: false, 
-          error: 'Network error - Railway server may be down or CORS misconfigured' 
+          error: 'Network connection error - Railway server may be down' 
+        };
+      }
+      
+      if (error.message.includes('CORS')) {
+        return { 
+          success: false, 
+          error: 'CORS error - Backend configuration issue' 
         };
       }
       
@@ -487,11 +510,50 @@ export class RailwayBackendService {
     return results;
   }
 
-  // Server status helper
-  static getServerStatus(): { isHealthy: boolean; lastCheck: number } {
+  // Server status helper with better diagnostics
+  static getServerStatus(): { isHealthy: boolean; lastCheck: number; baseUrl: string } {
     return {
       isHealthy: this.isServerHealthy,
-      lastCheck: this.lastHealthCheck
+      lastCheck: this.lastHealthCheck,
+      baseUrl: this.BASE_URL
     };
+  }
+
+  // Test connectivity to Railway backend
+  static async testConnectivity(): Promise<RailwayResponse> {
+    try {
+      console.log('🧪 Testing Railway backend connectivity...');
+      
+      // Test simple health endpoint first
+      const healthResult = await this.checkServerHealth();
+      
+      if (!healthResult.success) {
+        return {
+          success: false,
+          error: `Health check failed: ${healthResult.error}`
+        };
+      }
+
+      // Test chat endpoint with a simple message
+      const chatResult = await this.processMessage('مرحبا، هذا اختبار اتصال من Lovable');
+      
+      return {
+        success: chatResult.success,
+        data: {
+          health: healthResult.data,
+          chat: chatResult.success ? 'Chat test successful' : chatResult.error,
+          baseUrl: this.BASE_URL,
+          timestamp: new Date().toISOString()
+        },
+        error: chatResult.success ? undefined : chatResult.error
+      };
+      
+    } catch (error) {
+      console.error('❌ Railway connectivity test failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Connectivity test failed'
+      };
+    }
   }
 }
