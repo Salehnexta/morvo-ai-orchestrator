@@ -1,4 +1,3 @@
-
 import { RailwayBackendService } from './railwayBackendService';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -39,13 +38,6 @@ export interface DiagnosticInfo {
   tokens_used?: number;
 }
 
-export interface ConnectionTestResult {
-  name: string;
-  endpoint: string;
-  body: any;
-  timeout: number;
-}
-
 export class UnifiedChatService {
   private static connectionStatus: ChatConnectionStatus = {
     isConnected: false,
@@ -55,6 +47,9 @@ export class UnifiedChatService {
   
   private static diagnosticCache: DiagnosticInfo[] = [];
   private static readonly MAX_DIAGNOSTIC_ENTRIES = 50;
+  private static fallbackMode = false;
+  private static consecutiveFailures = 0;
+  private static readonly MAX_FAILURES_BEFORE_FALLBACK = 3;
 
   static async sendMessage(message: string, context?: any): Promise<UnifiedChatMessage> {
     const startTime = Date.now();
@@ -62,13 +57,19 @@ export class UnifiedChatService {
     try {
       console.log('🚀 UnifiedChatService: Sending message to Railway backend:', message);
       
+      // Check if we should skip Railway due to consecutive failures
+      if (this.fallbackMode && this.consecutiveFailures >= this.MAX_FAILURES_BEFORE_FALLBACK) {
+        console.warn('⚠️ In fallback mode due to consecutive Railway failures');
+        throw new Error('Railway backend in fallback mode');
+      }
+      
       // Get current user session for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('No authentication token available');
       }
 
-      // Send message via Railway backend using static method
+      // Send message via Railway backend
       const response = await RailwayBackendService.processMessage(message, {
         ...context,
         user_metadata: session.user?.user_metadata || {},
@@ -78,6 +79,10 @@ export class UnifiedChatService {
       const processingTime = Date.now() - startTime;
       
       if (response.success && response.data) {
+        // Reset failure count on success
+        this.consecutiveFailures = 0;
+        this.fallbackMode = false;
+        
         // Update connection status
         this.updateConnectionStatus(true, 'authenticated', processingTime);
         
@@ -119,6 +124,15 @@ export class UnifiedChatService {
       const processingTime = Date.now() - startTime;
       console.error('❌ UnifiedChatService: Railway backend error:', error);
       
+      // Increment failure count
+      this.consecutiveFailures++;
+      
+      // Enable fallback mode if too many consecutive failures
+      if (this.consecutiveFailures >= this.MAX_FAILURES_BEFORE_FALLBACK) {
+        this.fallbackMode = true;
+        console.warn('⚠️ Enabling fallback mode due to consecutive Railway failures');
+      }
+      
       // Update connection status
       this.updateConnectionStatus(false, 'offline', processingTime, error instanceof Error ? error.message : 'Unknown error');
       
@@ -133,10 +147,10 @@ export class UnifiedChatService {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       
-      // Return fallback response
+      // Return enhanced fallback response
       return {
         id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        content: this.generateSmartFallbackResponse(message, context),
+        content: this.generateEnhancedFallbackResponse(message, context, error),
         role: 'assistant',
         timestamp: new Date(),
         processing_time: processingTime,
@@ -146,7 +160,9 @@ export class UnifiedChatService {
         metadata: {
           isError: true,
           fallbackUsed: true,
-          originalError: error instanceof Error ? error.message : 'Unknown error'
+          originalError: error instanceof Error ? error.message : 'Unknown error',
+          consecutiveFailures: this.consecutiveFailures,
+          fallbackMode: this.fallbackMode
         }
       };
     }
@@ -159,16 +175,22 @@ export class UnifiedChatService {
       const healthResult = await RailwayBackendService.checkServerHealth();
       const isConnected = healthResult.success;
       
+      if (isConnected) {
+        this.consecutiveFailures = 0;
+        this.fallbackMode = false;
+      }
+      
       this.updateConnectionStatus(
         isConnected, 
         isConnected ? 'authenticated' : 'offline',
         0,
-        isConnected ? undefined : 'Railway backend health check failed'
+        isConnected ? undefined : healthResult.error
       );
       
       return isConnected;
     } catch (error) {
       console.error('❌ UnifiedChatService: Railway backend connection test failed:', error);
+      this.consecutiveFailures++;
       this.updateConnectionStatus(false, 'offline', 0, error instanceof Error ? error.message : 'Connection test failed');
       return false;
     }
@@ -188,16 +210,27 @@ export class UnifiedChatService {
 
   static clearDiagnosticCache(): void {
     this.diagnosticCache = [];
-    console.log('🧹 Diagnostic cache cleared');
+    this.consecutiveFailures = 0;
+    this.fallbackMode = false;
+    console.log('🧹 Diagnostic cache cleared and fallback mode reset');
   }
 
   static async getHealthStatus(): Promise<any> {
     try {
       const result = await RailwayBackendService.checkServerHealth();
-      return result.data || { status: 'unknown' };
+      return {
+        ...result.data,
+        consecutiveFailures: this.consecutiveFailures,
+        fallbackMode: this.fallbackMode
+      };
     } catch (error) {
       console.error('❌ Health check failed:', error);
-      return { status: 'failed', error: error instanceof Error ? error.message : 'Unknown error' };
+      return { 
+        status: 'failed', 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        consecutiveFailures: this.consecutiveFailures,
+        fallbackMode: this.fallbackMode
+      };
     }
   }
 
@@ -224,39 +257,55 @@ export class UnifiedChatService {
       diagnostics.push(diagnostic);
       this.addDiagnosticInfo(diagnostic);
       
-      // Test message processing
-      try {
-        const testStartTime = Date.now();
-        const testResult = await RailwayBackendService.processMessage('مرحبا، هذه رسالة تجريبية');
-        const testLatency = Date.now() - testStartTime;
-        
-        const testDiagnostic: DiagnosticInfo = {
-          format: 'Railway Backend Chat',
-          success: testResult.success,
-          timestamp: new Date().toISOString(),
-          endpoint: 'railway-backend-chat',
-          status: testResult.success ? 'success' : 'error',
-          latency: testLatency,
-          tokens_used: testResult.data?.tokens_used,
-          error: testResult.success ? undefined : testResult.error
-        };
-        
-        diagnostics.push(testDiagnostic);
-        this.addDiagnosticInfo(testDiagnostic);
-        
-      } catch (testError) {
-        const testDiagnostic: DiagnosticInfo = {
+      // Only test message processing if health check passes
+      if (healthResult.success) {
+        try {
+          const testStartTime = Date.now();
+          const testResult = await RailwayBackendService.processMessage('مرحبا، هذه رسالة تجريبية');
+          const testLatency = Date.now() - testStartTime;
+          
+          const testDiagnostic: DiagnosticInfo = {
+            format: 'Railway Backend Chat',
+            success: testResult.success,
+            timestamp: new Date().toISOString(),
+            endpoint: 'railway-backend-chat',
+            status: testResult.success ? 'success' : 'error',
+            latency: testLatency,
+            tokens_used: testResult.data?.tokens_used,
+            error: testResult.success ? undefined : testResult.error
+          };
+          
+          diagnostics.push(testDiagnostic);
+          this.addDiagnosticInfo(testDiagnostic);
+          
+        } catch (testError) {
+          const testDiagnostic: DiagnosticInfo = {
+            format: 'Railway Backend Chat',
+            success: false,
+            timestamp: new Date().toISOString(),
+            endpoint: 'railway-backend-chat',
+            status: 'error',
+            latency: 0,
+            error: testError instanceof Error ? testError.message : 'Chat test failed'
+          };
+          
+          diagnostics.push(testDiagnostic);
+          this.addDiagnosticInfo(testDiagnostic);
+        }
+      } else {
+        // Add skipped test info
+        const skippedDiagnostic: DiagnosticInfo = {
           format: 'Railway Backend Chat',
           success: false,
           timestamp: new Date().toISOString(),
           endpoint: 'railway-backend-chat',
           status: 'error',
           latency: 0,
-          error: testError instanceof Error ? testError.message : 'Chat test failed'
+          error: 'Skipped due to failed health check'
         };
         
-        diagnostics.push(testDiagnostic);
-        this.addDiagnosticInfo(testDiagnostic);
+        diagnostics.push(skippedDiagnostic);
+        this.addDiagnosticInfo(skippedDiagnostic);
       }
       
     } catch (error) {
@@ -277,18 +326,48 @@ export class UnifiedChatService {
     return diagnostics;
   }
 
-  static generateSmartFallbackResponse(message: string, context?: any): string {
-    // Enhanced Arabic fallback responses
-    const responses = [
-      'أعتذر، يبدو أن هناك مشكلة تقنية مؤقتة مع الخادم الرئيسي. النظام يعمل الآن في الوضع المحلي.',
-      'نظراً لمشكلة اتصال مؤقتة، دعني أساعدك بناءً على خبرتي المحفوظة محلياً.',
-      'أواجه صعوبة في الاتصال بالخادم الرئيسي حالياً، لكنني سأحاول مساعدتك بأفضل ما أستطيع.'
+  static generateEnhancedFallbackResponse(message: string, context?: any, error?: any): string {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Determine error type for better user messaging
+    let errorType = 'مشكلة تقنية مؤقتة';
+    let suggestion = 'يرجى المحاولة مرة أخرى خلال دقائق قليلة.';
+    
+    if (errorMessage.includes('timeout')) {
+      errorType = 'انتهت مهلة الاتصال مع الخادم';
+      suggestion = 'الخادم يستغرق وقتاً أطول من المعتاد. يرجى المحاولة مرة أخرى.';
+    } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network')) {
+      errorType = 'مشكلة في الاتصال بالشبكة';
+      suggestion = 'يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.';
+    } else if (errorMessage.includes('CORS')) {
+      errorType = 'مشكلة في إعدادات الخادم';
+      suggestion = 'يتم العمل على حل هذه المشكلة. النظام يعمل في النمط المحلي حالياً.';
+    }
+
+    const baseResponses = [
+      `أعتذر، يبدو أن هناك ${errorType} مع خادم Railway الرئيسي.`,
+      `نواجه حالياً ${errorType} مع الخادم المركزي.`,
+      `هناك ${errorType} مؤقتة مع نظام Railway.`
     ];
     
-    const baseResponse = responses[Math.floor(Math.random() * responses.length)];
+    const baseResponse = baseResponses[Math.floor(Math.random() * baseResponses.length)];
     const messagePreview = message.substring(0, 50) + (message.length > 50 ? '...' : '');
     
-    return `${baseResponse}\n\nبخصوص استفسارك: "${messagePreview}"\n\nيمكنك المحاولة مرة أخرى خلال دقائق قليلة، أو تواصل مع الدعم الفني إذا استمرت المشكلة.`;
+    let response = `${baseResponse}\n\n${suggestion}\n\nبخصوص استفسارك: "${messagePreview}"`;
+    
+    // Add consecutive failure warning if applicable
+    if (this.consecutiveFailures >= this.MAX_FAILURES_BEFORE_FALLBACK) {
+      response += `\n\n⚠️ تم تفعيل النمط الاحتياطي بعد ${this.consecutiveFailures} محاولات فاشلة متتالية.`;
+    }
+    
+    // Add helpful context-based suggestions
+    if (message.toLowerCase().includes('مرحبا') || message.toLowerCase().includes('hello')) {
+      response += '\n\n💡 يمكنني مساعدتك في:\n• تقديم معلومات عامة عن التسويق الرقمي\n• شرح المفاهيم الأساسية\n• تقديم نصائح عملية';
+    }
+    
+    response += '\n\n🔧 إذا استمرت المشكلة، يرجى التواصل مع الدعم الفني.';
+    
+    return response;
   }
 
   private static updateConnectionStatus(
@@ -312,13 +391,11 @@ export class UnifiedChatService {
   private static addDiagnosticInfo(info: DiagnosticInfo): void {
     this.diagnosticCache.unshift(info);
     
-    // Keep only the latest entries
     if (this.diagnosticCache.length > this.MAX_DIAGNOSTIC_ENTRIES) {
       this.diagnosticCache = this.diagnosticCache.slice(0, this.MAX_DIAGNOSTIC_ENTRIES);
     }
   }
 
-  // Conversation management
   static resetConversation(): void {
     console.log('🔄 Conversation reset via UnifiedChatService');
   }
@@ -327,7 +404,6 @@ export class UnifiedChatService {
     return `conv-${Date.now()}`;
   }
 
-  // User authentication check
   static async getCurrentUser(): Promise<any> {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -342,7 +418,6 @@ export class UnifiedChatService {
     }
   }
 
-  // Session management
   static async getSession(): Promise<any> {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -355,5 +430,15 @@ export class UnifiedChatService {
       console.error('❌ Unexpected error getting session:', error);
       return null;
     }
+  }
+
+  static shouldRetryRailway(): boolean {
+    return this.consecutiveFailures < this.MAX_FAILURES_BEFORE_FALLBACK && !this.fallbackMode;
+  }
+
+  static resetRailwayConnection(): void {
+    this.consecutiveFailures = 0;
+    this.fallbackMode = false;
+    console.log('🔄 Railway connection attempts reset');
   }
 }

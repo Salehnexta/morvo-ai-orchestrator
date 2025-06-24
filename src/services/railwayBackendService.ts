@@ -27,61 +27,135 @@ interface TokenPackage {
 
 export class RailwayBackendService {
   private static readonly BASE_URL = 'https://morvo-production.up.railway.app';
-  private static readonly TIMEOUT = 30000;
+  private static readonly TIMEOUT = 10000; // Reduced timeout
+  private static isServerHealthy = false;
+  private static lastHealthCheck = 0;
+  private static readonly HEALTH_CHECK_INTERVAL = 60000; // 1 minute
 
   private static async getAuthHeaders(): Promise<Record<string, string>> {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': session?.access_token ? `Bearer ${session.access_token}` : '',
-      'X-Client-Info': 'morvo-ai-frontend-v2',
-      'Accept': 'application/json'
-    };
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': session?.access_token ? `Bearer ${session.access_token}` : '',
+        'X-Client-Info': 'morvo-ai-frontend-v2',
+        'Accept': 'application/json'
+      };
+    } catch (error) {
+      console.warn('Failed to get auth headers:', error);
+      return {
+        'Content-Type': 'application/json',
+        'X-Client-Info': 'morvo-ai-frontend-v2',
+        'Accept': 'application/json'
+      };
+    }
   }
 
   private static async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const headers = await this.getAuthHeaders();
     
-    const response = await fetch(`${this.BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        ...headers,
-        ...options.headers
-      },
-      signal: AbortSignal.timeout(this.TIMEOUT)
-    });
-
-    return response;
-  }
-
-  // Health Check
-  static async checkServerHealth(): Promise<RailwayResponse> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT);
+    
     try {
-      const response = await fetch(`${this.BASE_URL}/health`, {
-        signal: AbortSignal.timeout(5000)
+      const response = await fetch(`${this.BASE_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          ...headers,
+          ...options.headers
+        },
+        signal: controller.signal
       });
       
-      if (!response.ok) {
-        return { success: false, error: `Server responded with ${response.status}` };
-      }
-      
-      const data = await response.json();
-      return { success: true, data };
+      clearTimeout(timeoutId);
+      return response;
     } catch (error) {
-      console.error('Railway health check failed:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - Railway server not responding');
+      }
+      throw error;
     }
   }
 
-  // Chat Processing - Updated to use Railway backend chat endpoint
+  // Enhanced Health Check with caching
+  static async checkServerHealth(): Promise<RailwayResponse> {
+    const now = Date.now();
+    
+    // Return cached result if recent
+    if (now - this.lastHealthCheck < this.HEALTH_CHECK_INTERVAL && this.isServerHealthy) {
+      return { success: true, data: { status: 'healthy', cached: true } };
+    }
+    
+    try {
+      console.log('🔍 Checking Railway server health...');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(`${this.BASE_URL}/health`, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      this.lastHealthCheck = now;
+      
+      if (!response.ok) {
+        this.isServerHealthy = false;
+        return { 
+          success: false, 
+          error: `Railway server responded with ${response.status}: ${response.statusText}` 
+        };
+      }
+      
+      const data = await response.json();
+      this.isServerHealthy = true;
+      
+      console.log('✅ Railway server is healthy');
+      return { success: true, data };
+      
+    } catch (error) {
+      this.lastHealthCheck = now;
+      this.isServerHealthy = false;
+      
+      console.error('❌ Railway health check failed:', error);
+      
+      if (error.name === 'AbortError') {
+        return { success: false, error: 'Railway server timeout - server may be down' };
+      }
+      
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Railway server connection failed' 
+      };
+    }
+  }
+
+  // Chat Processing with enhanced error handling
   static async processMessage(message: string, context: any = {}): Promise<RailwayResponse> {
     try {
+      // Quick health check first
+      if (!this.isServerHealthy) {
+        const healthCheck = await this.checkServerHealth();
+        if (!healthCheck.success) {
+          return { 
+            success: false, 
+            error: `Railway server unavailable: ${healthCheck.error}` 
+          };
+        }
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         return { success: false, error: 'User not authenticated' };
       }
 
+      console.log('📤 Sending message to Railway backend...');
+      
       const response = await this.makeRequest('/v1/chat/message', {
         method: 'POST',
         body: JSON.stringify({
@@ -105,10 +179,19 @@ export class RailwayBackendService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+        this.isServerHealthy = false; // Mark as unhealthy
+        
+        return { 
+          success: false, 
+          error: `Railway HTTP ${response.status}: ${errorText || response.statusText}` 
+        };
       }
 
       const data = await response.json();
+      this.isServerHealthy = true; // Mark as healthy
+      
+      console.log('✅ Railway backend response received');
+      
       return { 
         success: true, 
         data: {
@@ -121,9 +204,30 @@ export class RailwayBackendService {
           agents_involved: data.agents_involved || []
         }
       };
+      
     } catch (error) {
-      console.error('Railway message processing failed:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Processing failed' };
+      this.isServerHealthy = false; // Mark as unhealthy
+      
+      console.error('❌ Railway message processing failed:', error);
+      
+      if (error.message.includes('timeout')) {
+        return { 
+          success: false, 
+          error: 'Railway server timeout - please try again' 
+        };
+      }
+      
+      if (error.message.includes('Failed to fetch')) {
+        return { 
+          success: false, 
+          error: 'Network error - Railway server may be down or CORS misconfigured' 
+        };
+      }
+      
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Railway processing failed' 
+      };
     }
   }
 
@@ -354,22 +458,40 @@ export class RailwayBackendService {
     
     console.log('🧪 Running comprehensive Railway backend test...');
     
-    // Test health
+    // Test health first
     results.health = await this.checkServerHealth();
     
-    // Test message processing
-    results.messageProcessing = await this.processMessage('مرحبا، كيف يمكنني البدء؟');
-    
-    // Test conversations
-    results.conversations = await this.getConversations();
-    
-    // Test token packages
-    results.tokenPackages = await this.getTokenPackages();
-    
-    // Test onboarding questions
-    results.onboardingQuestions = await this.getOnboardingQuestions();
+    // Only proceed with other tests if health check passes
+    if (results.health.success) {
+      try {
+        results.messageProcessing = await this.processMessage('مرحبا، كيف يمكنني البدء؟');
+        results.conversations = await this.getConversations();
+        results.tokenPackages = await this.getTokenPackages();
+        results.onboardingQuestions = await this.getOnboardingQuestions();
+      } catch (error) {
+        console.error('❌ Comprehensive test failed:', error);
+        results.testError = { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Test suite failed' 
+        };
+      }
+    } else {
+      console.warn('⚠️ Skipping additional tests - health check failed');
+      results.skipped = { 
+        success: false, 
+        error: 'Health check failed - skipped remaining tests' 
+      };
+    }
     
     console.log('🧪 Railway backend test results:', results);
     return results;
+  }
+
+  // Server status helper
+  static getServerStatus(): { isHealthy: boolean; lastCheck: number } {
+    return {
+      isHealthy: this.isServerHealthy,
+      lastCheck: this.lastHealthCheck
+    };
   }
 }
