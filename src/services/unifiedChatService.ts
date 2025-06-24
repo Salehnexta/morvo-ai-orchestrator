@@ -1,3 +1,4 @@
+
 import { RailwayBackendService } from './railwayBackendService';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -56,8 +57,8 @@ export class UnifiedChatService {
     isOpen: false,
     failureCount: 0,
     lastFailureTime: 0,
-    readonly timeout: 30000, // 30 seconds
-    readonly threshold: 5
+    timeout: 30000, // 30 seconds
+    threshold: 5
   };
 
   // Performance Metrics
