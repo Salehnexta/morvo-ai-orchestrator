@@ -51,6 +51,81 @@ export class UnifiedChatService {
   private static consecutiveFailures = 0;
   private static readonly MAX_FAILURES_BEFORE_FALLBACK = 3;
 
+  // Circuit Breaker Implementation
+  private static circuitBreaker = {
+    isOpen: false,
+    failureCount: 0,
+    lastFailureTime: 0,
+    readonly timeout: 30000, // 30 seconds
+    readonly threshold: 5
+  };
+
+  // Performance Metrics
+  private static performanceMetrics = {
+    totalRequests: 0,
+    successfulRequests: 0,
+    failedRequests: 0,
+    averageResponseTime: 0,
+    lastResponseTime: 0
+  };
+
+  private static async checkCircuitBreaker(): Promise<boolean> {
+    if (!this.circuitBreaker.isOpen) return true;
+    
+    // Check if timeout has passed
+    if (Date.now() - this.circuitBreaker.lastFailureTime > this.circuitBreaker.timeout) {
+      console.log('🔄 Circuit breaker timeout passed, attempting to close...');
+      this.circuitBreaker.isOpen = false;
+      this.circuitBreaker.failureCount = 0;
+      return true;
+    }
+    
+    console.log('🔐 Circuit breaker is open, skipping Railway request');
+    return false;
+  }
+
+  private static recordFailure(): void {
+    this.circuitBreaker.failureCount++;
+    this.circuitBreaker.lastFailureTime = Date.now();
+    
+    if (this.circuitBreaker.failureCount >= this.circuitBreaker.threshold) {
+      this.circuitBreaker.isOpen = true;
+      console.warn('🚫 Circuit breaker opened due to repeated failures');
+    }
+  }
+
+  private static recordSuccess(): void {
+    this.circuitBreaker.failureCount = 0;
+    this.circuitBreaker.isOpen = false;
+  }
+
+  static getPerformanceMetrics() {
+    return {
+      ...this.performanceMetrics,
+      successRate: this.performanceMetrics.totalRequests > 0 
+        ? (this.performanceMetrics.successfulRequests / this.performanceMetrics.totalRequests) * 100 
+        : 0,
+      circuitBreakerStatus: this.circuitBreaker.isOpen ? 'open' : 'closed',
+      circuitBreakerFailures: this.circuitBreaker.failureCount
+    };
+  }
+
+  private static updateMetrics(success: boolean, responseTime: number): void {
+    this.performanceMetrics.totalRequests++;
+    this.performanceMetrics.lastResponseTime = responseTime;
+    
+    if (success) {
+      this.performanceMetrics.successfulRequests++;
+    } else {
+      this.performanceMetrics.failedRequests++;
+    }
+    
+    // Update average response time
+    const total = this.performanceMetrics.successfulRequests + this.performanceMetrics.failedRequests;
+    this.performanceMetrics.averageResponseTime = 
+      (this.performanceMetrics.averageResponseTime * (total - 1) + responseTime) / total;
+  }
+
   static async sendMessage(message: string, context?: any): Promise<UnifiedChatMessage> {
     const startTime = Date.now();
     
@@ -60,6 +135,13 @@ export class UnifiedChatService {
         hasContext: !!context,
         baseUrl: 'https://morvo-production.up.railway.app'
       });
+      
+      // Check circuit breaker before making request
+      const canProceed = await this.checkCircuitBreaker();
+      if (!canProceed) {
+        console.warn('⚠️ Circuit breaker is open - using fallback mode');
+        throw new Error('Circuit breaker is open - service temporarily unavailable');
+      }
       
       // Check if we should skip Railway due to consecutive failures
       if (this.fallbackMode && this.consecutiveFailures >= this.MAX_FAILURES_BEFORE_FALLBACK) {
@@ -93,9 +175,11 @@ export class UnifiedChatService {
       const processingTime = Date.now() - startTime;
       
       if (response.success && response.data) {
-        // Reset failure count on success
+        // Record success for circuit breaker and metrics
+        this.recordSuccess();
         this.consecutiveFailures = 0;
         this.fallbackMode = false;
+        this.updateMetrics(true, processingTime);
         
         // Update connection status
         this.updateConnectionStatus(true, 'authenticated', processingTime);
@@ -146,8 +230,10 @@ export class UnifiedChatService {
       const processingTime = Date.now() - startTime;
       console.error('❌ UnifiedChatService: Railway backend error:', error);
       
-      // Increment failure count
+      // Record failure for circuit breaker and metrics
+      this.recordFailure();
       this.consecutiveFailures++;
+      this.updateMetrics(false, processingTime);
       
       // Enable fallback mode if too many consecutive failures
       if (this.consecutiveFailures >= this.MAX_FAILURES_BEFORE_FALLBACK) {
@@ -160,7 +246,10 @@ export class UnifiedChatService {
       let userFriendlyMessage = 'مشكلة تقنية مع خادم Railway';
       
       if (error instanceof Error) {
-        if (error.message.includes('timeout')) {
+        if (error.message.includes('Circuit breaker is open')) {
+          errorCategory = 'circuit_breaker';
+          userFriendlyMessage = 'الخدمة متوقفة مؤقتاً للصيانة - سيتم استئنافها قريباً';
+        } else if (error.message.includes('timeout')) {
           errorCategory = 'timeout';
           userFriendlyMessage = 'انتهت مهلة الاتصال مع خادم Railway';
         } else if (error.message.includes('Network error') || error.message.includes('Failed to fetch')) {
@@ -206,9 +295,51 @@ export class UnifiedChatService {
           errorCategory,
           consecutiveFailures: this.consecutiveFailures,
           fallbackMode: this.fallbackMode,
-          railway_failed: true
+          railway_failed: true,
+          circuitBreakerOpen: this.circuitBreaker.isOpen
         }
       };
+    }
+  }
+
+  static async performHealthCheck(): Promise<{
+    railway: boolean;
+    supabase: boolean;
+    overall: boolean;
+    details: any;
+  }> {
+    const results = {
+      railway: false,
+      supabase: false,
+      overall: false,
+      details: {} as any
+    };
+
+    try {
+      // Check Railway health
+      const railwayHealth = await RailwayBackendService.checkServerHealth();
+      results.railway = railwayHealth.success;
+      results.details.railway = railwayHealth;
+
+      // Check Supabase connection
+      const { data, error } = await supabase.auth.getSession();
+      results.supabase = !error && !!data.session;
+      results.details.supabase = { hasSession: !!data.session, error };
+
+      // Check circuit breaker status
+      results.details.circuitBreaker = {
+        isOpen: this.circuitBreaker.isOpen,
+        failureCount: this.circuitBreaker.failureCount,
+        lastFailureTime: this.circuitBreaker.lastFailureTime
+      };
+
+      results.overall = results.railway && results.supabase && !this.circuitBreaker.isOpen;
+      
+      console.log('🏥 Health check results:', results);
+      return results;
+    } catch (error) {
+      console.error('❌ Health check failed:', error);
+      return results;
     }
   }
 
@@ -222,6 +353,9 @@ export class UnifiedChatService {
       if (isConnected) {
         this.consecutiveFailures = 0;
         this.fallbackMode = false;
+        this.recordSuccess();
+      } else {
+        this.recordFailure();
       }
       
       this.updateConnectionStatus(
@@ -235,6 +369,7 @@ export class UnifiedChatService {
     } catch (error) {
       console.error('❌ UnifiedChatService: Railway backend connection test failed:', error);
       this.consecutiveFailures++;
+      this.recordFailure();
       this.updateConnectionStatus(false, 'offline', 0, error instanceof Error ? error.message : 'Connection test failed');
       return false;
     }
@@ -256,7 +391,11 @@ export class UnifiedChatService {
     this.diagnosticCache = [];
     this.consecutiveFailures = 0;
     this.fallbackMode = false;
-    console.log('🧹 Diagnostic cache cleared and fallback mode reset');
+    // Reset circuit breaker
+    this.circuitBreaker.isOpen = false;
+    this.circuitBreaker.failureCount = 0;
+    this.circuitBreaker.lastFailureTime = 0;
+    console.log('🧹 Diagnostic cache cleared, fallback mode reset, and circuit breaker reset');
   }
 
   static async getHealthStatus(): Promise<any> {
@@ -265,7 +404,13 @@ export class UnifiedChatService {
       return {
         ...result.data,
         consecutiveFailures: this.consecutiveFailures,
-        fallbackMode: this.fallbackMode
+        fallbackMode: this.fallbackMode,
+        circuitBreaker: {
+          isOpen: this.circuitBreaker.isOpen,
+          failureCount: this.circuitBreaker.failureCount,
+          lastFailureTime: this.circuitBreaker.lastFailureTime
+        },
+        performance: this.getPerformanceMetrics()
       };
     } catch (error) {
       console.error('❌ Health check failed:', error);
@@ -273,7 +418,13 @@ export class UnifiedChatService {
         status: 'failed', 
         error: error instanceof Error ? error.message : 'Unknown error',
         consecutiveFailures: this.consecutiveFailures,
-        fallbackMode: this.fallbackMode
+        fallbackMode: this.fallbackMode,
+        circuitBreaker: {
+          isOpen: this.circuitBreaker.isOpen,
+          failureCount: this.circuitBreaker.failureCount,
+          lastFailureTime: this.circuitBreaker.lastFailureTime
+        },
+        performance: this.getPerformanceMetrics()
       };
     }
   }
@@ -301,8 +452,8 @@ export class UnifiedChatService {
       diagnostics.push(diagnostic);
       this.addDiagnosticInfo(diagnostic);
       
-      // Only test message processing if health check passes
-      if (healthResult.success) {
+      // Only test message processing if health check passes and circuit breaker is closed
+      if (healthResult.success && !this.circuitBreaker.isOpen) {
         try {
           const testStartTime = Date.now();
           const testResult = await RailwayBackendService.processMessage('مرحبا، هذه رسالة تجريبية');
@@ -338,6 +489,7 @@ export class UnifiedChatService {
         }
       } else {
         // Add skipped test info
+        const skippedReason = this.circuitBreaker.isOpen ? 'Circuit breaker is open' : 'Health check failed';
         const skippedDiagnostic: DiagnosticInfo = {
           format: 'Railway Backend Chat',
           success: false,
@@ -345,7 +497,7 @@ export class UnifiedChatService {
           endpoint: 'railway-backend-chat',
           status: 'error',
           latency: 0,
-          error: 'Skipped due to failed health check'
+          error: `Skipped due to: ${skippedReason}`
         };
         
         diagnostics.push(skippedDiagnostic);
@@ -378,6 +530,11 @@ export class UnifiedChatService {
     let technicalNote = '';
     
     switch (errorCategory) {
+      case 'circuit_breaker':
+        errorType = 'الخدمة متوقفة مؤقتاً للصيانة';
+        suggestion = 'سيتم استئناف الخدمة خلال 30 ثانية. يرجى الانتظار قليلاً.';
+        technicalNote = 'تم تفعيل آلية الحماية من الأخطاء المتكررة.';
+        break;
       case 'timeout':
         errorType = 'انتهت مهلة الاتصال مع خادم Railway';
         suggestion = 'الخادم يستغرق وقتاً أطول من المعتاد. يرجى المحاولة مرة أخرى.';
@@ -414,6 +571,38 @@ export class UnifiedChatService {
     // Add consecutive failure warning if applicable
     if (this.consecutiveFailures >= this.MAX_FAILURES_BEFORE_FALLBACK) {
       response += `\n\n⚠️ تم تفعيل النمط الاحتياطي بعد ${this.consecutiveFailures} محاولات فاشلة متتالية.`;
+    }
+
+    // Add context-aware suggestions
+    if (context?.business_type) {
+      response += `\n\n💡 بما أنك في مجال ${context.business_type}، يمكنني مساعدتك في:`;
+      
+      switch (context.business_type.toLowerCase()) {
+        case 'ecommerce':
+          response += '\n• تحسين مبيعات المتجر الإلكتروني\n• استراتيجيات التسويق الرقمي\n• تحسين تجربة المستخدم';
+          break;
+        case 'restaurant':
+          response += '\n• تسويق المطاعم عبر وسائل التواصل\n• إدارة السمعة الرقمية\n• استراتيجيات الولاء';
+          break;
+        case 'consulting':
+          response += '\n• بناء العلامة التجارية\n• استراتيجيات المحتوى\n• التسويق عبر الشبكات المهنية';
+          break;
+        case 'technology':
+          response += '\n• تسويق المنتجات التقنية\n• استراتيجيات B2B\n• بناء المجتمعات التقنية';
+          break;
+        default:
+          response += '\n• استراتيجيات التسويق الرقمي\n• تحسين العلامة التجارية\n• إدارة وسائل التواصل الاجتماعي';
+      }
+    }
+
+    // Add time-based suggestions
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      response += '\n\n🌅 صباح الخير! يمكنني مساعدتك في بدء يومك بخطط تسويقية فعالة.';
+    } else if (hour < 18) {
+      response += '\n\n☀️ وقت مثالي لتحليل أداء حملاتك التسويقية وتحسينها.';
+    } else {
+      response += '\n\n🌙 مساء الخير! يمكنني مساعدتك في تخطيط استراتيجيات الغد.';
     }
     
     // Add helpful context-based suggestions
@@ -494,12 +683,15 @@ export class UnifiedChatService {
   }
 
   static shouldRetryRailway(): boolean {
-    return this.consecutiveFailures < this.MAX_FAILURES_BEFORE_FALLBACK && !this.fallbackMode;
+    return this.consecutiveFailures < this.MAX_FAILURES_BEFORE_FALLBACK && !this.fallbackMode && !this.circuitBreaker.isOpen;
   }
 
   static resetRailwayConnection(): void {
     this.consecutiveFailures = 0;
     this.fallbackMode = false;
-    console.log('🔄 Railway connection attempts reset');
+    this.circuitBreaker.isOpen = false;
+    this.circuitBreaker.failureCount = 0;
+    this.circuitBreaker.lastFailureTime = 0;
+    console.log('🔄 Railway connection attempts reset and circuit breaker reset');
   }
 }
