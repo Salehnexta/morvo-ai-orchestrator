@@ -1,4 +1,5 @@
 
+
 // 🎯 Hook الشات الموحد - محدث للاتصال بـ Railway Backend
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -300,7 +301,7 @@ export const useUnifiedChat = () => {
         setServerIssues(currentIssueType);
         setIsConnected(false);
         
-        botResponse = response.content || UnifiedChatService.generateSmartFallbackResponse(messageText, context);
+        botResponse = response.content || UnifiedChatService.generateEnhancedFallbackResponse(messageText, context);
         
         // تحديث مقاييس الأداء للخطأ
         updatePerformanceMetrics(false, processingTime);
@@ -428,3 +429,4 @@ export const useUnifiedChat = () => {
     scrollToBottom
   };
 };
+
