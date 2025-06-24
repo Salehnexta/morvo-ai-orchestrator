@@ -53,7 +53,7 @@ export const useEnhancedToast = () => {
       title: (
         <div className="flex items-center gap-2">
           {getIcon()}
-          {title}
+          <span>{title}</span>
         </div>
       ),
       description,
