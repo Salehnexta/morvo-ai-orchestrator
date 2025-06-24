@@ -30,13 +30,13 @@ export const useEnhancedToast = () => {
     const getIcon = () => {
       switch (type) {
         case 'success':
-          return <CheckCircle className="w-4 h-4 text-green-600" />;
+          return '✅';
         case 'error':
-          return <XCircle className="w-4 h-4 text-red-600" />;
+          return '❌';
         case 'warning':
-          return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
+          return '⚠️';
         default:
-          return <Info className="w-4 h-4 text-blue-600" />;
+          return 'ℹ️';
       }
     };
 
@@ -50,12 +50,7 @@ export const useEnhancedToast = () => {
     };
 
     originalToast({
-      title: (
-        <div className="flex items-center gap-2">
-          {getIcon()}
-          <span>{title}</span>
-        </div>
-      ),
+      title: `${getIcon()} ${title}`,
       description,
       variant: getVariant(),
       duration: persistent ? Infinity : duration,
