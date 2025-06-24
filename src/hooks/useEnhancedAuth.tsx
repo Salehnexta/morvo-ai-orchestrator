@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +20,16 @@ export const useEnhancedAuth = () => {
   const getAuthError = (error: any): AuthError => {
     const errorMessage = error?.message || 'Unknown error';
     
-    // Enhanced error categorization
+    // Enhanced error categorization with API key handling
+    if (errorMessage.includes('Invalid API key')) {
+      return {
+        code: 'INVALID_API_KEY',
+        message: errorMessage,
+        userMessage: 'خطأ في إعدادات التطبيق. يرجى المحاولة لاحقاً أو التواصل مع الدعم الفني.',
+        canRetry: false
+      };
+    }
+
     if (errorMessage.includes('Invalid login credentials')) {
       return {
         code: 'INVALID_CREDENTIALS',
@@ -104,7 +112,7 @@ export const useEnhancedAuth = () => {
 
       // Success
       toast({
-        title: 'تم تسجيل الدخول بنجاح',
+        title: '✅ تم تسجيل الدخول بنجاح',
         description: 'مرحباً بعودتك إلى مورفو',
         variant: 'default'
       });
@@ -117,7 +125,7 @@ export const useEnhancedAuth = () => {
       const authError = getAuthError(error);
       
       toast({
-        title: 'خطأ غير متوقع',
+        title: '❌ خطأ غير متوقع',
         description: authError.userMessage,
         variant: 'destructive'
       });
@@ -138,7 +146,7 @@ export const useEnhancedAuth = () => {
         const authError = getAuthError(error);
         
         toast({
-          title: 'خطأ في إنشاء الحساب',
+          title: '❌ خطأ في إنشاء الحساب',
           description: authError.userMessage,
           variant: 'destructive'
         });
@@ -147,7 +155,7 @@ export const useEnhancedAuth = () => {
       }
 
       toast({
-        title: 'تم إنشاء الحساب بنجاح',
+        title: '✅ تم إنشاء الحساب بنجاح',
         description: 'يرجى التحقق من بريدك الإلكتروني لتأكيد الحساب',
         variant: 'default'
       });
@@ -158,7 +166,7 @@ export const useEnhancedAuth = () => {
       const authError = getAuthError(error);
       
       toast({
-        title: 'خطأ غير متوقع',
+        title: '❌ خطأ غير متوقع',
         description: authError.userMessage,
         variant: 'destructive'
       });
@@ -179,7 +187,7 @@ export const useEnhancedAuth = () => {
         const authError = getAuthError(error);
         
         toast({
-          title: 'خطأ في تسجيل الخروج',
+          title: '❌ خطأ في تسجيل الخروج',
           description: authError.userMessage,
           variant: 'destructive'
         });
@@ -188,7 +196,7 @@ export const useEnhancedAuth = () => {
       }
 
       toast({
-        title: 'تم تسجيل الخروج بنجاح',
+        title: '✅ تم تسجيل الخروج بنجاح',
         description: 'إلى اللقاء!',
         variant: 'default'
       });
@@ -200,7 +208,7 @@ export const useEnhancedAuth = () => {
       const authError = getAuthError(error);
       
       toast({
-        title: 'خطأ غير متوقع',
+        title: '❌ خطأ غير متوقع',
         description: authError.userMessage,
         variant: 'destructive'
       });
