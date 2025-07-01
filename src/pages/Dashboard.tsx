@@ -1,14 +1,22 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { DirectGPT4ChatInterface } from '@/components/chat/DirectGPT4ChatInterface';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { useDirectGPT4Chat } from '@/hooks/useDirectGPT4Chat';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const { theme } = useTheme();
+  
+  // Use the GPT-4 chat hook for messaging functionality
+  const {
+    messages,
+    handleSendMessage,
+    isLoading,
+    resetChat
+  } = useDirectGPT4Chat();
 
   if (!user) {
     return (
@@ -21,23 +29,41 @@ const Dashboard = () => {
     );
   }
 
+  // Convert messages to conversation history for the layout
+  const conversationHistory = messages.map(msg => msg.content);
+  const lastUserMessage = messages.filter(msg => msg.sender === 'user').pop()?.content || '';
+
+  const handleMessageSent = (message: string) => {
+    handleSendMessage(message);
+  };
+
+  const handleContentTypeChange = (type: string) => {
+    // Keep existing functionality
+    console.log('Content type changed to:', type);
+  };
+
+  const handlePhaseComplete = (phase: string) => {
+    // Keep existing functionality
+    console.log('Phase completed:', phase);
+  };
+
+  const handleContentAction = (action: string) => {
+    // Keep existing functionality
+    console.log('Content action:', action);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            مورفو GPT-4 المباشر
-          </h1>
-          <p className="text-white/70">
-            تحدث مباشرة مع GPT-4 للحصول على أفضل النصائح التسويقية
-          </p>
-        </div>
-        
-        <div className="h-[calc(100vh-200px)]">
-          <DirectGPT4ChatInterface />
-        </div>
-      </div>
-    </div>
+    <DashboardLayout
+      isOnboardingComplete={true}
+      contentType="chat"
+      showOnboarding={false}
+      lastUserMessage={lastUserMessage}
+      conversationHistory={conversationHistory}
+      onContentTypeChange={handleContentTypeChange}
+      onMessageSent={handleMessageSent}
+      onPhaseComplete={handlePhaseComplete}
+      onContentAction={handleContentAction}
+    />
   );
 };
 

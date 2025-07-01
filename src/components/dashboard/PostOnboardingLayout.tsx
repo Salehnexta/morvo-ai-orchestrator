@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { UnifiedChatInterface } from "@/components/UnifiedChatInterface";
-import { SidebarContentManager } from "@/components/sidebar/SidebarContentManager";
+import { DirectGPT4ChatInterface } from '@/components/chat/DirectGPT4ChatInterface';
+import { DynamicSidebar } from '@/components/DynamicSidebar';
+import { SidebarContentManager } from '@/components/sidebar/SidebarContentManager';
 
 interface PostOnboardingLayoutProps {
   lastUserMessage: string;
@@ -19,26 +20,44 @@ export const PostOnboardingLayout: React.FC<PostOnboardingLayoutProps> = ({
   onContentAction
 }) => {
   return (
-    <>
-      {/* Smart Dynamic Sidebar - 60% width */}
-      <div className="w-[60%] relative z-10 border-r border-gray-200 dark:border-gray-700">
-        <SidebarContentManager 
-          lastMessage={lastUserMessage}
-          conversationHistory={conversationHistory}
-          onActionClick={onContentAction}
+    <div className="flex w-full min-h-screen relative z-10">
+      {/* Dynamic Sidebar */}
+      <div className="w-80 flex-shrink-0">
+        <DynamicSidebar 
+          contentType="chat"
+          onContentTypeChange={onContentTypeChange}
         />
       </div>
 
-      {/* Chat Interface - 40% width */}
-      <div className="w-[40%] bg-black/30 backdrop-blur-xl border-l border-white/10 relative z-10 shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
-        <div className="relative z-10 h-full">
-          <UnifiedChatInterface 
-            onContentTypeChange={onContentTypeChange}
-            onMessageSent={onMessageSent}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-white/10">
+          <h1 className="text-2xl font-bold text-white mb-2">
+            مورفو - المساعد الذكي للتسويق الرقمي
+          </h1>
+          <p className="text-white/70">
+            اسأل مورفو عن أي شيء يتعلق بالتسويق الرقمي والأعمال
+          </p>
+        </div>
+
+        {/* Chat Interface */}
+        <div className="flex-1 p-6">
+          <div className="h-full max-w-4xl mx-auto">
+            <DirectGPT4ChatInterface />
+          </div>
+        </div>
+
+        {/* Sidebar Content Manager */}
+        <div className="absolute right-0 top-0 h-full w-80 pointer-events-none">
+          <SidebarContentManager 
+            contentType="chat"
+            lastUserMessage={lastUserMessage}
+            conversationHistory={conversationHistory}
+            onContentAction={onContentAction}
           />
         </div>
       </div>
-    </>
+    </div>
   );
 };
