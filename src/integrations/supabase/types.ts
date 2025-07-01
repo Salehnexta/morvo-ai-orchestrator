@@ -33,6 +33,88 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_memory: {
+        Row: {
+          agent_id: string
+          client_id: string
+          content: Json
+          created_at: string
+          id: string
+          importance_score: number
+          memory_type: string
+          timestamp: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          client_id: string
+          content?: Json
+          created_at?: string
+          id?: string
+          importance_score?: number
+          memory_type?: string
+          timestamp?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          client_id?: string
+          content?: Json
+          created_at?: string
+          id?: string
+          importance_score?: number
+          memory_type?: string
+          timestamp?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_memory_client_id_fkey1"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_memory_kv: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          id: string
+          key: string
+          source: string | null
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          id?: string
+          key: string
+          source?: string | null
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          key?: string
+          source?: string | null
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_memory_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_metrics: {
         Row: {
           agent_id: string
@@ -87,6 +169,53 @@ export type Database = {
         }
         Relationships: []
       }
+      campaigns: {
+        Row: {
+          budget: number | null
+          campaign_id: number
+          channel: string | null
+          clicks: number | null
+          company_id: number | null
+          conversions: number | null
+          end_date: string | null
+          impressions: number | null
+          name: string | null
+          start_date: string | null
+        }
+        Insert: {
+          budget?: number | null
+          campaign_id?: number
+          channel?: string | null
+          clicks?: number | null
+          company_id?: number | null
+          conversions?: number | null
+          end_date?: string | null
+          impressions?: number | null
+          name?: string | null
+          start_date?: string | null
+        }
+        Update: {
+          budget?: number | null
+          campaign_id?: number
+          channel?: string | null
+          clicks?: number | null
+          company_id?: number | null
+          conversions?: number | null
+          end_date?: string | null
+          impressions?: number | null
+          name?: string | null
+          start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           active: boolean | null
@@ -99,7 +228,7 @@ export type Database = {
           quota_limit: number | null
           quota_used: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           active?: boolean | null
@@ -112,7 +241,7 @@ export type Database = {
           quota_limit?: number | null
           quota_used?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           active?: boolean | null
@@ -125,9 +254,74 @@ export type Database = {
           quota_limit?: number | null
           quota_used?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
+      }
+      companies: {
+        Row: {
+          company_id: number
+          company_size: string | null
+          description: string | null
+          founded_year: number | null
+          headquarters: string | null
+          industry: string | null
+          name: string | null
+          website: string | null
+        }
+        Insert: {
+          company_id?: number
+          company_size?: string | null
+          description?: string | null
+          founded_year?: number | null
+          headquarters?: string | null
+          industry?: string | null
+          name?: string | null
+          website?: string | null
+        }
+        Update: {
+          company_id?: number
+          company_size?: string | null
+          description?: string | null
+          founded_year?: number | null
+          headquarters?: string | null
+          industry?: string | null
+          name?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      competitors: {
+        Row: {
+          company_id: number | null
+          competitor_id: number
+          description: string | null
+          name: string | null
+          website: string | null
+        }
+        Insert: {
+          company_id?: number | null
+          competitor_id?: number
+          description?: string | null
+          name?: string | null
+          website?: string | null
+        }
+        Update: {
+          company_id?: number | null
+          competitor_id?: number
+          description?: string | null
+          name?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitors_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
       }
       conversations: {
         Row: {
@@ -168,6 +362,115 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_conversations_client_id"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      executives: {
+        Row: {
+          company_id: number | null
+          executive_id: number
+          linkedin_url: string | null
+          name: string | null
+          role: string | null
+        }
+        Insert: {
+          company_id?: number | null
+          executive_id?: number
+          linkedin_url?: string | null
+          name?: string | null
+          role?: string | null
+        }
+        Update: {
+          company_id?: number | null
+          executive_id?: number
+          linkedin_url?: string | null
+          name?: string | null
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "executives_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
+      faq: {
+        Row: {
+          answer: string | null
+          company_id: number | null
+          date_updated: string | null
+          faq_id: number
+          question: string | null
+        }
+        Insert: {
+          answer?: string | null
+          company_id?: number | null
+          date_updated?: string | null
+          faq_id?: number
+          question?: string | null
+        }
+        Update: {
+          answer?: string | null
+          company_id?: number | null
+          date_updated?: string | null
+          faq_id?: number
+          question?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
+      financials: {
+        Row: {
+          amount_raised: number | null
+          company_id: number | null
+          financial_id: number
+          funding_round: string | null
+          investors: string | null
+          revenue: number | null
+          year: number | null
+        }
+        Insert: {
+          amount_raised?: number | null
+          company_id?: number | null
+          financial_id?: number
+          funding_round?: string | null
+          investors?: string | null
+          revenue?: number | null
+          year?: number | null
+        }
+        Update: {
+          amount_raised?: number | null
+          company_id?: number | null
+          financial_id?: number
+          funding_round?: string | null
+          investors?: string | null
+          revenue?: number | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financials_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
         ]
       }
       messages: {
@@ -200,6 +503,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_messages_client_id"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_messages_conversation_id"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "messages_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
@@ -212,6 +529,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "conversations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      news: {
+        Row: {
+          company_id: number | null
+          date: string | null
+          headline: string | null
+          news_id: number
+          summary: string | null
+          url: string | null
+        }
+        Insert: {
+          company_id?: number | null
+          date?: string | null
+          headline?: string | null
+          news_id?: number
+          summary?: string | null
+          url?: string | null
+        }
+        Update: {
+          company_id?: number | null
+          date?: string | null
+          headline?: string | null
+          news_id?: number
+          summary?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
           },
         ]
       }
@@ -330,6 +682,38 @@ export type Database = {
           },
         ]
       }
+      products_services: {
+        Row: {
+          category: string | null
+          company_id: number | null
+          description: string | null
+          name: string | null
+          ps_id: number
+        }
+        Insert: {
+          category?: string | null
+          company_id?: number | null
+          description?: string | null
+          name?: string | null
+          ps_id?: number
+        }
+        Update: {
+          category?: string | null
+          company_id?: number | null
+          description?: string | null
+          name?: string | null
+          ps_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_services_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           active: boolean
@@ -359,6 +743,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          company_id: number | null
+          date: string | null
+          rating: number | null
+          review_id: number
+          review_text: string | null
+          source: string | null
+        }
+        Insert: {
+          company_id?: number | null
+          date?: string | null
+          rating?: number | null
+          review_id?: number
+          review_text?: string | null
+          source?: string | null
+        }
+        Update: {
+          company_id?: number | null
+          date?: string | null
+          rating?: number | null
+          review_id?: number
+          review_text?: string | null
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
       }
       roi_predictions: {
         Row: {
@@ -599,6 +1018,44 @@ export type Database = {
           units_consumed?: number | null
         }
         Relationships: []
+      }
+      social_media: {
+        Row: {
+          company_id: number | null
+          engagement_rate: number | null
+          followers: number | null
+          last_post_date: string | null
+          platform: string | null
+          sm_id: number
+          url: string | null
+        }
+        Insert: {
+          company_id?: number | null
+          engagement_rate?: number | null
+          followers?: number | null
+          last_post_date?: string | null
+          platform?: string | null
+          sm_id?: number
+          url?: string | null
+        }
+        Update: {
+          company_id?: number | null
+          engagement_rate?: number | null
+          followers?: number | null
+          last_post_date?: string | null
+          platform?: string | null
+          sm_id?: number
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_media_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
       }
       social_media_analytics: {
         Row: {
@@ -855,6 +1312,35 @@ export type Database = {
           task_type?: string
         }
         Relationships: []
+      }
+      technology_stack: {
+        Row: {
+          company_id: number | null
+          description: string | null
+          tech_id: number
+          technology: string | null
+        }
+        Insert: {
+          company_id?: number | null
+          description?: string | null
+          tech_id?: number
+          technology?: string | null
+        }
+        Update: {
+          company_id?: number | null
+          description?: string | null
+          tech_id?: number
+          technology?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technology_stack_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
       }
       token_packages: {
         Row: {
@@ -1186,6 +1672,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_user_subscriptions_client_id"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user_subscriptions_plan_id"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_subscriptions_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
@@ -1302,6 +1802,44 @@ export type Database = {
           },
         ]
       }
+      website_seo: {
+        Row: {
+          backlink_count: number | null
+          bounce_rate: number | null
+          company_id: number | null
+          domain_authority: number | null
+          monthly_visits: number | null
+          seo_id: number
+          top_keywords: string | null
+        }
+        Insert: {
+          backlink_count?: number | null
+          bounce_rate?: number | null
+          company_id?: number | null
+          domain_authority?: number | null
+          monthly_visits?: number | null
+          seo_id?: number
+          top_keywords?: string | null
+        }
+        Update: {
+          backlink_count?: number | null
+          bounce_rate?: number | null
+          company_id?: number | null
+          domain_authority?: number | null
+          monthly_visits?: number | null
+          seo_id?: number
+          top_keywords?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_seo_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1351,6 +1889,17 @@ export type Database = {
       refresh_seo_data_summary: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      store_agent_memory_service: {
+        Args: {
+          p_agent_id: string
+          p_client_id: string
+          p_memory_type: string
+          p_content: string
+          p_importance_score?: number
+          p_metadata?: Json
+        }
+        Returns: string
       }
       user_owns_company: {
         Args:
