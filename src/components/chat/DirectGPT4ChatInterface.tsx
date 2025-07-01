@@ -131,8 +131,9 @@ export const DirectGPT4ChatInterface: React.FC = () => {
             isLoading={isLoading}
             theme={theme}
             isRTL={isRTL}
+            thinkingText={t.thinking}
+            onCommandResponse={() => {}}
             language={language}
-            loadingText={t.thinking}
           />
           <div ref={messagesEndRef} />
         </div>

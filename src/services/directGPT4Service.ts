@@ -14,7 +14,8 @@ export interface DirectGPT4Response {
 }
 
 export class DirectGPT4Service {
-  private static readonly SUPABASE_URL = 'https://pnhpedfzusrxafxdcfnl.supabase.co';
+  private static readonly SUPABASE_URL = 'https://teniefzxdikestahdnur.supabase.co';
+  private static readonly SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlbmllZnp4ZGlrZXN0YWhkbnVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMDczMjcsImV4cCI6MjA2NDg4MzMyN30.9-WD35_UTe4_nBLMxZaSNS-VWfZit5ORUI6jahEYQUM';
   
   static async sendMessage(
     message: string, 
@@ -36,7 +37,7 @@ export class DirectGPT4Service {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`,
-          'apikey': supabase.supabaseKey
+          'apikey': this.SUPABASE_ANON_KEY
         },
         body: JSON.stringify({
           message: message.trim(),
