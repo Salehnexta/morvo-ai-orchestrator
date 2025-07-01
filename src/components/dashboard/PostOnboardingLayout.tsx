@@ -21,11 +21,11 @@ export const PostOnboardingLayout: React.FC<PostOnboardingLayoutProps> = ({
 }) => {
   return (
     <div className="flex w-full min-h-screen relative z-10">
-      {/* Dynamic Sidebar */}
+      {/* Left Dynamic Sidebar */}
       <div className="w-80 flex-shrink-0">
         <DynamicSidebar 
-          contentType="chat"
-          onContentTypeChange={onContentTypeChange}
+          contentType="default"
+          onActionClick={onContentAction}
         />
       </div>
 
@@ -47,16 +47,15 @@ export const PostOnboardingLayout: React.FC<PostOnboardingLayoutProps> = ({
             <DirectGPT4ChatInterface />
           </div>
         </div>
+      </div>
 
-        {/* Sidebar Content Manager */}
-        <div className="absolute right-0 top-0 h-full w-80 pointer-events-none">
-          <SidebarContentManager 
-            contentType="chat"
-            lastUserMessage={lastUserMessage}
-            conversationHistory={conversationHistory}
-            onContentAction={onContentAction}
-          />
-        </div>
+      {/* Right Sidebar Content Manager */}
+      <div className="w-80 flex-shrink-0">
+        <SidebarContentManager 
+          lastMessage={lastUserMessage}
+          conversationHistory={conversationHistory}
+          onActionClick={onContentAction}
+        />
       </div>
     </div>
   );

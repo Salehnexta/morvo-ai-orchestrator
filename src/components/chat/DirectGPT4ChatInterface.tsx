@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
 import { useDirectGPT4Chat } from '@/hooks/useDirectGPT4Chat';
-import { RefreshCw, Zap, CheckCircle, AlertCircle } from 'lucide-react';
+import { RefreshCw, Sparkles } from 'lucide-react';
 
 export const DirectGPT4ChatInterface: React.FC = () => {
   const {
@@ -13,8 +13,6 @@ export const DirectGPT4ChatInterface: React.FC = () => {
     input,
     setInput,
     isLoading,
-    isConnected,
-    connectionChecked,
     messagesEndRef,
     user,
     language,
@@ -22,7 +20,6 @@ export const DirectGPT4ChatInterface: React.FC = () => {
     theme,
     t,
     handleSendMessage,
-    testConnection,
     resetChat,
     userProfile
   } = useDirectGPT4Chat();
@@ -58,28 +55,14 @@ export const DirectGPT4ChatInterface: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500/20 rounded-lg">
-              <Zap className="w-5 h-5 text-blue-400" />
+              <Sparkles className="w-5 h-5 text-blue-400" />
             </div>
             <div>
               <CardTitle className="text-white text-lg">
-                {t.masterAgent}
+                مورفو - مساعدك الذكي
               </CardTitle>
-              <div className="flex items-center gap-2 mt-1">
-                {connectionChecked ? (
-                  isConnected ? (
-                    <>
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-green-400 text-sm">{t.connected}</span>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="w-4 h-4 text-red-400" />
-                      <span className="text-red-400 text-sm">غير متصل</span>
-                    </>
-                  )
-                ) : (
-                  <span className="text-yellow-400 text-sm">{t.connecting}</span>
-                )}
+              <div className="text-sm text-blue-300">
+                جاهز لمساعدتك في التسويق الرقمي
               </div>
             </div>
           </div>
@@ -88,7 +71,7 @@ export const DirectGPT4ChatInterface: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={testConnection}
+              onClick={() => window.location.reload()}
               className="text-white/70 hover:text-white hover:bg-white/10"
             >
               <RefreshCw className="w-4 h-4" />
@@ -131,7 +114,7 @@ export const DirectGPT4ChatInterface: React.FC = () => {
             isLoading={isLoading}
             theme={theme}
             isRTL={isRTL}
-            thinkingText={t.thinking}
+            thinkingText="مورفو يفكر..."
             onCommandResponse={() => {}}
             language={language}
           />
@@ -143,7 +126,7 @@ export const DirectGPT4ChatInterface: React.FC = () => {
           isLoading={isLoading}
           theme={theme}
           isRTL={isRTL}
-          placeholder={t.placeholder}
+          placeholder="اكتب رسالتك هنا..."
           onInputChange={setInput}
           onSend={handleSend}
           onKeyPress={handleKeyPress}
